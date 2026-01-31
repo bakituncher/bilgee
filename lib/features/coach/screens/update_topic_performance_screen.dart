@@ -59,58 +59,136 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
               child: Column(
                 children: [
-                  // Mod Seçici - Kompakt
-                  _buildCompactModeSelector(context, ref),
+                  // Mod Seçici - Yenilenmiş Sliding Style
+                  _buildSlidingModeSelector(context, ref),
                   const SizedBox(height: 20),
 
-                  // Mastery Gauge & Stats - Yan yana
+                  // Mastery Gauge & Stats
                   _buildMasterySection(context, mastery, correct, wrong, blank),
                   const SizedBox(height: 24),
 
-                  // Slider'lar - Optimize edilmiş
+                  // Slider'lar
                   _buildSlidersSection(context, ref, sessionQuestions, correct, wrong, isAddingMode),
                 ],
               ),
             ),
           ),
 
-          // Kaydet Butonu - Sabit Alt
+          // Kaydet Butonu
           _buildSaveButton(context, ref, isAddingMode, correct, wrong, blank, sessionQuestions),
         ],
       ),
     );
   }
 
-  Widget _buildCompactModeSelector(BuildContext context, WidgetRef ref) {
+  /// Çift kutu sorununu çözen, modern kayan animasyonlu seçici
+  Widget _buildSlidingModeSelector(BuildContext context, WidgetRef ref) {
     final isAddingMode = ref.watch(_updateModeProvider);
+    final theme = Theme.of(context);
+    final activeColor = theme.colorScheme.secondary;
+    final inactiveColor = theme.colorScheme.onSurfaceVariant;
+
     return Container(
+      height: 56, // Rahat bir dokunma alanı için yükseklik
+      padding: const EdgeInsets.all(4), // İçerideki "yüzen" efekt için padding
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: theme.cardColor, // Arka plan rengi
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)),
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.15)), // Tek ve narin bir dış çerçeve
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _CompactModeOption(
-              title: "Üzerine Ekle",
-              icon: Icons.add_circle_outline_rounded,
-              isSelected: isAddingMode,
-              onTap: () => ref.read(_updateModeProvider.notifier).state = true,
-            ),
-          ),
-          Container(width: 1, height: 48, color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)),
-          Expanded(
-            child: _CompactModeOption(
-              title: "Değiştir",
-              icon: Icons.sync_rounded,
-              isSelected: !isAddingMode,
-              onTap: () => ref.read(_updateModeProvider.notifier).state = false,
-            ),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Toplam genişliğin yarısından padding'i çıkarıyoruz
+          final itemWidth = (constraints.maxWidth - 8) / 2;
+
+          return Stack(
+            children: [
+              // 1. Katman: Hareket Eden Arka Plan (Highlighter)
+              AnimatedAlign(
+                duration: 250.ms,
+                curve: Curves.easeOutBack, // Hafif yaylanma efekti
+                alignment: isAddingMode ? Alignment.centerLeft : Alignment.centerRight,
+                child: Container(
+                  width: itemWidth,
+                  height: double.infinity,
+                  decoration: BoxDecoration(
+                    color: activeColor.withOpacity(0.15), // Seçili alanın hafif arka planı
+                    borderRadius: BorderRadius.circular(12),
+                    // Seçili alanın etrafına çok hafif bir border, şıklık katar
+                    border: Border.all(color: activeColor.withOpacity(0.1)),
+                  ),
+                ),
+              ),
+
+              // 2. Katman: Tıklanabilir Yazılar ve İkonlar
+              Row(
+                children: [
+                  _buildSelectorItem(
+                    context: context,
+                    title: "Üzerine Ekle",
+                    icon: Icons.add_circle_outline_rounded,
+                    isSelected: isAddingMode,
+                    activeColor: activeColor,
+                    inactiveColor: inactiveColor,
+                    onTap: () => ref.read(_updateModeProvider.notifier).state = true,
+                  ),
+                  _buildSelectorItem(
+                    context: context,
+                    title: "Değiştir",
+                    icon: Icons.sync_rounded,
+                    isSelected: !isAddingMode,
+                    activeColor: activeColor,
+                    inactiveColor: inactiveColor,
+                    onTap: () => ref.read(_updateModeProvider.notifier).state = false,
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
       ),
     ).animate().fadeIn(duration: 300.ms).slideY(begin: -0.2, duration: 300.ms);
+  }
+
+  Widget _buildSelectorItem({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required bool isSelected,
+    required Color activeColor,
+    required Color inactiveColor,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque, // Boşluklara tıklamayı da algılar
+        child: Center(
+          child: AnimatedScale(
+            scale: isSelected ? 1.0 : 0.95, // Seçili değilken çok hafif küçült
+            duration: 200.ms,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: isSelected ? activeColor : inactiveColor,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    color: isSelected ? activeColor : inactiveColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildMasterySection(BuildContext context, double mastery, int correct, int wrong, int blank) {
@@ -505,54 +583,6 @@ class _SuccessDialogState extends State<_SuccessDialog> {
   }
 }
 
-class _CompactModeOption extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _CompactModeOption({
-    required this.title,
-    required this.icon,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).colorScheme.secondary.withOpacity(0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.onSurfaceVariant,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _QuickStat extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -601,7 +631,7 @@ class _QuickStat extends StatelessWidget {
   }
 }
 
-// Etüt Odası Tanıtım ve Pazarlama Dialogu - Kompakt ve Düzgün Hizalı
+// Etüt Odası Tanıtım ve Pazarlama Dialogu
 class _WorkshopOfferDialog extends StatelessWidget {
   final String topicName;
 
@@ -614,35 +644,33 @@ class _WorkshopOfferDialog extends StatelessWidget {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24), // Kenar boşluklarını azalttık
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 360), // Genişliği sınırla
+        constraints: const BoxConstraints(maxWidth: 360),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           color: theme.cardColor,
         ),
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 20), // İç boşlukları azalttık (Kompakt)
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // İkon + Başlık (Daha sıkışık)
             Center(
               child: Container(
-                padding: const EdgeInsets.all(12), // İkon circle küçüldü
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.secondary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.menu_book_rounded,
-                  size: 36, // İkon küçüldü
+                  size: 36,
                   color: theme.colorScheme.secondary,
                 ),
               ),
             ),
             const SizedBox(height: 12),
-
             FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
@@ -654,9 +682,7 @@ class _WorkshopOfferDialog extends StatelessWidget {
                 maxLines: 1,
               ),
             ),
-
             const SizedBox(height: 6),
-
             Center(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -679,9 +705,7 @@ class _WorkshopOfferDialog extends StatelessWidget {
                 ),
               ),
             ),
-
             const SizedBox(height: 16),
-
             Text(
               'Etüt Odası\'nda bu konuyu güçlendir',
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -690,8 +714,6 @@ class _WorkshopOfferDialog extends StatelessWidget {
               textAlign: TextAlign.start,
             ),
             const SizedBox(height: 12),
-
-            // Özellikler - Minimalist (Daha az boşluk)
             _MinimalFeatureItem(
               icon: Icons.auto_awesome,
               text: 'Kişiselleştirilmiş konu anlatımı',
@@ -709,15 +731,11 @@ class _WorkshopOfferDialog extends StatelessWidget {
               text: 'Hızlı ve etkili ilerleme',
               color: theme.colorScheme.secondary,
             ),
-
             const SizedBox(height: 20),
-
-            // Butonlar - Tek Satır Garantili
             Row(
               children: [
-                // Şimdi Değil Butonu
                 Expanded(
-                  flex: 3, // Oranı biraz daha dengeli yaptık
+                  flex: 3,
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(false),
                     style: TextButton.styleFrom(
@@ -725,9 +743,8 @@ class _WorkshopOfferDialog extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Boşluğu azaltır
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    // FittedBox ile yazı asla kesilmez, gerekirse küçülür
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
@@ -741,8 +758,6 @@ class _WorkshopOfferDialog extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-
-                // Devam Et Butonu
                 Expanded(
                   flex: 4,
                   child: ElevatedButton(
@@ -815,7 +830,7 @@ class _MinimalFeatureItem extends StatelessWidget {
         Icon(
           icon,
           color: color,
-          size: 18, // İkon küçüldü
+          size: 18,
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -823,7 +838,7 @@ class _MinimalFeatureItem extends StatelessWidget {
             text,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontSize: 12, // Font küçüldü
+              fontSize: 12,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
