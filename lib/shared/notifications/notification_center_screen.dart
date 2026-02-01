@@ -46,9 +46,19 @@ class NotificationCenterScreen extends ConsumerWidget {
               onPressed: user == null
                   ? null
                   : () async {
-                await ref
-                    .read(firestoreServiceProvider)
-                    .markAllInAppNotificationsRead(user.uid);
+                try {
+                  // İki işlemi paralel çalıştır (daha hızlı)
+                  await Future.wait([
+                    ref.read(firestoreServiceProvider).markAllInAppNotificationsRead(user.uid),
+                    ref.read(globalCampaignServiceProvider).markAllGlobalCampaignsAsRead(),
+                  ]);
+
+                  // İkisi de bitince hem listeyi hem de rozet sayısını yenile
+                  ref.invalidate(inAppNotificationsProvider);
+                  ref.invalidate(unreadInAppCountProvider); // Rozet sayısını güncelle
+                } catch (e) {
+                  debugPrint('Tümünü okundu işaretleme hatası: $e');
+                }
               },
               icon: const Icon(Icons.done_all_rounded),
             ),
@@ -97,6 +107,10 @@ class NotificationCenterScreen extends ConsumerWidget {
                         // Tek bir kampanya hatasında devam et
                       }
                     }
+
+                    // Listeyi ve sayacı yenile (Anlık temizlik için şart)
+                    ref.invalidate(inAppNotificationsProvider);
+                    ref.invalidate(unreadInAppCountProvider);
 
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -174,6 +188,12 @@ class NotificationCenterScreen extends ConsumerWidget {
                               .read(firestoreServiceProvider)
                               .deleteInAppNotification(u.uid, n.id);
                         }
+
+                        // Silme işleminden sonra listeyi tazelemeye zorla
+                        // Bu sayede "Global Kampanyalar" da anında listeden kalkar.
+                        ref.invalidate(inAppNotificationsProvider);
+                        ref.invalidate(unreadInAppCountProvider);
+
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -287,6 +307,11 @@ class _NotificationTile extends ConsumerWidget {
                   .read(firestoreServiceProvider)
                   .markInAppNotificationRead(user.uid, item.id);
             }
+
+            // >>> ÇÖZÜM BURADA <<<
+            // Veritabanı işlemi bitti, hem listeyi hem de rozet sayısını yenile (mavi nokta ve rozet anında gider)
+            ref.invalidate(inAppNotificationsProvider);
+            ref.invalidate(unreadInAppCountProvider); // Ana ekrandaki rozet sayısını güncelle
             // DÜZELTME BİTİŞİ
           } catch (e) {
             // Hata olsa bile detay sayfasını aç
