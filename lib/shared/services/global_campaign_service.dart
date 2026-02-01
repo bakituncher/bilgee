@@ -148,6 +148,35 @@ class GlobalCampaignService {
     }
   }
 
+  /// Tüm aktif global kampanyaları okundu olarak işaretle
+  ///
+  /// "Tümünü okundu işaretle" butonunda kullanılır.
+  /// Tüm kampanyaların ID'lerini tek seferde 'readCampaignIds' listesine ekler.
+  Future<void> markAllGlobalCampaignsAsRead() async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return;
+
+    try {
+      // Aktif global kampanyaları getir
+      final campaigns = await fetchGlobalCampaigns();
+
+      // Okunmamış olanların ID'lerini topla
+      final unreadCampaignIds = campaigns
+          .where((c) => !c.read)
+          .map((c) => c.id)
+          .toList();
+
+      if (unreadCampaignIds.isEmpty) return;
+
+      // Tüm ID'leri tek seferde ekle
+      await _firestore.collection('users').doc(userId).set({
+        'readCampaignIds': FieldValue.arrayUnion(unreadCampaignIds)
+      }, SetOptions(merge: true));
+    } catch (e) {
+      print('❌ Tüm global kampanyalar okundu işaretlenirken hata: $e');
+    }
+  }
+
   /// Okunmamış (ve kapatılmamış) global kampanyaların sayısını getir (badge için)
   Future<int> getUnreadGlobalCampaignsCount() async {
     final campaigns = await fetchGlobalCampaigns();

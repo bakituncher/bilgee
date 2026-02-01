@@ -46,9 +46,18 @@ class NotificationCenterScreen extends ConsumerWidget {
               onPressed: user == null
                   ? null
                   : () async {
-                await ref
-                    .read(firestoreServiceProvider)
-                    .markAllInAppNotificationsRead(user.uid);
+                try {
+                  // İki işlemi paralel çalıştır (daha hızlı)
+                  await Future.wait([
+                    ref.read(firestoreServiceProvider).markAllInAppNotificationsRead(user.uid),
+                    ref.read(globalCampaignServiceProvider).markAllGlobalCampaignsAsRead(),
+                  ]);
+
+                  // İkisi de bitince listeyi yenile
+                  ref.invalidate(inAppNotificationsProvider);
+                } catch (e) {
+                  debugPrint('Tümünü okundu işaretleme hatası: $e');
+                }
               },
               icon: const Icon(Icons.done_all_rounded),
             ),
