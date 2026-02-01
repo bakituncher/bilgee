@@ -411,9 +411,14 @@ class _ProfileView extends ConsumerWidget {
     final progressToNext = rankInfo.progress;
     final rankIndex = RankService.ranks.indexOf(currentRank);
 
-    // HESAPLAMA: Filtrelenmiş liste üzerinden hesapla
-    final testCount = mainTests.length;
-    final avgNet = testCount > 0 ? mainTests.fold(0.0, (sum, t) => sum + t.totalNet) / testCount : 0.0;
+    // HESAPLAMA: Test count'u doğrudan user modelinden al
+    // mainTests.length kullanırsak pagination nedeniyle yanlış (eksik) sayı gösterebilir.
+    final testCount = user.testCount;
+
+    // Ortalama neti hesaplarken mevcut yüklenenleri kullanabiliriz (veya backend'den çekilen totalNetSum / testCount)
+    // Eğer tüm testler yüklenmediyse ortalama yine de yaklaşık doğru olacaktır.
+    // Ancak en doğrusu:
+    final avgNet = user.testCount > 0 ? (user.totalNetSum / user.testCount) : 0.0;
 
     // MERKEZİ SİSTEM: Streak Firebase'den alınır, hesaplanmaz
     final streak = StatsCalculator.getStreak(user);

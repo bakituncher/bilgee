@@ -1543,27 +1543,28 @@ class FirestoreService {
     }
   }
 
-  /// Gerçek deneme sayısı (tests koleksiyonundan). Stats/cache drift ederse bile doğruyu verir.
-  /// Not: Aggregate count yerine snapshot boyutu kullanılır; tek kullanıcı için kabul edilebilir maliyet.
   Stream<int> streamTestCount(String userId) {
     return _testsCollection
         .where('userId', isEqualTo: userId)
+        .where('isBranchTest', isEqualTo: false) // FİLTRE EKLENDİ
         .snapshots()
         .map((qs) => qs.size);
   }
 
   /// Gerçek toplam net (tests koleksiyonundan). Stats/cache drift ederse bile doğruyu verir.
+  /// GÜNCELLEME: Sadece 'isBranchTest' alanı false olanları toplar.
   Stream<double> streamTotalNetSum(String userId) {
     return _testsCollection
         .where('userId', isEqualTo: userId)
+        .where('isBranchTest', isEqualTo: false) // FİLTRE EKLENDİ
         .snapshots()
         .map((qs) {
-          double sum = 0.0;
-          for (final d in qs.docs) {
-            final data = d.data();
-            sum += (data['totalNet'] as num?)?.toDouble() ?? 0.0;
-          }
-          return sum;
-        });
+      double sum = 0.0;
+      for (final d in qs.docs) {
+        final data = d.data();
+        sum += (data['totalNet'] as num?)?.toDouble() ?? 0.0;
+      }
+      return sum;
+    });
   }
 }
