@@ -298,10 +298,10 @@ class StatsAnalysis {
   void _addTrendAdvice(List<TacticalAdvice> adviceList) {
     if (sortedTests.length < 3) return;
 
-    // Son 5 testin trendini hesapla
+    // Son 8 testin trendini hesapla (grafikle tutarlı)
     // Not: Trend analizi için sortedTests kullanıyoruz, böylece kullanıcı genel gidişatını (branşlar dahil) görebilir.
     // İstenirse burası da statsSourceTests ile değiştirilebilir ama genelde "son çözülenler" bağlamında hepsi istenir.
-    final recentTests = sortedTests.length > 5 ? sortedTests.sublist(sortedTests.length - 5) : sortedTests;
+    final recentTests = sortedTests.length > 8 ? sortedTests.sublist(sortedTests.length - 8) : sortedTests;
     final recentNets = recentTests.map((t) => t.totalNet).toList();
     final recentTrend = _calculateTrend(recentNets);
 

@@ -40,8 +40,8 @@ final userProfileProvider = StreamProvider.autoDispose<UserModel?>((ref) {
 final testsProvider = FutureProvider<List<TestModel>>((ref) async {
   final user = ref.watch(authControllerProvider).value;
   if (user != null) {
-    // İlk sayfayı 20 kayıtla getirir
-    return ref.watch(firestoreServiceProvider).getTestResultsPaginated(user.uid, limit: 20);
+    // Son 100 denemeyi getir (grafik ve analizler için yeterli)
+    return ref.watch(firestoreServiceProvider).getTestResultsPaginated(user.uid, limit: 100);
   }
   return <TestModel>[];
 });
