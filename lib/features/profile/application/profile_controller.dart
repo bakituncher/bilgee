@@ -26,6 +26,17 @@ class ProfileController extends StateNotifier<AsyncValue<void>> {
       }
       final firestoreService = _ref.read(firestoreServiceProvider);
 
+      // Kullanıcı adı değiştirilmişse müsaitlik kontrolü yap
+      if (username != null && username.isNotEmpty) {
+        final isAvailable = await firestoreService.checkUsernameAvailability(
+          username,
+          excludeUserId: userId,
+        );
+        if (!isAvailable) {
+          throw Exception("Bu kullanıcı adı zaten alınmış.");
+        }
+      }
+
       final Map<String, dynamic> dataToUpdate = {
         'firstName': firstName,
         'lastName': lastName,
