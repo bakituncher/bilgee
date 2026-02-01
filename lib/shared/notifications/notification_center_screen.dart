@@ -296,6 +296,10 @@ class _NotificationTile extends ConsumerWidget {
                   .read(firestoreServiceProvider)
                   .markInAppNotificationRead(user.uid, item.id);
             }
+
+            // >>> ÇÖZÜM BURADA <<<
+            // Veritabanı işlemi bitti, listeyi yenile ki UI güncellensin (mavi nokta gitsin)
+            ref.invalidate(inAppNotificationsProvider);
             // DÜZELTME BİTİŞİ
           } catch (e) {
             // Hata olsa bile detay sayfasını aç
