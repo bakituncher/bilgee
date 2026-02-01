@@ -53,8 +53,9 @@ class NotificationCenterScreen extends ConsumerWidget {
                     ref.read(globalCampaignServiceProvider).markAllGlobalCampaignsAsRead(),
                   ]);
 
-                  // İkisi de bitince listeyi yenile
+                  // İkisi de bitince hem listeyi hem de rozet sayısını yenile
                   ref.invalidate(inAppNotificationsProvider);
+                  ref.invalidate(unreadInAppCountProvider); // Rozet sayısını güncelle
                 } catch (e) {
                   debugPrint('Tümünü okundu işaretleme hatası: $e');
                 }
@@ -298,8 +299,9 @@ class _NotificationTile extends ConsumerWidget {
             }
 
             // >>> ÇÖZÜM BURADA <<<
-            // Veritabanı işlemi bitti, listeyi yenile ki UI güncellensin (mavi nokta gitsin)
+            // Veritabanı işlemi bitti, hem listeyi hem de rozet sayısını yenile (mavi nokta ve rozet anında gider)
             ref.invalidate(inAppNotificationsProvider);
+            ref.invalidate(unreadInAppCountProvider); // Ana ekrandaki rozet sayısını güncelle
             // DÜZELTME BİTİŞİ
           } catch (e) {
             // Hata olsa bile detay sayfasını aç
