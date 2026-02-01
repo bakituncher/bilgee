@@ -73,7 +73,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
         ),
         TutorialStep(
           highlightKey: _coachKey,
-          title: "Psikolojik Üstünlük",
+          title: "Motivasyonel Üstünlük",
           text: "Sınav sadece bilgi değildir. Motivasyonun düştüğünde veya stres olduğunda Taktik Tavşan seni mental olarak ayağa kaldırmak için burada.",
           buttonText: "Keşfetmeye Başla",
         ),
@@ -306,7 +306,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                   'iconName': 'psychology',
                   'color': Colors.indigoAccent,
                   'marketingTitle': 'Koçun Cebinde!',
-                  'marketingSubtitle': 'Sınav sadece bilgi değil, psikolojidir. Taktik Tavşan seni mental olarak sınava hazırlar.',
+                  'marketingSubtitle': 'Sınav sadece bilgi değil, mentalitedir. Taktik Tavşan seni mental olarak sınava hazırlar.',
                   'redirectRoute': '/ai-hub/motivation-chat',
                   'imageAsset': 'assets/images/bunnyy.png',
                 }),
@@ -1019,7 +1019,7 @@ class _MinimalDisclaimer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Yapay zeka önerileri rehberlik amaçlıdır.',
+        'Yapay zeka öngörüleri referans amaçlıdır.',
         style: TextStyle(
           fontSize: 11,
           color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
