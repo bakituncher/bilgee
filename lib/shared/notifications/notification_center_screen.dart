@@ -108,6 +108,10 @@ class NotificationCenterScreen extends ConsumerWidget {
                       }
                     }
 
+                    // Listeyi ve sayacı yenile (Anlık temizlik için şart)
+                    ref.invalidate(inAppNotificationsProvider);
+                    ref.invalidate(unreadInAppCountProvider);
+
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -184,6 +188,12 @@ class NotificationCenterScreen extends ConsumerWidget {
                               .read(firestoreServiceProvider)
                               .deleteInAppNotification(u.uid, n.id);
                         }
+
+                        // Silme işleminden sonra listeyi tazelemeye zorla
+                        // Bu sayede "Global Kampanyalar" da anında listeden kalkar.
+                        ref.invalidate(inAppNotificationsProvider);
+                        ref.invalidate(unreadInAppCountProvider);
+
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
