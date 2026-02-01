@@ -11,6 +11,22 @@ class ProfileController extends StateNotifier<AsyncValue<void>> {
 
   ProfileController(this._ref) : super(const AsyncValue.data(null));
 
+  /// Kullanıcı adının müsait olup olmadığını kontrol et
+  Future<bool> checkUsernameAvailability(String username) async {
+    try {
+      final userId = _ref.read(authControllerProvider).value?.uid;
+      if (userId == null) return false;
+
+      final firestoreService = _ref.read(firestoreServiceProvider);
+      return await firestoreService.checkUsernameAvailability(
+        username,
+        excludeUserId: userId,
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<void> updateUserProfile({
     required String firstName,
     required String lastName,
@@ -26,16 +42,6 @@ class ProfileController extends StateNotifier<AsyncValue<void>> {
       }
       final firestoreService = _ref.read(firestoreServiceProvider);
 
-      // Kullanıcı adı değiştirilmişse müsaitlik kontrolü yap
-      if (username != null && username.isNotEmpty) {
-        final isAvailable = await firestoreService.checkUsernameAvailability(
-          username,
-          excludeUserId: userId,
-        );
-        if (!isAvailable) {
-          throw Exception("Bu kullanıcı adı zaten alınmış.");
-        }
-      }
 
       final Map<String, dynamic> dataToUpdate = {
         'firstName': firstName,

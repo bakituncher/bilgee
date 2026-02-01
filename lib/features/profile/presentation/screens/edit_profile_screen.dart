@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
-import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/features/profile/application/profile_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:taktik/shared/widgets/custom_date_picker.dart';
@@ -63,53 +62,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
   }
 
-  /// Kullanıcı adının müsaitliğini kontrol et
-  Future<void> _checkUsernameAvailability() async {
-    final username = _usernameController.text.trim();
-
-    // Kullanıcı adı değişmediyse kontrol etme
-    if (username == _originalUsername) {
-      setState(() {
-        _usernameError = null;
-      });
-      return;
-    }
-
-    if (username.isEmpty || username.length < 3) {
-      return;
-    }
-
-    setState(() {
-      _isCheckingUsername = true;
-      _usernameError = null;
-    });
-
-    try {
-      final firestoreService = ref.read(firestoreServiceProvider);
-      final userId = ref.read(authControllerProvider).value?.uid;
-
-      if (userId != null) {
-        final isAvailable = await firestoreService.checkUsernameAvailability(
-          username,
-          excludeUserId: userId,
-        );
-
-        if (mounted) {
-          setState(() {
-            _usernameError = isAvailable ? null : 'Bu kullanıcı adı zaten alınmış.';
-            _isCheckingUsername = false;
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _usernameError = 'Kullanıcı adı kontrol edilemedi.';
-          _isCheckingUsername = false;
-        });
-      }
-    }
-  }
 
   @override
   void dispose() {
@@ -157,31 +109,42 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   void _submit() async {
-    // Kullanıcı adı hatası varsa kaydetme
-    if (_usernameError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen kullanıcı adı sorununu düzeltin.')),
-      );
+    // Form validasyonunu kontrol et
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // Kullanıcı adı kontrolü devam ediyorsa bekle
-    if (_isCheckingUsername) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kullanıcı adı kontrol ediliyor, lütfen bekleyin.')),
-      );
-      return;
+    // Kullanıcı adı değişmişse kontrol et
+    final newUsername = _usernameController.text.trim();
+    if (newUsername != _originalUsername) {
+      setState(() {
+        _isCheckingUsername = true;
+        _usernameError = null;
+      });
+
+      final isAvailable = await ref.read(profileControllerProvider.notifier).checkUsernameAvailability(newUsername);
+
+      setState(() {
+        _isCheckingUsername = false;
+      });
+
+      if (!isAvailable) {
+        setState(() {
+          _usernameError = 'Bu kullanıcı adı zaten alınmış.';
+        });
+        _formKey.currentState!.validate();
+        return;
+      }
     }
 
-    if (_formKey.currentState!.validate()) {
-      await ref.read(profileControllerProvider.notifier).updateUserProfile(
-        firstName: _firstNameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
-        gender: _selectedGender,
-        dateOfBirth: _selectedDate,
-        username: _usernameController.text.trim(),
-      );
-    }
+    // Her şey yolundaysa güncelle
+    await ref.read(profileControllerProvider.notifier).updateUserProfile(
+      firstName: _firstNameController.text.trim(),
+      lastName: _lastNameController.text.trim(),
+      gender: _selectedGender,
+      dateOfBirth: _selectedDate,
+      username: newUsername,
+    );
   }
 
   @override
@@ -249,18 +212,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               ),
                             )
-                          : (_usernameError == null && _usernameController.text.trim() != _originalUsername && _usernameController.text.trim().length >= 3
-                              ? const Icon(Icons.check_circle, color: Colors.green)
-                              : null),
+                          : null,
                       errorText: _usernameError,
                     ),
                     onChanged: (value) {
-                      // Debounce: Kullanıcı yazmayı bıraktıktan 500ms sonra kontrol et
-                      Future.delayed(const Duration(milliseconds: 500), () {
-                        if (_usernameController.text.trim() == value.trim()) {
-                          _checkUsernameAvailability();
-                        }
-                      });
+                      // Kullanıcı yazarken hatayı temizle
+                      if (_usernameError != null) {
+                        setState(() {
+                          _usernameError = null;
+                        });
+                      }
                     },
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -358,8 +319,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton(
-                    // ÇÖZÜM: Sadece form dirty, loading değil, username error yok ve checking değilse aktif
-                    onPressed: (isLoading || !_formIsDirty || _usernameError != null || _isCheckingUsername) ? null : _submit,
+                    // ÇÖZÜM: Sadece form dirty ve loading değilse aktif
+                    onPressed: (isLoading || !_formIsDirty) ? null : _submit,
                     child: isLoading
                         ? const SizedBox(
                             width: 24,
