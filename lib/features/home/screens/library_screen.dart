@@ -27,7 +27,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   final List<TestModel> _tests = [];
   bool _isLoading = false;
   bool _hasMore = true;
-  static const int _pageSize = 50;
+  static const int _pageSize = 100;
   DocumentSnapshot? _lastVisible;
 
   String _searchQuery = '';
