@@ -53,11 +53,11 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 void main() async {
-  // 1. Flutter Motorunu Başlat
-  WidgetsFlutterBinding.ensureInitialized();
-
   // Tüm uygulamayı Hata Yakalama Bölgesi (Zone) içinde çalıştır
   await runZonedGuarded(() async {
+    // 1. Flutter Motorunu Başlat
+    WidgetsFlutterBinding.ensureInitialized();
+
     // 2. Çevresel Değişkenleri (.env) Yükle
     try {
       await dotenv.load(fileName: ".env").timeout(
