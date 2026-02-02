@@ -12,6 +12,7 @@ import 'package:taktik/data/providers/temporary_access_provider.dart';
 import 'package:taktik/features/stats/widgets/fortress_tab_selector.dart';
 import 'package:taktik/features/stats/widgets/cached_analysis_view.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
+import 'package:taktik/shared/widgets/pro_badge.dart';
 
 final selectedTabIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -442,27 +443,16 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               ],
             ),
             actions: [
-              if (!isPremium)
+              if (isPremium)
                 Container(
                   margin: const EdgeInsets.only(right: 8),
                   child: GestureDetector(
                     onTap: () => context.push('/premium'),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.amber.withOpacity(0.5), width: 1),
-                      ),
-                      child: const Text(
-                        'PRO',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.amber,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
+                    child: const ProBadge(
+                      fontSize: 10,
+                      horizontalPadding: 8,
+                      verticalPadding: 4,
+                      borderRadius: 8,
                     ),
                   ),
                 ),

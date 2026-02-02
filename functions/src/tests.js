@@ -2,7 +2,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions");
 const { db, admin } = require("./init");
 const { nowIstanbul, computeTestAggregates, enforceRateLimit, enforceDailyQuota, getClientIpFromRawRequest, isBranchTest } = require("./utils");
-const { updatePublicProfile } = require("./profile");
+const { updatePublicProfile } = require("./profile"); // Profil güncelleme fonksiyonunu çağırıyoruz
 
 exports.addEngagementPoints = onCall({ region: "us-central1", enforceAppCheck: true, maxInstances: 20 }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Oturum gerekli");
@@ -26,7 +26,6 @@ exports.addEngagementPoints = onCall({ region: "us-central1", enforceAppCheck: t
   const statsRef = userRef.collection("state").doc("stats");
 
   // Transaction içinde sadece kullanıcının puanını artırıyoruz.
-  // Liderlik tablosu güncellemesini leaderboard.js'deki onUserStatsWritten trigger yapacak.
   await db.runTransaction(async (tx) => {
     const [uSnap] = await Promise.all([tx.get(userRef)]);
     if (!uSnap.exists) throw new HttpsError("failed-precondition", "Kullanıcı bulunamadı");
@@ -37,8 +36,7 @@ exports.addEngagementPoints = onCall({ region: "us-central1", enforceAppCheck: t
     }, { merge: true });
   });
 
-  // Manuel leaderboard güncellemeleri kaldırıldı - trigger tarafından yapılacak
-
+  // Profil verilerini güncelle
   await updatePublicProfile(uid).catch(() => { });
   return { ok: true, added: delta };
 });
@@ -58,7 +56,6 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
     enforceDailyQuota(`tests_submit_${uid}`, 200),
   ]);
 
-  // Sade log: sadece gerekli alanlar
   try {
     const logSafe = {
       uid,
@@ -102,7 +99,7 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
       const examType = ((userDocData && userDocData.selectedExam) || examTypeParam || "").toString();
 
       const stats = sSnap.exists ? (sSnap.data() || {}) : {};
-      const lastTs = stats.lastStreakUpdate; // beklenen Timestamp
+      const lastTs = stats.lastStreakUpdate;
       const currentStreak = typeof stats.streak === "number" ? stats.streak : 0;
 
       const now = nowIstanbul();
@@ -144,8 +141,10 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      // İstatistikleri güncelle (onUserStatsWritten trigger'ı buradan tetiklenecek)
-      // testCount ve totalNetSum sadece ana sınav denemeleri için artırılır (branş denemeleri hariç)
+      // İstatistikleri güncelle (Streak ve Puan)
+      // DİKKAT: testCount ve totalNetSum burada GÜNCELLENMİYOR.
+      // Bu değerler transaction sonrası çağrılacak updatePublicProfile ile
+      // sıfırdan hesaplanıp (recalculation) yazılacak. Bu sayede tutarsızlık önlenir.
       const statsUpdate = {
         streak: newStreak,
         lastStreakUpdate: admin.firestore.Timestamp.fromDate(today),
@@ -153,11 +152,8 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       };
 
-      // Sadece ana sınav denemelerinde testCount ve totalNetSum'ı artır
-      if (!isTestBranch) {
-        statsUpdate.testCount = admin.firestore.FieldValue.increment(1);
-        statsUpdate.totalNetSum = admin.firestore.FieldValue.increment(totalNet);
-      }
+      // ESKİ HATALI KOD BURADAYDI VE SİLİNDİ:
+      // if (!isTestBranch) { statsUpdate.testCount = ... } -> ARTIK YOK
 
       tx.set(statsRef, statsUpdate, { merge: true });
 
@@ -178,9 +174,16 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
       }
     });
 
-    // Manuel leaderboard güncellemeleri kaldırıldı - onUserStatsWritten trigger'ı yapacak
+    // KRİTİK DÜZELTME:
+    // Transaction bittikten sonra, testCount ve totalNetSum değerlerinin
+    // *kesinlikle* doğru olması için updatePublicProfile fonksiyonunu çağırıyoruz.
+    // Bu fonksiyon tüm testleri tarayıp (isBranchTest=false olanları) sayar ve stats'a yazar.
+    try {
+      await updatePublicProfile(uid);
+    } catch (e) {
+      logger.error("[addTestResult] updatePublicProfile failed", e);
+    }
 
-    await updatePublicProfile(uid).catch(() => { });
     return { ok: true, testId: newTestId, awarded: pointsAward };
   } catch (error) {
     logger.error("[addTestResult] error", {

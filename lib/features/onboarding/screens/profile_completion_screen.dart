@@ -19,6 +19,7 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _dateController = TextEditingController();
+
   String? _gender;
   DateTime? _dateOfBirth;
   bool _isLoading = false;
@@ -28,6 +29,7 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
   @override
   void initState() {
     super.initState();
+    // Ekran açıldığında mevcut verileri yükle
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUserData();
     });
@@ -38,6 +40,7 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
     if (user != null) {
       final userProfile = ref.read(userProfileProvider).value;
       if (userProfile != null) {
+        // Eğer kullanıcı adı varsa (otomatik oluşturulan) kutuya doldur
         if (userProfile.username.isNotEmpty && _usernameController.text.isEmpty) {
           _usernameController.text = userProfile.username;
         }
@@ -65,9 +68,11 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
 
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
-    // Reset previous error
+
+    // Önceki hataları temizle
     setState(() => _usernameError = null);
 
+    // 1. Sözleşme Kontrolü
     if (!_acceptPolicy) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Lütfen kullanım şartlarını ve gizlilik politikasını kabul edin.')),
@@ -76,7 +81,7 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
     }
 
     if (_formKey.currentState!.validate()) {
-      // iOS kullanıcıları için doğum tarihi zorunlu değil
+      // 2. Yaş Kontrolü (iOS hariç)
       final isIOS = Platform.isIOS;
       if (!isIOS || _dateOfBirth != null) {
         final now = DateTime.now();
@@ -93,30 +98,38 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
 
       final firestoreService = ref.read(firestoreServiceProvider);
       final userId = ref.read(authControllerProvider).value!.uid;
+      final newUsername = _usernameController.text.trim();
 
+      // 3. Kullanıcı Adı Müsaitlik Kontrolü
+      // excludeUserId parametresi sayesinde, kullanıcı kendi ismini değiştirmeden
+      // kaydetmeye çalışırsa hata almaz.
       final isAvailable = await firestoreService.checkUsernameAvailability(
-        _usernameController.text.trim(),
+        newUsername,
         excludeUserId: userId,
       );
+
       if (!isAvailable) {
         if (mounted) {
           setState(() {
             _usernameError = 'Bu kullanıcı adı zaten alınmış.';
             _isLoading = false;
           });
+          // Formu tekrar validate ederek hatayı input altında göster
           _formKey.currentState!.validate();
         }
         return;
       }
 
+      // 4. Profil Güncelleme İşlemi
       try {
         await firestoreService.updateUserProfileDetails(
           userId: userId,
-          username: _usernameController.text.trim(),
+          username: newUsername,
           gender: _gender!,
           dateOfBirth: _dateOfBirth,
         );
-        // On success, the router will automatically redirect
+        // Başarılı olduğunda yönlendirme (Router) otomatik devreye girecektir.
+        // Ancak yine de loading'i kapatmıyoruz ki geçiş sırasında buton tekrar tıklanmasın.
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -125,19 +138,21 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
           setState(() => _isLoading = false);
         }
       }
-      // No need for a finally block to set isLoading to false if navigation happens on success
     }
   }
 
   Future<void> _selectDate(BuildContext context) async {
     final now = DateTime.now();
+    // Kullanıcı en az 13 yaşında olmalı kuralı için üst sınır
     final thirteenYearsAgo = DateTime(now.year - 13, now.month, now.day);
+
     final pickedDate = await CustomDatePicker.show(
       context: context,
       initialDate: _dateOfBirth,
       firstDate: DateTime(1950),
       lastDate: thirteenYearsAgo,
     );
+
     if (pickedDate != null && pickedDate != _dateOfBirth) {
       setState(() {
         _dateOfBirth = pickedDate;
@@ -149,6 +164,7 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -179,7 +195,9 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
                     Text(
                       'Hesabını kişiselleştirmek ve sana özel bir deneyim sunabilmemiz için bu bilgilere ihtiyacımız var.',
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.7)),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
                     ),
                     const SizedBox(height: 24),
                     Card(
@@ -192,27 +210,33 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                              // KULLANICI ADI GİRİŞİ
                               TextFormField(
                                 controller: _usernameController,
                                 decoration: InputDecoration(
                                   labelText: 'Kullanıcı Adı',
                                   prefixIcon: const Icon(Icons.alternate_email_rounded),
                                   errorText: _usernameError,
+                                  helperText: 'Benzersiz bir isim seçin',
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) return 'Lütfen bir kullanıcı adı girin.';
                                   if (value.length < 3) return 'Kullanıcı adı en az 3 karakter olmalı.';
-                                  if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value)) {
+                                  // Sadece harf, rakam ve alt çizgiye izin ver
+                                  if (!RegExp(r'^[a-z0-9_]+$', caseSensitive: false).hasMatch(value)) {
                                     return 'Sadece harf, rakam ve alt çizgi kullanın.';
                                   }
                                   if (_usernameError != null) return _usernameError;
                                   return null;
                                 },
                                 onChanged: (_) {
+                                  // Kullanıcı yazmaya başladığında hata mesajını temizle
                                   if (_usernameError != null) setState(() => _usernameError = null);
                                 },
                               ),
                               const SizedBox(height: 16),
+
+                              // CİNSİYET SEÇİMİ
                               DropdownButtonFormField<String>(
                                 initialValue: _gender,
                                 decoration: const InputDecoration(
@@ -226,6 +250,8 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
                                 validator: (value) => value == null ? 'Lütfen cinsiyetinizi seçin.' : null,
                               ),
                               const SizedBox(height: 16),
+
+                              // DOĞUM TARİHİ SEÇİMİ
                               TextFormField(
                                 controller: _dateController,
                                 readOnly: true,
@@ -235,7 +261,7 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
                                 ),
                                 onTap: () => _selectDate(context),
                                 validator: (value) {
-                                  // iOS kullanıcıları için doğum tarihi zorunlu değil
+                                  // iOS kullanıcıları için opsiyonel
                                   if (Platform.isIOS) {
                                     return null;
                                   }
@@ -243,6 +269,8 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
                                 },
                               ),
                               const SizedBox(height: 16),
+
+                              // SÖZLEŞME ONAYI
                               Row(
                                 children: [
                                   Checkbox(
@@ -305,12 +333,21 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
                                 ],
                               ),
                               const SizedBox(height: 24),
+
+                              // KAYDET BUTONU
                               SizedBox(
                                 height: 48,
                                 child: ElevatedButton(
                                   onPressed: _isLoading ? null : _submit,
                                   child: _isLoading
-                                      ? SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: theme.colorScheme.onPrimary, strokeWidth: 2.5))
+                                      ? SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(
+                                        color: theme.colorScheme.onPrimary,
+                                        strokeWidth: 2.5
+                                    ),
+                                  )
                                       : const Text('Profili Tamamla'),
                                 ),
                               ),

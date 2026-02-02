@@ -37,15 +37,16 @@ async function updatePublicProfile(uid, options = {}) {
           ? data.isBranchTest
           : isBranchTest(data.scores, data.sectionName, data.examType);
 
+        // SADECE GENEL DENEMELERİ SAY (Branş denemelerini atla)
         if (branch) continue;
+
         realTestCount += 1;
         const net = typeof data.totalNet === "number" ? data.totalNet : 0;
         realTotalNetSum += net;
       }
 
-      // Eğer hiç test yoksa (gerçekten boş) 0 doğru; ama query başarısız olursa fallback'e düşelim.
     } catch (e) {
-      // En kötü senaryo: sayımı yapamazsak stats bazlı değeri yaz (0'a düşürme)
+      // Hata durumunda eski stats değerlerini koru ama logla
       logger.warn("updatePublicProfile: tests aggregate failed, falling back to stats", { uid, error: String(e) });
       realTestCount = typeof s.testCount === "number" ? s.testCount : 0;
       realTotalNetSum = typeof s.totalNetSum === "number" ? s.totalNetSum : 0;
@@ -62,19 +63,29 @@ async function updatePublicProfile(uid, options = {}) {
       streak: typeof s.streak === "number" ? s.streak : 0,
       testCount: realTestCount,
       totalNetSum: realTotalNetSum,
-      // GÜVENLİK GÜNCELLEMESİ: Takipçi sayıları da senkronize edilir
       followerCount: typeof u.followerCount === "number" ? u.followerCount : 0,
       followingCount: typeof u.followingCount === "number" ? u.followingCount : 0,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
+
+    // 1. Public profili güncelle
     await db.collection("public_profiles").doc(uid).set(publicDoc, { merge: true });
+
+    // 2. DÜZELTME: Hesaplanan doğru (filtreli) değerleri kullanıcının ÖZEL STATS dosyasına da eşitle.
+    // Bu işlem, uygulamadaki 'Profile Screen' ve 'Dashboard'daki yanlış veriyi düzeltir.
+    await userRef.collection("state").doc("stats").set({
+      testCount: realTestCount,
+      totalNetSum: realTotalNetSum,
+      // Diğer alanlara (streak, score vb.) dokunmuyoruz, onlar merge ile korunur.
+    }, { merge: true });
+
   } catch (e) {
     logger.warn("updatePublicProfile failed", { uid, error: String(e) });
   }
 }
 
-// GÜVENLİK GÜNCELLEMESİ: Takipçi sayıları artık /users koleksiyonu üzerinde atomik olarak güncellenir.
-// RACE CONDITION GÜVENLİĞİ: Kullanıcı silinmişse zombi belge oluşturulmaz.
+// ... (Geri kalan kodlar aynı) ...
+
 async function adjustUserFollowCounts(uid, { followersDelta = 0, followingDelta = 0 }) {
   if (!uid) return;
 
@@ -90,18 +101,12 @@ async function adjustUserFollowCounts(uid, { followersDelta = 0, followingDelta 
 
   if (Object.keys(dataToUpdate).length > 0) {
     dataToUpdate.updatedAt = admin.firestore.FieldValue.serverTimestamp();
-
-    // KRİTİK: set({ merge: true }) yerine update() kullanıyoruz
-    // update() metodu, belge yoksa hata fırlatır (zombi belge oluşturmaz)
-    // set({ merge: true }) ise belge yoksa YENİ BELGE OLUŞTURUR (race condition!)
     try {
       await ref.update(dataToUpdate);
     } catch (error) {
-      // Belge bulunamadı hatası (kullanıcı silinmiş) - sessizce logla
       if (error.code === 'not-found') {
         logger.info(`User ${uid} not found during follow count adjustment (likely deleted). Skipping.`);
       } else {
-        // Diğer hatalar için yeniden fırlat
         throw error;
       }
     }
@@ -114,9 +119,7 @@ exports.onFollowerCreated = onDocumentCreated({
 }, async (event) => {
   const { userId, followerId } = event.params;
   try {
-    // Takip edilen kullanıcının takipçi sayısını artır
     await adjustUserFollowCounts(userId, { followersDelta: +1 });
-    // Takip eden kullanıcının takip ettikleri sayısını artır
     await adjustUserFollowCounts(followerId, { followingDelta: +1 });
   } catch (e) {
     logger.warn("onFollowerCreated failed", { userId, followerId, error: String(e) });
@@ -129,38 +132,27 @@ exports.onFollowerDeleted = onDocumentDeleted({
 }, async (event) => {
   const { userId, followerId } = event.params;
   try {
-    // Takip edilen kullanıcının takipçi sayısını azalt
     await adjustUserFollowCounts(userId, { followersDelta: -1 });
-    // Takip eden kullanıcının takip ettikleri sayısını azalt
     await adjustUserFollowCounts(followerId, { followingDelta: -1 });
   } catch (e) {
     logger.warn("onFollowerDeleted failed", { userId, followerId, error: String(e) });
   }
 });
 
-// `following` alt koleksiyonu üzerindeki tetikleyiciler kaldırıldı.
-// `followers` koleksiyonu üzerindeki değişiklikler, her iki kullanıcının da
-// sayaçlarını atomik olarak güncellediği için `following` tetikleyicileri gereksizdir.
-// Bu, hem maliyeti düşürür hem de sistemin karmaşıklığını azaltır.
-
 exports.onUserUpdate = onDocumentUpdated("users/{userId}", async (event) => {
   const before = event.data.before.data();
   const after = event.data.after.data();
   const uid = event.params.userId;
 
-  // GÜVENLİK GÜNCELLEMESİ: Senkronize edilecek alanlara takipçi sayıları eklendi.
   const fieldsToSync = ["name", "username", "avatarStyle", "avatarSeed", "selectedExam", "followerCount", "followingCount"];
   const needsSync = fieldsToSync.some((field) => before[field] !== after[field]);
 
   if (!needsSync) {
-    // logger.log(`No relevant fields changed for user ${uid}. Skipping sync.`);
     return null;
   }
 
   logger.log(`Syncing profile for user ${uid} due to field changes.`);
 
-  // GÜVENLİK GÜNCELLEMESİ: Sadece public_profiles senkronize edilir.
-  // Eski /leaderboards koleksiyonu artık kullanılmıyor (optimize edilmiş snapshot sistemi kullanılıyor).
   const publicProfileRef = db.collection("public_profiles").doc(uid);
   const publicData = {
     name: after.name || "",
@@ -181,10 +173,6 @@ exports.onUserUpdate = onDocumentUpdated("users/{userId}", async (event) => {
   }
 });
 
-// YENİ: Kullanıcı ana dökümanı silindiğinde public_profile'ı da temizle.
-// Bu, deleteUserAccount fonksiyonundaki manuel silme işleminden sonra
-// onUserUpdate tetikleyicisinin yanlışlıkla belgeyi tekrar oluşturması (zombi belge)
-// durumunu düzeltir.
 exports.onUserDeleted = onDocumentDeleted("users/{userId}", async (event) => {
   const uid = event.params.userId;
   try {

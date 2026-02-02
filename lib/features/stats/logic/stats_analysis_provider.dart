@@ -1,4 +1,5 @@
 // lib/features/stats/logic/stats_analysis_provider.dart
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/models/user_model.dart';
@@ -15,6 +16,20 @@ final statsAnalysisControllerProvider = AutoDisposeAsyncNotifierProvider<StatsAn
 );
 
 class StatsAnalysisController extends AutoDisposeAsyncNotifier<Map<String, StatsAnalysis>> {
+  // Cache için hash değerleri
+  String? _lastCacheKey;
+  Map<String, StatsAnalysis>? _cachedResult;
+
+  String _generateCacheKey(List<TestModel> tests, PerformanceSummary performance, String? selectedExam) {
+    // Test ID'leri ve tarihlerinden hash oluştur
+    final testHash = tests.map((t) => '${t.id}_${t.date.millisecondsSinceEpoch}').join('|');
+
+    // Performance verisinden hash oluştur
+    final perfHash = '${performance.topicPerformances.length}_${performance.masteredTopics.length}';
+
+    return '$selectedExam:$testHash:$perfHash';
+  }
+
   @override
   Future<Map<String, StatsAnalysis>> build() async {
     final UserModel? user = ref.watch(userProfileProvider).valueOrNull;
@@ -27,6 +42,12 @@ class StatsAnalysisController extends AutoDisposeAsyncNotifier<Map<String, Stats
     // ÖNEMLI: Artık testler boş olsa bile, performance verisi varsa analiz yapıyoruz
     // Çünkü kullanıcı Coach Screen'de konu bazlı veri giriyor
     if (tests.isEmpty && performance.topicPerformances.isEmpty) return {};
+
+    // CACHE KONTROLÜ: Veri değişmediyse cache'den dön
+    final currentCacheKey = _generateCacheKey(tests, performance, user.selectedExam);
+    if (_lastCacheKey == currentCacheKey && _cachedResult != null) {
+      return _cachedResult!;
+    }
 
     final Exam exam = await ExamData.getExamByType(ExamType.values.byName(user.selectedExam!));
 
@@ -57,6 +78,10 @@ class StatsAnalysisController extends AutoDisposeAsyncNotifier<Map<String, Stats
       );
     }
 
+    // Cache'i güncelle
+    _lastCacheKey = currentCacheKey;
+    _cachedResult = result;
+
     return result;
   }
 }
@@ -71,8 +96,16 @@ final overallStatsAnalysisProvider = Provider<AsyncValue<StatsAnalysis?>>((ref) 
   return mapAsync.whenData((map) => map[kAllSectionsKey]);
 });
 
-// Workshop İstatistik Analizi (Issue 6 Çözümü)
+// Workshop İstatistik Analizi (Issue 6 Çözümü) - CACHE'LENEBILIR
 final workshopStatsAnalysisProvider = Provider.autoDispose<WorkshopAnalysisData>((ref) {
+  // Cache için keepAlive - veri değişmedikçe hesaplamayı tekrar yapma
+  final link = ref.keepAlive();
+
+  // 2 dakika sonra cache'i temizle
+  Timer(const Duration(minutes: 2), () {
+    link.close();
+  });
+
   final performance = ref.watch(performanceProvider).valueOrNull;
 
   if (performance == null) {

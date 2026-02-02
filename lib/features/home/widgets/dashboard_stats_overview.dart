@@ -29,7 +29,7 @@ class DashboardStatsOverview extends ConsumerWidget {
 
         // MERKEZİ SİSTEM: Streak Firebase'den alınır, hesaplanmaz
         final streak = StatsCalculator.getStreak(user);
-        final motivationColor = _getMotivationColor(streak, mainExamTests.length);
+        final motivationColor = _getMotivationColor(streak, user.testCount);
 
         // Basit hesaplamalar - test yoksa 0 değerleri
         final lastTestNet = mainExamTests.isEmpty ? 0.0 : (() {
@@ -128,7 +128,7 @@ class DashboardStatsOverview extends ConsumerWidget {
                       child: _StatItem(
                         icon: Icons.assignment_turned_in_rounded,
                         label: 'Deneme',
-                        value: '${mainExamTests.length}',
+                        value: '${user.testCount}', // DEĞİŞTİRİLDİ: mainExamTests.length yerine user.testCount
                         color: const Color(0xFF8B5CF6),
                         theme: theme,
                       ),
