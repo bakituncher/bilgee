@@ -29,25 +29,6 @@ class AuthRepository {
 
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
-  /// Benzersiz ve güvenli kullanıcı adı üretir.
-  /// Mail adresinin başını alır, geçersiz karakterleri temizler ve
-  /// sonuna 1000-9999 arası rastgele bir sayı ekler.
-  String _generateSafeUsername(String emailOrBase) {
-    // 1. @ işaretinden öncesini al
-    String base = emailOrBase.split('@').first;
-
-    // 2. İstenmeyen karakterleri temizle (Sadece harf, rakam ve alt çizgi kalsın)
-    base = base.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '');
-
-    // 3. Eğer temizlik sonrası boş kaldıysa varsayılan bir isim ver
-    if (base.isEmpty) base = 'user';
-
-    // 4. Çakışmayı önlemek için 1000-9999 arası rastgele sayı ekle
-    final randomSuffix = Random().nextInt(9000) + 1000;
-
-    return '${base}_$randomSuffix';
-  }
-
   Future<void> signUpWithEmailAndPassword({
     required String firstName,
     required String lastName,
@@ -207,9 +188,7 @@ class AuthRepository {
           final nameParts = user.displayName?.split(' ') ?? [''];
           final firstName = nameParts.isNotEmpty ? nameParts.first : '';
           final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
-
-          // [GÜNCELLENDİ] Güvenli kullanıcı adı oluşturma
-          final generatedUsername = _generateSafeUsername(user.email ?? 'google_user');
+          final generatedUsername = user.email!.split('@').first;
 
           // Google kullanıcıları için varsayılan avatar
           await _firestoreService.createUserProfile(
@@ -291,10 +270,7 @@ class AuthRepository {
               firstName = 'Apple';
               lastName = 'Kullanıcısı';
             }
-
-            // [GÜNCELLENDİ] Güvenli kullanıcı adı oluşturma (Apple mail gizleyebilir)
-            final generatedUsername = _generateSafeUsername(user.email ?? 'apple_${user.uid.substring(0, 5)}');
-
+            final generatedUsername = user.email?.split('@').first ?? 'apple_${user.uid.substring(0, 8)}';
             await _firestoreService.createUserProfile(
               user: user,
               firstName: firstName,
@@ -334,10 +310,7 @@ class AuthRepository {
             firstName = 'Apple';
             lastName = 'Kullanıcısı';
           }
-
-          // [GÜNCELLENDİ] Güvenli kullanıcı adı oluşturma
-          final generatedUsername = _generateSafeUsername(user.email ?? 'apple_${user.uid.substring(0, 5)}');
-
+          final generatedUsername = user.email?.split('@').first ?? 'apple_${user.uid.substring(0, 8)}';
           await _firestoreService.createUserProfile(
             user: user,
             firstName: firstName,
