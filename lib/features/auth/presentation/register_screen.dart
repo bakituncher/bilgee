@@ -122,13 +122,199 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         }
       } catch (e) {
         if (mounted) {
-          setState(() => _errorMessage = e.toString().replaceAll('Exception: ', ''));
+          final errorMsg = e.toString().replaceAll('Exception: ', '');
+
+          // KULLANICI ADI ALINMIŞSA ÖNERİ SİSTEMİ
+          if (errorMsg.contains('kullanımda') || errorMsg.contains('alınmış')) {
+            await _handleUsernameTaken();
+          } else {
+            setState(() => _errorMessage = errorMsg);
+          }
         }
       } finally {
         if (mounted) {
           setState(() => _isLoading = false);
         }
       }
+    }
+  }
+
+  /// Kullanıcı adı alınmışsa otomatik öneri üret (SEKTÖR SEVİYESİ TASARIM)
+  Future<void> _handleUsernameTaken() async {
+    final baseUsername = _usernameController.text.trim();
+    final theme = Theme.of(context);
+
+    // 4 farklı öneri oluştur (daha fazla seçenek)
+    final suggestions = <String>[];
+    for (int i = 0; i < 4; i++) {
+      final randomSuffix = 1000 + (i * 1337) + DateTime.now().millisecond % 1000;
+      final suggestion = '${baseUsername}_$randomSuffix';
+      suggestions.add(suggestion.length > 20 ? suggestion.substring(0, 20) : suggestion);
+    }
+
+    if (!mounted) return;
+
+    // Modern ve şık dialog
+    final selectedUsername = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        elevation: 8,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // İkon ve Başlık
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.person_search_rounded,
+                  size: 48,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Kullanıcı Adı Alınmış',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Üzgünüz, "$baseUsername" zaten kullanımda. Sana özel hazırladığımız alternatiflerden birini seçebilirsin:',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+
+              // Öneriler - Modern Card'lar
+              ...suggestions.map((suggestion) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Material(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    onTap: () => Navigator.pop(context, suggestion),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.alternate_email_rounded,
+                              size: 20,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              suggestion,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 16,
+                            color: theme.colorScheme.onSurface.withOpacity(0.4),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              )),
+
+              const SizedBox(height: 16),
+
+              // Alt Butonlar
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                      label: const Text('İptal'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => Navigator.pop(context, 'manual'),
+                      icon: const Icon(Icons.edit_rounded, size: 18),
+                      label: const Text('Kendin Gir'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (selectedUsername == 'manual') {
+      setState(() {
+        _errorMessage = 'Bu kullanıcı adı zaten alınmış. Lütfen başka bir tane deneyin.';
+      });
+    } else if (selectedUsername != null && selectedUsername.isNotEmpty) {
+      setState(() {
+        _usernameController.text = selectedUsername;
+        _errorMessage = null;
+      });
+      // Başarı bildirimi
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle_rounded, color: theme.colorScheme.onPrimary),
+              const SizedBox(width: 12),
+              Text('Kullanıcı adın "$selectedUsername" olarak ayarlandı'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    } else {
+      setState(() {
+        _errorMessage = 'Bu kullanıcı adı zaten alınmış. Lütfen başka bir tane deneyin.';
+      });
     }
   }
 
