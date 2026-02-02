@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:in_app_review/in_app_review.dart';
+import 'package:taktik/shared/widgets/pro_badge.dart';
 
 class SidePanelDrawer extends ConsumerStatefulWidget {
   const SidePanelDrawer({super.key});
@@ -199,23 +200,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                               ),
                             ),
                             const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.amber.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: Colors.amber.withOpacity(0.5), width: 1),
-                              ),
-                              child: const Text(
-                                'PRO',
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w900,
-                                  fontFamily: 'Poppins',
-                                  color: Colors.amber,
-                                ),
-                              ),
-                            ),
+                            const ProBadge(),
                           ],
                         ),
                       ),
