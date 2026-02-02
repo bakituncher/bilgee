@@ -443,7 +443,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               ],
             ),
             actions: [
-              if (!isPremium)
+              if (isPremium)
                 Container(
                   margin: const EdgeInsets.only(right: 8),
                   child: GestureDetector(
