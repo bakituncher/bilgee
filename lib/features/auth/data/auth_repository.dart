@@ -29,6 +29,48 @@ class AuthRepository {
 
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
+  /// Benzersiz bir kullanıcı adı oluşturur.
+  /// Eğer [baseUsername] alınmışsa, sonuna rastgele sayılar ekler.
+  Future<String> _ensureUniqueUsername(String baseUsername) async {
+    String username = baseUsername;
+    // Geçersiz karakterleri temizle (opsiyonel ama iyi bir pratik)
+    username = username.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '').toLowerCase();
+
+    if (username.length < 3) {
+      username = 'user_${Random().nextInt(99999)}';
+    }
+
+    bool isAvailable = await _firestoreService.checkUsernameAvailability(username);
+
+    if (isAvailable) return username;
+
+    // Eğer alınmışsa, benzersiz olana kadar dene (max 5 deneme)
+    int attempts = 0;
+    while (!isAvailable && attempts < 5) {
+      // 4 haneli rastgele sayı ekle
+      final randomSuffix = Random().nextInt(9000) + 1000; // 1000-9999
+      final newUsername = '${username}_$randomSuffix'; // Alt çizgi ile ayırarak okunabilirlik sağla
+
+      // Karakter limitini kontrol et (örneğin 20 karakter)
+      final effectiveUsername = newUsername.length > 20
+          ? newUsername.substring(0, 20)
+          : newUsername;
+
+      isAvailable = await _firestoreService.checkUsernameAvailability(effectiveUsername);
+      if (isAvailable) {
+        return effectiveUsername;
+      }
+      attempts++;
+    }
+
+    // Son çare: Timestamp kullan
+    if (!isAvailable) {
+      return '${username.substring(0, min(username.length, 10))}_${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}';
+    }
+
+    return username;
+  }
+
   Future<void> signUpWithEmailAndPassword({
     required String firstName,
     required String lastName,
@@ -39,6 +81,12 @@ class AuthRepository {
     required String password,
   }) async {
     try {
+      // Manuel kayıtta da kullanıcı adı kontrolü eklemek iyi bir güvenlik önlemidir
+      final bool isAvailable = await _firestoreService.checkUsernameAvailability(username);
+      if (!isAvailable) {
+        throw 'Bu kullanıcı adı zaten kullanımda. Lütfen başka bir tane seçin.';
+      }
+
       final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -188,16 +236,19 @@ class AuthRepository {
           final nameParts = user.displayName?.split(' ') ?? [''];
           final firstName = nameParts.isNotEmpty ? nameParts.first : '';
           final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
-          final generatedUsername = user.email!.split('@').first;
+
+          // DÜZELTME: Benzersiz kullanıcı adı oluştur
+          final baseUsername = user.email!.split('@').first;
+          final uniqueUsername = await _ensureUniqueUsername(baseUsername);
 
           // Google kullanıcıları için varsayılan avatar
           await _firestoreService.createUserProfile(
             user: user,
             firstName: firstName,
             lastName: lastName,
-            username: generatedUsername,
+            username: uniqueUsername, // uniqueUsername kullanılıyor
             avatarStyle: 'bottts',
-            avatarSeed: generatedUsername,
+            avatarSeed: uniqueUsername,
           );
         }
       }
@@ -270,14 +321,18 @@ class AuthRepository {
               firstName = 'Apple';
               lastName = 'Kullanıcısı';
             }
-            final generatedUsername = user.email?.split('@').first ?? 'apple_${user.uid.substring(0, 8)}';
+
+            // DÜZELTME: Benzersiz kullanıcı adı oluştur
+            final baseUsername = user.email?.split('@').first ?? 'apple_${user.uid.substring(0, 8)}';
+            final uniqueUsername = await _ensureUniqueUsername(baseUsername);
+
             await _firestoreService.createUserProfile(
               user: user,
               firstName: firstName,
               lastName: lastName,
-              username: generatedUsername,
+              username: uniqueUsername, // uniqueUsername kullanılıyor
               avatarStyle: 'bottts',
-              avatarSeed: generatedUsername,
+              avatarSeed: uniqueUsername,
             );
           }
         }
@@ -310,14 +365,18 @@ class AuthRepository {
             firstName = 'Apple';
             lastName = 'Kullanıcısı';
           }
-          final generatedUsername = user.email?.split('@').first ?? 'apple_${user.uid.substring(0, 8)}';
+
+          // DÜZELTME: Benzersiz kullanıcı adı oluştur
+          final baseUsername = user.email?.split('@').first ?? 'apple_${user.uid.substring(0, 8)}';
+          final uniqueUsername = await _ensureUniqueUsername(baseUsername);
+
           await _firestoreService.createUserProfile(
             user: user,
             firstName: firstName,
             lastName: lastName,
-            username: generatedUsername,
+            username: uniqueUsername, // uniqueUsername kullanılıyor
             avatarStyle: 'bottts',
-            avatarSeed: generatedUsername,
+            avatarSeed: uniqueUsername,
           );
         }
       }
