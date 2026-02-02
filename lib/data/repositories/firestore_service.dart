@@ -463,24 +463,32 @@ class FirestoreService {
   }
 
   Future<bool> checkUsernameAvailability(String username, {String? excludeUserId}) async {
-    // Güvenli okuma: public_profiles herkesçe (auth) okunabilir
-    final q = await _firestore
-        .collection('public_profiles')
-        .where('username', isEqualTo: username)
-        .limit(1)
-        .get();
+    // KULLANICI ADI KONTROLÜ (KAYIT OLMAYAN KULLANICILAR İÇİN DE ÇALIŞIR)
+    // Firestore kuralları .limit(1) ile sınırlandırılmış sorguları herkese açık yapar.
+    // Bu sayede kayıt olma ekranında henüz giriş yapmamış kullanıcılar da
+    // kullanıcı adı müsaitlik kontrolü yapabilir.
+    try {
+      final q = await _firestore
+          .collection('public_profiles')
+          .where('username', isEqualTo: username)
+          .limit(1) // <--- BU SATIR FIRESTORE KURALLARI İÇİN ŞARTTIR
+          .get();
 
-    if (q.docs.isEmpty) return true;
+      if (q.docs.isEmpty) return true;
 
-    // Eğer hariç tutulacak kullanıcı ID'si varsa ve bulunan doküman bu kullanıcıya aitse
-    // o zaman bu kullanıcı adı "müsait" kabul edilir (çünkü zaten kullanıcının kendisidir)
-    if (excludeUserId != null) {
-      final doc = q.docs.first;
-      // public_profiles doküman ID'si userId ile aynıdır
-      if (doc.id == excludeUserId) return true;
+      // Eğer hariç tutulacak kullanıcı ID'si varsa ve bulunan doküman bu kullanıcıya aitse
+      // o zaman bu kullanıcı adı "müsait" kabul edilir (çünkü zaten kullanıcının kendisidir)
+      if (excludeUserId != null) {
+        final doc = q.docs.first;
+        // public_profiles doküman ID'si userId ile aynıdır
+        if (doc.id == excludeUserId) return true;
+      }
+
+      return false;
+    } catch (e) {
+      print('Username check error: $e');
+      return false; // Hata durumunda güvenli tarafı seçip false dönebiliriz
     }
-
-    return false;
   }
 
   // KULLANICI ADI GÜNCELLEME (BASİTLEŞTİRİLDİ)

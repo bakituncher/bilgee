@@ -150,7 +150,15 @@ service cloud.firestore {
     // =====================================================================
     match /public_profiles/{userId} {
       // Herkese açık profilleri tüm giriş yapmış kullanıcılar okuyabilir.
-      allow read, list: if request.auth != null;
+      allow read: if request.auth != null;
+
+      // --- KULLANICI ADI KONTROLÜ İÇİN KAYIT OLMAYAN KULLANICILARA İZİN ---
+      // Kullanıcı adı kontrolü için herkese (giriş yapmamış olsa bile)
+      // liste sorgusu yapma izni ver, ANCAK sadece 1 adet veri çekiyorsa.
+      // Bu sayede kayıt olma ekranında kullanıcı adı müsaitlik kontrolü yapılabilir.
+      allow list: if request.query.limit <= 1;
+      // ----------------------------------------------------------------------
+
       // Kullanıcılar kendi public profile'larını oluşturabilir ve güncelleyebilir
       allow create, update: if request.auth != null && request.auth.uid == userId;
       // Profillerin silinmesine istemci tarafından izin verilmez.
