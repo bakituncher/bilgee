@@ -10,6 +10,7 @@ class StrategyPrompts {
   static String? _kpssTemplate;
   static String? _agsTemplate;
 
+  /// Uygulama açılışında çağrılır, prompt şablonlarını belleğe yükler.
   static Future<void> preload() async {
     _yksTemplate = RemotePrompts.get('yks_prompt') ?? await rootBundle.loadString('assets/prompts/yks_prompt.md');
     _lgsTemplate = RemotePrompts.get('lgs_prompt') ?? await rootBundle.loadString('assets/prompts/lgs_prompt.md');
@@ -17,6 +18,7 @@ class StrategyPrompts {
     _agsTemplate = RemotePrompts.get('ags_prompt') ?? await rootBundle.loadString('assets/prompts/ags_prompt.md');
   }
 
+  /// Kullanıcı planı beğenmeyip revize isterse bu blok devreye girer.
   static String _revisionBlock(String? revisionRequest) {
     if (revisionRequest != null && revisionRequest.isNotEmpty) {
       return """
@@ -26,7 +28,7 @@ class StrategyPrompts {
 Kullanıcının Geri Bildirimi:
 "$revisionRequest"
 
-**AKSİYON:** Planı tamamen YENİDEN oluştur. Önceki planı unut.
+**AKSİYON:** Planı tamamen YENİDEN oluştur. Önceki planı unut ve bu geri bildirimi uygula.
 """;
     }
     return '';
@@ -35,6 +37,7 @@ Kullanıcının Geri Bildirimi:
   static String _fillTemplate(String template, Map<String, String> values) {
     String out = template;
     values.forEach((k, v) {
+      // {{KEY}} şeklindeki placeholder'ları değiştirir
       out = out.replaceAll('{{$k}}', v);
     });
     return out;
@@ -50,15 +53,15 @@ Kullanıcının Geri Bildirimi:
     required String avgNet,
     required Map<String, double> subjectAverages,
     required String availabilityJson,
-    required String curriculumJson,
+    required String curriculumJson, // Artık sadece "Aday Konular" listesi geliyor
     required String guardrailsJson,
     String? revisionRequest,
   }) {
     assert(_yksTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
     final template = _yksTemplate!;
     final currentDate = DateTime.now().toIso8601String();
-    final currentWeek = '1'; // Basitleştirilmiş hafta takibi
 
+    // Prompt içindeki değişkenleri doldur
     final replacements = <String, String>{
       'REVISION_BLOCK': _revisionBlock(revisionRequest),
       'AVAILABILITY_JSON': availabilityJson,
@@ -72,7 +75,6 @@ Kullanıcının Geri Bildirimi:
       'CURRICULUM_JSON': curriculumJson,
       'GUARDRAILS_JSON': guardrailsJson,
       'CURRENT_DATE': currentDate,
-      'CURRENT_WEEK': currentWeek,
     };
     return _fillTemplate(template, replacements);
   }
@@ -92,7 +94,6 @@ Kullanıcının Geri Bildirimi:
     assert(_lgsTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
     final template = _lgsTemplate!;
     final currentDate = DateTime.now().toIso8601String();
-    final currentWeek = '1';
 
     final replacements = <String, String>{
       'REVISION_BLOCK': _revisionBlock(revisionRequest),
@@ -103,11 +104,10 @@ Kullanıcının Geri Bildirimi:
       'TEST_COUNT': user.testCount.toString(),
       'AVG_NET': avgNet,
       'SUBJECT_AVERAGES': jsonEncode(subjectAverages),
-      'TOPIC_PERFORMANCES_JSON': '[]',
+      'TOPIC_PERFORMANCES_JSON': '[]', // Detaylı analiz artık backend'de yapılıyor
       'CURRICULUM_JSON': curriculumJson,
       'GUARDRAILS_JSON': guardrailsJson,
       'CURRENT_DATE': currentDate,
-      'CURRENT_WEEK': currentWeek,
     };
     return _fillTemplate(template, replacements);
   }
@@ -128,7 +128,6 @@ Kullanıcının Geri Bildirimi:
     assert(_kpssTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
     final template = _kpssTemplate!;
     final currentDate = DateTime.now().toIso8601String();
-    final currentWeek = '1';
 
     final replacements = <String, String>{
       'REVISION_BLOCK': _revisionBlock(revisionRequest),
@@ -144,7 +143,6 @@ Kullanıcının Geri Bildirimi:
       'CURRICULUM_JSON': curriculumJson,
       'GUARDRAILS_JSON': guardrailsJson,
       'CURRENT_DATE': currentDate,
-      'CURRENT_WEEK': currentWeek,
     };
     return _fillTemplate(template, replacements);
   }
@@ -164,7 +162,6 @@ Kullanıcının Geri Bildirimi:
     assert(_agsTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
     final template = _agsTemplate!;
     final currentDate = DateTime.now().toIso8601String();
-    final currentWeek = '1';
 
     final replacements = <String, String>{
       'REVISION_BLOCK': _revisionBlock(revisionRequest),
@@ -178,7 +175,6 @@ Kullanıcının Geri Bildirimi:
       'CURRICULUM_JSON': curriculumJson,
       'GUARDRAILS_JSON': guardrailsJson,
       'CURRENT_DATE': currentDate,
-      'CURRENT_WEEK': currentWeek,
     };
     return _fillTemplate(template, replacements);
   }
