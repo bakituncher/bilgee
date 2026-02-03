@@ -5,14 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/models/exam_model.dart';
-import 'package:taktik/data/models/topic_performance_model.dart';
 import 'package:taktik/core/prompts/strategy_consult_prompt.dart';
 import 'package:taktik/core/prompts/psych_support_prompt.dart';
 import 'package:taktik/core/prompts/motivation_corner_prompt.dart';
 import 'package:taktik/core/prompts/trial_review_prompt.dart';
 import 'package:taktik/core/prompts/strategy_prompts.dart';
 import 'package:taktik/core/prompts/workshop_prompts.dart';
-import 'package:taktik/core/prompts/motivation_suite_prompts.dart';
 import 'package:taktik/core/prompts/default_motivation_prompts.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
 import 'package:taktik/features/stats/logic/stats_analysis_provider.dart';
@@ -189,29 +187,6 @@ class AiService {
     }
   }
 
-  // Son N günün tamamlanan görevlerini Firestore'dan topla (YYYY-MM-DD -> [taskId])
-  Future<Map<String, List<String>>> _loadRecentCompletedTasks(String userId, {int days = 28}) async {
-    try {
-      final svc = _ref.read(firestoreServiceProvider);
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final start = today.subtract(Duration(days: days - 1));
-      final dates = List<DateTime>.generate(days, (i) => start.add(Duration(days: i)));
-      final lists = await Future.wait(dates.map((d) => svc.getCompletedTasksForDate(userId, d)));
-      final Map<String, List<String>> acc = {};
-      for (int i = 0; i < dates.length; i++) {
-        final list = lists[i];
-        if (list.isNotEmpty) acc[_yyyyMmDd(dates[i])] = list;
-      }
-      return acc;
-    } catch (_) {
-      return {};
-    }
-  }
-
-  String _yyyyMmDd(DateTime d) =>
-      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-
   /// Tamamlanan görev ID'lerini Set olarak döndürür (hızlı arama için)
   Future<Set<String>> _loadRecentCompletedTaskIdsOnly(String userId, {int days = 365}) async {
     try {
@@ -318,18 +293,6 @@ class AiService {
     return ExamSchedule.daysUntilExam(examType);
   }
 
-  String _encodeTopicPerformances(Map<String, Map<String, TopicPerformanceModel>> performances) {
-    final encodableMap = performances.map(
-          (subjectKey, topicMap) => MapEntry(
-        subjectKey,
-        topicMap.map(
-              (topicKey, model) => MapEntry(topicKey, model.toMap()),
-        ),
-      ),
-    );
-    return jsonEncode(encodableMap);
-  }
-
   Future<String> generateGrandStrategy({
     required UserModel user,
     required List<TestModel> tests,
@@ -347,25 +310,10 @@ class AiService {
     final examType = ExamType.values.byName(user.selectedExam!);
     final daysUntilExam = _getDaysUntilExam(examType);
 
-    // DÜZELTME 1: Önbellek yerine anlık hesap; yeni denemeler hemen yansısın.
-    final String avgNet = _quickAverageNet(tests).toStringAsFixed(2);
-    final Map<String, double> subjectAverages = _computeSubjectAveragesQuick(tests);
-
     final availabilityJson = jsonEncode(user.weeklyAvailability);
 
-    // Tamamlanan konu ID'lerini al (Müfredat filtreleme için)
-    final completedTopicIds = await _loadRecentCompletedTaskIdsOnly(user.id, days: 365);
-
-    // YENİ SEKTÖR STANDARDI: Tüm müfredat yerine sadece "Sıradaki Aday Konular"
-    // Bu sayede yeni kullanıcı için otomatik olarak ilk konular, ileri kullanıcı için kaldığı yerden devam
-    final candidateTopicsJson = await _buildNextStudyTopicsJson(
-      examType,
-      user.selectedExamSection,
-      completedTopicIds
-    );
-
-    // GUARDRAILS: backlog + konu renkleri + politika
-    final guardrailsJson = _buildGuardrailsJson(planDoc?.weeklyPlan, completedTopicIds, performance);
+    // Not: candidateTopicsJson ve guardrailsJson artık backend tarafından işleniyor
+    // Bu nedenle burada hesaplamaya gerek yok
 
     String prompt;
     switch (examType) {
@@ -377,47 +325,35 @@ class AiService {
         }
 
         prompt = StrategyPrompts.getYksPrompt(
-            userId: user.id, selectedExamSection: displaySection,
-            daysUntilExam: daysUntilExam, pacing: pacing,
-            testCount: user.testCount, avgNet: avgNet,
-            subjectAverages: subjectAverages,
+            selectedExamSection: displaySection,
+            daysUntilExam: daysUntilExam,
+            pacing: pacing,
             availabilityJson: availabilityJson,
-            curriculumJson: candidateTopicsJson,
-            guardrailsJson: guardrailsJson,
             revisionRequest: revisionRequest
         );
         break;
       case ExamType.lgs:
         prompt = StrategyPrompts.getLgsPrompt(
-            user: user,
-            avgNet: avgNet, subjectAverages: subjectAverages,
-            pacing: pacing, daysUntilExam: daysUntilExam,
+            pacing: pacing,
+            daysUntilExam: daysUntilExam,
             availabilityJson: availabilityJson,
-            curriculumJson: candidateTopicsJson,
-            guardrailsJson: guardrailsJson,
             revisionRequest: revisionRequest
         );
         break;
       case ExamType.ags:
         prompt = StrategyPrompts.getAgsPrompt(
-            user: user,
-            avgNet: avgNet, subjectAverages: subjectAverages,
-            pacing: pacing, daysUntilExam: daysUntilExam,
+            pacing: pacing,
+            daysUntilExam: daysUntilExam,
             availabilityJson: availabilityJson,
-            curriculumJson: candidateTopicsJson,
-            guardrailsJson: guardrailsJson,
             revisionRequest: revisionRequest
         );
         break;
       default:
         prompt = StrategyPrompts.getKpssPrompt(
-            user: user,
-            avgNet: avgNet, subjectAverages: subjectAverages,
-            pacing: pacing, daysUntilExam: daysUntilExam,
-            availabilityJson: availabilityJson,
             examName: examType.displayName,
-            curriculumJson: candidateTopicsJson,
-            guardrailsJson: guardrailsJson,
+            pacing: pacing,
+            daysUntilExam: daysUntilExam,
+            availabilityJson: availabilityJson,
             revisionRequest: revisionRequest
         );
         break;
@@ -495,134 +431,6 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
     return _callGemini(prompt, expectJson: true, requestType: 'weekly_plan');
   }
 
-  /// YENİ SEKTÖR STANDARDI FONKSİYON: Tüm müfredatı değil, sadece çalışılması gereken "ADAY" konuları hazırlar.
-  /// Bu sayede AI'a token israfı olmaz ve yeni kullanıcılar için otomatik olarak doğru konular seçilir.
-  Future<String> _buildNextStudyTopicsJson(
-    ExamType examType,
-    String? selectedSection,
-    Set<String> completedTopicIds // Kullanıcının bitirdiği konuların ID listesi
-  ) async {
-    try {
-      // 1. Tüm müfredatı yerelden çek (Bu işlem token harcamaz, cihazda yapılır)
-      final exam = await ExamData.getExamByType(examType);
-
-      List<ExamSection> sections = [];
-
-      // 2. Kullanıcının bölümüne göre dersleri filtrele
-      // AGS MANTIĞI: Her zaman "AGS" (Ortak) + Seçilen Branş
-      if (examType == ExamType.ags) {
-        sections.addAll(exam.sections.where((s) => s.name == 'AGS'));
-        if (selectedSection != null && selectedSection.isNotEmpty) {
-          sections.addAll(exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()));
-        }
-      }
-      // YKS MANTIĞI: Her zaman "TYT" + Seçilen Alan (AYT-Sayısal, YDT vb.)
-      else if (examType == ExamType.yks) {
-        sections.addAll(exam.sections.where((s) => s.name == 'TYT'));
-        if (selectedSection != null && selectedSection.isNotEmpty && selectedSection != 'TYT') {
-          sections.addAll(exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()));
-        }
-      }
-      // DİĞERLERİ (LGS, KPSS)
-      else {
-        sections = (selectedSection != null && selectedSection.isNotEmpty)
-            ? exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()).toList()
-            : exam.sections;
-      }
-
-      final Map<String, List<String>> candidateTopics = {};
-
-      // 3. KRİTİK NOKTA: Her ders için "Sıradaki 3 Konuyu" bul
-      for (final sec in sections) {
-        sec.subjects.forEach((subjectName, subjectDetails) {
-          // Bu dersteki tüm konular (Sıralı halde gelir)
-          final allTopics = subjectDetails.topics.map((t) => t.name).toList();
-
-          // Bitmemiş olanları bul (Sırayı bozmadan)
-          final remainingTopics = allTopics.where((t) => !completedTopicIds.contains(t)).toList();
-
-          // Eğer hiç konu kalmadıysa (Ders bitmişse) boş geç
-          if (remainingTopics.isEmpty) return;
-
-          // SEKTÖR STANDARDI AYAR:
-          // Her dersten önümüzdeki "3" konuyu seç. AI bunlardan birini veya ikisini seçecek.
-          // Hepsini birden göndermiyoruz - Token tasarrufu + Odaklanma
-          final nextBatch = remainingTopics.take(3).toList();
-
-          candidateTopics[subjectName] = nextBatch;
-        });
-      }
-
-      // Çıktı Örneği:
-      // {
-      //   "candidates": {
-      //     "Matematik": ["Temel Kavramlar", "Sayı Basamakları", "Bölünebilme"],
-      //     "Fizik": ["Fizik Bilimine Giriş", "Madde ve Özellikleri"]
-      //   },
-      //   "note": "Sadece bu listedeki konuları planlayabilirsin. Sırayı bozma."
-      // }
-      return jsonEncode({
-        'candidates': candidateTopics,
-        'note': 'Sadece bu listedeki konuları planlayabilirsin. Müfredat sırasını takip et.'
-      });
-    } catch (e) {
-      // Hata durumunda boş liste döndür
-      return jsonEncode({
-        'candidates': {},
-        'note': 'Müfredat yüklenemedi, genel konulardan plan oluştur.'
-      });
-    }
-  }
-
-  Future<String> _buildCurriculumOrderJson(ExamType examType, String? selectedSection) async {
-    try {
-      final exam = await ExamData.getExamByType(examType);
-
-      List<ExamSection> sections = [];
-
-      // 1. AGS MANTIĞI: Her zaman "AGS" (Ortak) + Seçilen Branş
-      if (examType == ExamType.ags) {
-        // Ortak bölümü ekle (Adı genellikle 'AGS' olarak parse ediliyor)
-        sections.addAll(exam.sections.where((s) => s.name == 'AGS'));
-
-        // Seçilen branşı ekle (Eğer varsa)
-        if (selectedSection != null && selectedSection.isNotEmpty) {
-          sections.addAll(exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()));
-        }
-      }
-      // 2. YKS MANTIĞI: Her zaman "TYT" + Seçilen Alan (AYT-Sayısal, YDT vb.)
-      else if (examType == ExamType.yks) {
-        // TYT her zaman eklenir
-        sections.addAll(exam.sections.where((s) => s.name == 'TYT'));
-
-        if (selectedSection != null && selectedSection.isNotEmpty && selectedSection != 'TYT') {
-          // Eğer seçilen alan 'AYT - Sayısal' ise onu ekle
-          sections.addAll(exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()));
-        }
-      }
-      // 3. DİĞERLERİ (LGS, KPSS)
-      else {
-        sections = (selectedSection != null && selectedSection.isNotEmpty)
-            ? exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()).toList()
-            : exam.sections;
-      }
-
-      final Map<String, List<String>> subjects = {};
-      for (final sec in sections) {
-        sec.subjects.forEach((subject, details) {
-          subjects[subject] = details.topics.map((t) => t.name).toList();
-        });
-      }
-      final payload = {
-        'section': selectedSection ?? 'all',
-        'subjects': subjects,
-      };
-      return jsonEncode(payload);
-    } catch (_) {
-      return jsonEncode({'section': selectedSection ?? 'all', 'subjects': {}});
-    }
-  }
-
   String _buildGuardrailsJson(Map<String, dynamic>? weeklyPlanRaw, Set<String> completedTopicIds, PerformanceSummary performance){
     // Backlog: geçen haftanın planından tamamlanmamış görevler
     final backlogActivities = <String>[];
@@ -653,7 +461,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
 
     // Konu renkleri: kırmızı/sarı/yeşil/unknown
     final topicStatus = <String, Map<String, dynamic>>{}; // subject -> { topic -> status }
-    int redCount = 0, yellowCount = 0, unknownCount = 0;
+    int redCount = 0;
     performance.topicPerformances.forEach((subject, topics){
       final map = <String, String>{};
       topics.forEach((topic, tp){
@@ -661,12 +469,11 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
         String status;
         if (tp.questionCount < 8 || attempts < 6) {
           status = 'unknown';
-          unknownCount++;
         } else {
           final denom = attempts == 0 ? 1 : attempts;
           final acc = tp.correctCount / denom;
           if (acc < 0.5 || tp.wrongCount >= tp.correctCount) { status = 'red'; redCount++; }
-          else if (acc < 0.7) { status = 'yellow'; yellowCount++; }
+          else if (acc < 0.7) { status = 'yellow'; }
           else { status = 'green'; }
         }
         map[topic] = status;
@@ -721,7 +528,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
   }) async {
     // Eğer test yoksa hemen hata döndürme: bazı yeni hesaplarda konu performansı (ör. manuel veri) olabilir.
     if (tests.isEmpty) {
-      final hasTopicData = performance.topicPerformances.values.any((subjectMap) => subjectMap.values.any((t) => (t.questionCount ?? 0) > 0));
+      final hasTopicData = performance.topicPerformances.values.any((subjectMap) => subjectMap.values.any((t) => t.questionCount > 0));
       if (!hasTopicData && topicOverride == null) {
         return '{"error":"Analiz için en az bir deneme sonucu gereklidir."}';
       }
@@ -886,24 +693,6 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
     return raw;
   }
 
-  // Hafif yardımcılar: UI dış tek seferlik hesaplamalarda kullanılabilir
-  double _quickAverageNet(List<TestModel> tests) {
-    if (tests.isEmpty) return 0.0;
-    final total = tests.fold<double>(0.0, (acc, t) => acc + t.totalNet);
-    return total / tests.length;
-  }
-
-  Map<String, double> _computeSubjectAveragesQuick(List<TestModel> tests) {
-    if (tests.isEmpty) return {}; // Boş liste ise boş map döndür (NaN önleme)
-    final Map<String, List<double>> subjectNets = {};
-    for (final t in tests) {
-      t.scores.forEach((subject, scores) {
-        final net = (scores['dogru'] ?? 0) - ((scores['yanlis'] ?? 0) * t.penaltyCoefficient);
-        subjectNets.putIfAbsent(subject, () => []).add(net);
-      });
-    }
-    return subjectNets.map((k, v) => MapEntry(k, v.isEmpty ? 0.0 : v.reduce((a, b) => a + b) / v.length));
-  }
 
   Future<Map<String, dynamic>> computeGuardrailsForDisplay({
     required PlanDocument? planDoc,
