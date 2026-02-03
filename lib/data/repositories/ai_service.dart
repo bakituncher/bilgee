@@ -259,7 +259,7 @@ class AiService {
         'temperature': temperature ?? 0.7, // Default artık daha insani
         if (model != null && model.isNotEmpty) 'model': model,
       };
-      final result = await callable.call(payload).timeout(const Duration(seconds: 70));
+      final result = await callable.call(payload).timeout(const Duration(seconds: 150));
       final data = result.data;
       final rawResponse = (data is Map && data['raw'] is String) ? (data['raw'] as String).trim() : '';
       if (rawResponse.isEmpty) {
