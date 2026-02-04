@@ -402,7 +402,6 @@ class RevisionWorkshop extends StatefulWidget {
 }
 
 class _RevisionWorkshopState extends State<RevisionWorkshop> {
-  final _textController = TextEditingController();
   final List<String> _quickFeedbacks = [
     "Daha yoğun bir program istiyorum.",
     "Biraz daha hafif olmalı.",
@@ -413,17 +412,14 @@ class _RevisionWorkshopState extends State<RevisionWorkshop> {
   final Set<String> _selectedFeedbacks = {};
 
   void _sendFeedback() {
-    final customFeedback = _textController.text.trim();
-    final allFeedbacks = [..._selectedFeedbacks, customFeedback]
-        .where((f) => f.isNotEmpty)
-        .join("\n- ");
-    if (allFeedbacks.isEmpty) {
+    if (_selectedFeedbacks.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text("Lütfen bir geri bildirim belirtin."),
+        content: const Text("Lütfen bir geri bildirim seçin."),
         backgroundColor: Theme.of(context).colorScheme.error,
       ));
       return;
     }
+    final allFeedbacks = _selectedFeedbacks.join("\n- ");
     widget.onRevisionRequested("- $allFeedbacks");
   }
 
@@ -486,25 +482,6 @@ class _RevisionWorkshopState extends State<RevisionWorkshop> {
                   ),
                 );
               }).toList(),
-            ),
-            const SizedBox(height: 16),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                return TextField(
-                  controller: _textController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    label: SizedBox(
-                      width: constraints.maxWidth - 32,
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: const Text("Eklemek istediğin özel bir not var mı?"),
-                      ),
-                    ),
-                  ),
-                );
-              },
             ),
             const SizedBox(height: 24),
             ElevatedButton(

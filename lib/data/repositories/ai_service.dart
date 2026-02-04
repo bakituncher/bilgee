@@ -10,9 +10,7 @@ import 'package:taktik/core/prompts/strategy_consult_prompt.dart';
 import 'package:taktik/core/prompts/psych_support_prompt.dart';
 import 'package:taktik/core/prompts/motivation_corner_prompt.dart';
 import 'package:taktik/core/prompts/trial_review_prompt.dart';
-import 'package:taktik/core/prompts/strategy_prompts.dart';
 import 'package:taktik/core/prompts/workshop_prompts.dart';
-import 'package:taktik/core/prompts/motivation_suite_prompts.dart';
 import 'package:taktik/core/prompts/default_motivation_prompts.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
 import 'package:taktik/features/stats/logic/stats_analysis_provider.dart';
@@ -20,6 +18,7 @@ import 'package:taktik/core/utils/json_text_cleaner.dart';
 import 'package:taktik/data/models/performance_summary.dart';
 import 'package:taktik/data/models/plan_document.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/repositories/weekly_planner_service.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/data/repositories/exam_schedule.dart';
@@ -338,161 +337,26 @@ class AiService {
     required String pacing,
     String? revisionRequest,
   }) async {
-    if (user.selectedExam == null) {
-      return '{"error":"Analiz için önce bir sınav seçmelisiniz."}';
+    try {
+      // Yeni modüler WeeklyPlannerService kullan
+      final plannerService = WeeklyPlannerService();
+      final result = await plannerService.generateWeeklyPlan(
+        user: user,
+        tests: tests,
+        performance: performance,
+        existingPlan: planDoc,
+        pacing: pacing,
+        revisionRequest: revisionRequest,
+      );
+
+      return jsonEncode(result);
+    } on PlannerException catch (e) {
+      return jsonEncode({'error': e.message});
+    } catch (e) {
+      return jsonEncode({
+        'error': 'Plan oluşturulurken bir hata oluştu: ${e.toString()}'
+      });
     }
-    if (user.weeklyAvailability.values.every((list) => list.isEmpty)) {
-      return '{"error":"Strateji oluşturmadan önce en az bir tane müsait zaman dilimi seçmelisiniz."}';
-    }
-    final examType = ExamType.values.byName(user.selectedExam!);
-    final daysUntilExam = _getDaysUntilExam(examType);
-
-    // DÜZELTME 1: Önbellek yerine anlık hesap; yeni denemeler hemen yansısın.
-    final String avgNet = _quickAverageNet(tests).toStringAsFixed(2);
-    final Map<String, double> subjectAverages = _computeSubjectAveragesQuick(tests);
-
-    final availabilityJson = jsonEncode(user.weeklyAvailability);
-
-    // Tamamlanan konu ID'lerini al (Müfredat filtreleme için)
-    final completedTopicIds = await _loadRecentCompletedTaskIdsOnly(user.id, days: 365);
-
-    // YENİ SEKTÖR STANDARDI: Tüm müfredat yerine sadece "Sıradaki Aday Konular"
-    // Bu sayede yeni kullanıcı için otomatik olarak ilk konular, ileri kullanıcı için kaldığı yerden devam
-    final candidateTopicsJson = await _buildNextStudyTopicsJson(
-      examType,
-      user.selectedExamSection,
-      completedTopicIds
-    );
-
-    // GUARDRAILS: backlog + konu renkleri + politika
-    final guardrailsJson = _buildGuardrailsJson(planDoc?.weeklyPlan, completedTopicIds, performance);
-
-    String prompt;
-    switch (examType) {
-      case ExamType.yks:
-      // FIX: YDT öğrencileri için başlığı "TYT ve YDT" olarak güncelle ki AI her ikisini de kapsasın
-        String displaySection = user.selectedExamSection ?? '';
-        if (displaySection == 'YDT') {
-          displaySection = 'TYT ve YDT';
-        }
-
-        prompt = StrategyPrompts.getYksPrompt(
-            userId: user.id, selectedExamSection: displaySection,
-            daysUntilExam: daysUntilExam, pacing: pacing,
-            testCount: user.testCount, avgNet: avgNet,
-            subjectAverages: subjectAverages,
-            availabilityJson: availabilityJson,
-            curriculumJson: candidateTopicsJson,
-            guardrailsJson: guardrailsJson,
-            revisionRequest: revisionRequest
-        );
-        break;
-      case ExamType.lgs:
-        prompt = StrategyPrompts.getLgsPrompt(
-            user: user,
-            avgNet: avgNet, subjectAverages: subjectAverages,
-            pacing: pacing, daysUntilExam: daysUntilExam,
-            availabilityJson: availabilityJson,
-            curriculumJson: candidateTopicsJson,
-            guardrailsJson: guardrailsJson,
-            revisionRequest: revisionRequest
-        );
-        break;
-      case ExamType.ags:
-        prompt = StrategyPrompts.getAgsPrompt(
-            user: user,
-            avgNet: avgNet, subjectAverages: subjectAverages,
-            pacing: pacing, daysUntilExam: daysUntilExam,
-            availabilityJson: availabilityJson,
-            curriculumJson: candidateTopicsJson,
-            guardrailsJson: guardrailsJson,
-            revisionRequest: revisionRequest
-        );
-        break;
-      default:
-        prompt = StrategyPrompts.getKpssPrompt(
-            user: user,
-            avgNet: avgNet, subjectAverages: subjectAverages,
-            pacing: pacing, daysUntilExam: daysUntilExam,
-            availabilityJson: availabilityJson,
-            examName: examType.displayName,
-            curriculumJson: candidateTopicsJson,
-            guardrailsJson: guardrailsJson,
-            revisionRequest: revisionRequest
-        );
-        break;
-    }
-
-    // DÜZELTME 3: AI cache kırıcı varyasyon etiketi ekle
-    prompt += "\n\n[System: Generate a UNIQUE plan. Variation: ${DateTime.now().millisecondsSinceEpoch}]";
-
-    // TOKEN LİMİTİ UYARISI: AI'a JSON'u tam olarak kapatmasını hatırlat (Sorunun 2. çözümü)
-    prompt += "\n\nÖNEMLİ: Yanıtını mutlaka geçerli ve KAPALI bir JSON objesi olarak döndür. JSON'un sonunda tüm süslü parantezleri kapat. Yanıt kesilirse kısa tut ama yapıyı koru.";
-
-    // ====================================================================================
-    // DÜZELTME 4: GÜN SIRALAMASI SORUNUNU ÇÖZME (Cumartesi bile olsa o günden başla)
-    // ====================================================================================
-    final trDays = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
-    final todayIndex = DateTime.now().weekday - 1; // 0=Pzt, 6=Paz
-    final todayName = trDays[todayIndex];
-
-    // Günleri bugünden başlayarak sırala (örn: Cmt, Paz, Pzt, Sal...)
-    List<String> orderedDays = [];
-    for(int i=0; i<7; i++) {
-      orderedDays.add(trDays[(todayIndex + i) % 7]);
-    }
-    final orderString = orderedDays.join(', ');
-
-    prompt += """
-
-[SİSTEM AYARI 1: TAKVİM YAPISI]
-Bugün günlerden: $todayName.
-Lütfen oluşturacağın 'weeklyPlan' içindeki 'plan' dizisini KESİNLİKLE **$todayName** gününden başlat.
-Plan dizisindeki günlerin sırası tam olarak şu sırayla olmalıdır: $orderString.
-
-ÖNEMLİ: Haftanın planlamasını yaparken "Pazartesi başlar" kuralını YOK SAY. Kullanıcı stratejiyi bugün ($todayName) oluşturuyor, bu yüzden ilk gün ($todayName) en yoğun ve motive edici başlangıç günü olmalı. Geçmiş günleri (örneğin dünkü Cuma) planlama, onları döngünün sonuna (gelecek hafta) at.
-""";
-
-    // ====================================================================================
-    // ÇÖZÜM 2: KAPASİTE KULLANIMI VE BOŞLUK DOLDURMA
-    // ====================================================================================
-    // Sorun: Kullanıcı "Yoğun" seçiyor ve tüm saatleri açıyor ama AI boşluk bırakıyor.
-    // Çözüm: Pacing moduna göre "Doluluk Oranı" talimatı veriyoruz.
-
-    String densityInstruction = "";
-
-    if (pacing == 'intense' || pacing == 'yoğun') {
-      densityInstruction = """
-
-[SİSTEM AYARI 2: KAPASİTE VE DOLULUK (CRITICAL)]
-Kullanıcı Modu: **INTENSE (YOĞUN)**.
-
-TALİMATLAR:
-1. 'weeklyAvailability' içinde "true" (müsait) olarak işaretlenmiş **HER BİR SAAT DİLİMİNİ** doldurmak ZORUNDASIN.
-2. Asla "kullanıcı yorulur" diye düşünüp inisiyatif alma ve boşluk bırakma. Kullanıcı sınırlarını zorlamak istiyor.
-3. Konu çalışması biterse; "Zor Soru Çözümü", "Branş Denemesi", "Paragraf/Problem Rutini" veya "Genel Tekrar" ile slotu doldur.
-4. HEDEF DOLULUK ORANI: %100. Müsait olan hiçbir slot boş kalmamalı.
-""";
-    } else if (pacing == 'moderate' || pacing == 'dengeli') {
-      densityInstruction = """
-
-[SİSTEM AYARI 2: KAPASİTE]
-Kullanıcı Modu: **MODERATE (DENGELİ)**.
-Müsait zamanların yaklaşık %80'ini doldur. %20'lik kısmı esneklik payı olarak boş bırakabilirsin.
-""";
-    } else {
-      densityInstruction = """
-
-[SİSTEM AYARI 2: KAPASİTE]
-Kullanıcı Modu: **RELAXED (RAHAT)**.
-Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeterli.
-""";
-    }
-
-    prompt += densityInstruction;
-    // ====================================================================================
-
-    return _callGemini(prompt, expectJson: true, requestType: 'weekly_plan');
   }
 
   /// YENİ SEKTÖR STANDARDI FONKSİYON: Tüm müfredatı değil, sadece çalışılması gereken "ADAY" konuları hazırlar.
