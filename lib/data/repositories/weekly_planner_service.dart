@@ -45,6 +45,8 @@ class WeeklyPlannerService {
       // Tamamlanan görevleri yükle
       final completedTopicIds = await _loadCompletedTopics(user.id, days: 365);
 
+      print('Tamamlanan Konu Sayısı: ${completedTopicIds.length}');
+
       // Revizyon analizi yap
       RevisionAnalysis? revisionAnalysis;
       String effectivePacing = pacing;
@@ -62,13 +64,18 @@ class WeeklyPlannerService {
       // Kullanıcının haftalık müsait slot sayısını hesapla
       final totalAvailableSlots = _calculateTotalWeeklySlots(user, effectivePacing);
 
-      // Sıradaki çalışılacak konuları belirle
+      // YENİ: Deneme sınavlarından ders ağırlıklarını/önceliklerini hesapla
+      final subjectPriorities = _calculateSubjectPrioritiesFromTests(tests);
+      print('📊 Deneme Analizi Sonucu Öncelikler: $subjectPriorities');
+
+      // Sıradaki çalışılacak konuları belirle (Önceliklere göre)
       var nextTopics = await _getNextTopicsToStudy(
         examType,
         user.selectedExamSection,
         completedTopicIds,
         performance,
         totalAvailableSlots,
+        subjectPriorities, // Öncelik haritasını gönderiyoruz
       );
 
       // Revizyon analizi varsa konu listesini ayarla
@@ -90,6 +97,7 @@ class WeeklyPlannerService {
         pacing: effectivePacing,
         performance: performance,
         completedTopicIds: completedTopicIds,
+        subjectPriorities: subjectPriorities, // Aktivite tipi belirlemek için gönderiyoruz
       );
 
       // Stratejiyi oluştur
@@ -108,12 +116,70 @@ class WeeklyPlannerService {
         'weeklyPlan': weeklyPlan,
         'strategy': strategy,
         'createdAt': DateTime.now().toIso8601String(),
-        'version': '2.1', // Revision service integrated
+        'version': '2.3', // Deneme analizi ve akıllı aktivite atama eklendi
       };
     } catch (e) {
       if (e is PlannerException) rethrow;
       throw PlannerException('Plan oluşturulurken bir hata oluştu: ${e.toString()}');
     }
+  }
+
+  /// Deneme sonuçlarına göre ders önceliklerini hesaplar
+  /// Düşük başarı = Negatif Puan (Yüksek Öncelik/Listenin Başı)
+  /// Yüksek başarı = Nötr Puan (Normal/Genel Tekrar Modu)
+  Map<String, double> _calculateSubjectPrioritiesFromTests(List<TestModel> tests) {
+    if (tests.isEmpty) return {};
+
+    // Ders bazında toplam doğru ve yanlışları topla
+    final Map<String, Map<String, int>> aggregates = {};
+
+    // Sadece son 5 denemeyi dikkate alarak güncel durumu yansıt
+    final recentTests = tests.length > 5 ? tests.sublist(tests.length - 5) : tests;
+
+    for (final test in recentTests) {
+      test.scores.forEach((subject, stats) {
+        if (!aggregates.containsKey(subject)) {
+          aggregates[subject] = {'dogru': 0, 'toplam': 0};
+        }
+
+        final dogru = stats['dogru'] ?? 0;
+        final yanlis = stats['yanlis'] ?? 0;
+        final bos = stats['bos'] ?? 0;
+        final toplam = dogru + yanlis + bos;
+
+        aggregates[subject]!['dogru'] = aggregates[subject]!['dogru']! + dogru;
+        aggregates[subject]!['toplam'] = aggregates[subject]!['toplam']! + toplam;
+      });
+    }
+
+    // Başarı oranına göre öncelik puanı
+    final Map<String, double> priorities = {};
+
+    aggregates.forEach((subject, stats) {
+      final toplam = stats['toplam']!;
+      if (toplam < 10) return; // Çok az veri varsa yoksay
+
+      final dogru = stats['dogru']!;
+      final basariOrani = dogru / toplam;
+
+      if (basariOrani < 0.30) {
+        // %30 altı: Kritik Durum -> Çok yüksek öncelik (-200 puan)
+        // Bu ders listenin en başına geçer.
+        priorities[subject] = -200.0;
+      } else if (basariOrani < 0.50) {
+        // %30-%50 arası: Zayıf -> Yüksek öncelik (-150 puan)
+        priorities[subject] = -150.0;
+      } else if (basariOrani < 0.70) {
+        // %50-%70 arası: Orta -> Hafif öncelik (-50 puan)
+        priorities[subject] = -50.0;
+      } else {
+        // %70 üzeri: İyi -> Normal akış (0 puan)
+        // Bu derste "Genel Tekrar" modu aktif olur.
+        priorities[subject] = 0.0;
+      }
+    });
+
+    return priorities;
   }
 
   /// Tamamlanan görev/konu ID'lerini yükler
@@ -132,13 +198,51 @@ class WeeklyPlannerService {
       final tasks = data['completedDailyTasks'] as List<dynamic>?;
       if (tasks != null) {
         for (final task in tasks) {
-          if (task is Map && task['id'] != null) {
-            completedIds.add(task['id'].toString());
+          if (task is Map) {
+            // 1. Doğrudan konu adı veya ID
+            if (task['id'] != null) {
+              final rawId = task['id'].toString();
+              completedIds.add(rawId);
+
+              // ID karmaşık bir yapıdaysa (örn: 09:00-11:00-Konu-0) içinden konu adını çek
+              final extracted = _extractTopicFromId(rawId);
+              if (extracted != rawId && extracted.isNotEmpty) {
+                completedIds.add(extracted);
+              }
+            }
+            // 2. Varsa açıkça belirtilmiş 'topic' alanı
+            if (task['topic'] != null) {
+              completedIds.add(task['topic'].toString());
+            }
+          } else if (task is String) {
+            // String olarak kayıtlıysa hem kendisini hem de parse edilmiş halini ekle
+            completedIds.add(task);
+            final extracted = _extractTopicFromId(task);
+            if (extracted != task && extracted.isNotEmpty) {
+              completedIds.add(extracted);
+            }
           }
         }
       }
     }
     return completedIds;
+  }
+
+  /// ID stringinden konu adını ayıklar
+  String _extractTopicFromId(String id) {
+    if (RegExp(r'^[a-zA-ZğüşıöçĞÜŞİÖÇ\s]+$').hasMatch(id)) return id;
+
+    final parts = id.split('-');
+    if (parts.length < 2) return id;
+
+    final topicParts = parts.where((part) {
+      if (RegExp(r'^\d{1,2}:\d{2}$').hasMatch(part)) return false;
+      if (RegExp(r'^\d+$').hasMatch(part)) return false;
+      return true;
+    }).toList();
+
+    if (topicParts.isEmpty) return id;
+    return topicParts.join('-');
   }
 
   /// Kullanıcının haftalık toplam müsait slot sayısını hesaplar
@@ -155,25 +259,30 @@ class WeeklyPlannerService {
 
   /// Çalışılacak konuları öncelik sırasına göre belirler
   Future<List<StudyTopic>> _getNextTopicsToStudy(
-    ExamType examType,
-    String? selectedSection,
-    Set<String> completedTopicIds,
-    PerformanceSummary performance,
-    int totalAvailableSlots,
-  ) async {
+      ExamType examType,
+      String? selectedSection,
+      Set<String> completedTopicIds,
+      PerformanceSummary performance,
+      int totalAvailableSlots,
+      Map<String, double> subjectPriorities, // YENİ PARAMETRE
+      ) async {
     final exam = await ExamData.getExamByType(examType);
     final sections = _getRelevantSections(exam, examType, selectedSection);
 
-    // Her dersten konuları topla ve öncelik puanla
     final List<_ScoredTopic> scoredTopics = [];
 
     for (final section in sections) {
       section.subjects.forEach((subjectName, subjectDetails) {
+        // Bu ders için denemelerden gelen genel bir öncelik ayarı var mı?
+        final subjectPriorityAdjustment = subjectPriorities[subjectName] ?? 0.0;
+
         for (int i = 0; i < subjectDetails.topics.length; i++) {
           final topic = subjectDetails.topics[i];
 
-          // Tamamlanmış konuları atla
-          if (completedTopicIds.contains(topic.name)) continue;
+          if (completedTopicIds.contains(topic.name) ||
+              completedTopicIds.contains(topic.name.trim())) {
+            continue;
+          }
 
           // Öncelik puanı hesapla
           final priority = _calculateTopicPriority(
@@ -181,6 +290,7 @@ class WeeklyPlannerService {
             subjectName: subjectName,
             curriculumOrder: i,
             performance: performance,
+            subjectPriorityAdjustment: subjectPriorityAdjustment, // YENİ
           );
 
           scoredTopics.add(_ScoredTopic(
@@ -193,14 +303,10 @@ class WeeklyPlannerService {
       });
     }
 
-    // Önceliğe göre sırala
+    // Önceliğe göre sırala (Düşük/Negatif puan en üstte)
     scoredTopics.sort((a, b) => a.priority.compareTo(b.priority));
 
-    // Her konu için 2 slot gerekir, dolayısıyla gerekli konu sayısı:
-    // (totalSlots / 2) + %20 buffer (bazı günler daha az slot olabilir)
     final neededTopicCount = ((totalAvailableSlots / 2) * 1.2).ceil();
-
-    // En az 10, en fazla tüm konular kadar seç
     final finalTopicCount = neededTopicCount.clamp(10, scoredTopics.length);
 
     return scoredTopics
@@ -209,12 +315,12 @@ class WeeklyPlannerService {
         .toList();
   }
 
-  /// İlgili bölümleri döndürür (YKS, AGS, KPSS vb. mantığı)
+  /// İlgili bölümleri döndürür
   List<ExamSection> _getRelevantSections(
-    Exam exam,
-    ExamType examType,
-    String? selectedSection,
-  ) {
+      Exam exam,
+      ExamType examType,
+      String? selectedSection,
+      ) {
     if (examType == ExamType.ags) {
       final sections = exam.sections.where((s) => s.name == 'AGS').toList();
       if (selectedSection != null && selectedSection.isNotEmpty) {
@@ -244,8 +350,14 @@ class WeeklyPlannerService {
     required String subjectName,
     required int curriculumOrder,
     required PerformanceSummary performance,
+    required double subjectPriorityAdjustment, // YENİ PARAMETRE
   }) {
-    double priority = curriculumOrder.toDouble(); // Müfredat sırası
+    // Baz puan: Müfredat sırası
+    double priority = curriculumOrder.toDouble();
+
+    // Deneme sonuçlarına göre ders bazlı önceliği uygula
+    // Eğer ders kötüyse priority değeri azalır ve konu en üste çıkar.
+    priority += subjectPriorityAdjustment;
 
     final topicPerf = performance.topicPerformances[subjectName]?[topicName];
 
@@ -253,19 +365,17 @@ class WeeklyPlannerService {
       final attempts = topicPerf.correctCount + topicPerf.wrongCount;
       if (attempts > 5) {
         final accuracy = topicPerf.correctCount / attempts;
-        // Zayıf konulara öncelik ver
+        // Zayıf konulara ekstra öncelik ver
         if (accuracy < 0.5) {
-          priority -= 100; // Çok zayıf (en öncelikli)
+          priority -= 100; // Konu da zayıfsa daha da öne al
         } else if (accuracy < 0.7) {
-          priority -= 50; // Orta zayıf
+          priority -= 50;
         }
       } else if (topicPerf.questionCount < 5) {
-        // Hiç çalışılmamış konular
-        priority -= 20;
+        priority -= 20; // Hiç çalışılmamış
       }
     } else {
-      // Hiç verisi olmayan konular
-      priority -= 10;
+      priority -= 10; // Veri yok
     }
 
     return priority;
@@ -278,6 +388,7 @@ class WeeklyPlannerService {
     required String pacing,
     required PerformanceSummary performance,
     required Set<String> completedTopicIds,
+    required Map<String, double> subjectPriorities, // YENİ PARAMETRE
   }) {
     if (topics.isEmpty) {
       return {
@@ -289,27 +400,20 @@ class WeeklyPlannerService {
     final trDays = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
     final todayIndex = DateTime.now().weekday - 1;
 
-    // Günleri bugünden başlayarak sırala
     final List<String> orderedDays = [];
     for (int i = 0; i < 7; i++) {
       orderedDays.add(trDays[(todayIndex + i) % 7]);
     }
 
-    // Kullanıcının sınavına göre deneme türünü belirle
     final examType = ExamType.values.byName(user.selectedExam!);
-
-    // YKS için hem TYT hem de AYT/YDT denemeleri, diğer sınavlar için tek deneme
     final trialExams = _getTrialExamsForWeek(examType, user.selectedExamSection);
-
-    // Pacing'e göre doluluk oranını belirle
     final fillRatio = _getFillRatio(pacing);
 
     final List<Map<String, dynamic>> plan = [];
     int globalTopicIndex = 0;
-    int slotCountForCurrentTopic = 0; // Mevcut konu için kaç slot kullanıldı
-    final Set<String> usedTopics = {}; // Kullanılan konuları takip et
+    int slotCountForCurrentTopic = 0;
+    final Set<String> usedTopics = {};
 
-    // Deneme sınavları için en uygun günleri bul
     final trialDayIndices = _findBestTrialDays(orderedDays, user.weeklyAvailability, trialExams);
 
     for (int dayIdx = 0; dayIdx < orderedDays.length; dayIdx++) {
@@ -326,15 +430,11 @@ class WeeklyPlannerService {
 
       final targetSlotCount = (availability.length * fillRatio).ceil();
       final actualSlotCount = targetSlotCount > availability.length ? availability.length : targetSlotCount;
-
-      // Bu gün için aktiviteleri oluştur
       final dayActivities = <Map<String, String>>[];
-
-      // Bu gün deneme günlerinden biri mi kontrol et
       final trialExamForToday = trialDayIndices[dayIdx];
 
       if (trialExamForToday != null) {
-        // Deneme sınavı ekle
+        // Deneme Sınavı Günü
         final trialSlotCount = trialExamForToday['slotsNeeded'] as int;
         final availableSlotsForTrial = actualSlotCount.clamp(0, trialSlotCount);
 
@@ -347,17 +447,21 @@ class WeeklyPlannerService {
           });
         }
 
-        // Kalan slotlara normal çalışma ekle
+        // Kalan slotlara normal çalışma
         for (int slotIdx = availableSlotsForTrial; slotIdx < actualSlotCount; slotIdx++) {
           if (globalTopicIndex >= topics.length) break;
 
           final topic = topics[globalTopicIndex];
           final slot = availability[slotIdx];
 
+          // Bu ders "Güçlü" bir ders mi? (Puanı 0 veya daha iyi mi?)
+          final isStrongSubject = (subjectPriorities[topic.subject] ?? 0) >= 0;
+
           final activityType = _getProgressiveActivityType(
             slotCountForCurrentTopic,
             topic,
             performance,
+            isStrongSubject,
           );
 
           dayActivities.add({
@@ -383,10 +487,14 @@ class WeeklyPlannerService {
           final topic = topics[globalTopicIndex];
           final slot = availability[slotIdx];
 
+          // Bu ders "Güçlü" bir ders mi?
+          final isStrongSubject = (subjectPriorities[topic.subject] ?? 0) >= 0;
+
           final activityType = _getProgressiveActivityType(
             slotCountForCurrentTopic,
             topic,
             performance,
+            isStrongSubject,
           );
 
           dayActivities.add({
@@ -406,7 +514,6 @@ class WeeklyPlannerService {
         }
       }
 
-      // Günün fokusunu belirle
       String dayFocus = trialExamForToday != null
           ? '${trialExamForToday['name']} Denemesi'
           : _getDayFocus(dayActivities);
@@ -425,18 +532,29 @@ class WeeklyPlannerService {
   }
 
   /// Konu ilerlemesine göre aktivite türü belirler
-  /// slotCount: Bu konu için kaçıncı slot (0=ilk, 1=ikinci)
+  /// isStrongSubject: Eğer true ise, konu anlatımı yerine genel tekrar verilir.
   String _getProgressiveActivityType(
-    int slotCount,
-    StudyTopic topic,
-    PerformanceSummary performance,
-  ) {
-    // Her konu için sadece 2 aktivite: Konu Anlatımı ve Soru Çözümü
+      int slotCount,
+      StudyTopic topic,
+      PerformanceSummary performance,
+      bool isStrongSubject, // YENİ PARAMETRE
+      ) {
+    // EĞER KULLANICI BU DERSTE İYİYSE (%70+ Başarı)
+    if (isStrongSubject) {
+      if (slotCount % 2 == 0) {
+        // İlk slot: Konu Anlatımı yerine GENEL TEKRAR
+        return '${topic.subject} - ${topic.topic} (Genel Tekrar)';
+      } else {
+        // İkinci slot: Soru Çözümü
+        return '${topic.subject} - ${topic.topic} (Soru Çözümü)';
+      }
+    }
+
+    // EĞER KULLANICI BU DERSTE ZAYIF VEYA ORTA SEVİYEDEYSE
+    // (Konu Anlatımı ile başlar, Soru Çözümü ile biter)
     if (slotCount % 2 == 0) {
-      // İlk slot: Konu Anlatımı
       return '${topic.subject} - ${topic.topic} (Konu Anlatımı)';
     } else {
-      // İkinci slot: Soru Çözümü
       return '${topic.subject} - ${topic.topic} (Soru Çözümü)';
     }
   }
@@ -458,10 +576,8 @@ class WeeklyPlannerService {
 
     if (subjectCounts.isEmpty) return 'Karışık Çalışma';
 
-    // En çok geçen dersi bul
     final topSubject = subjectCounts.entries.reduce((a, b) => a.value > b.value ? a : b);
 
-    // Eğer %60'tan fazla aynı dersse, onu yaz
     if (topSubject.value / activities.length > 0.6) {
       return topSubject.key;
     }
@@ -484,180 +600,102 @@ class WeeklyPlannerService {
   }
 
   /// Sınav türüne göre haftalık deneme sınavlarını döndürür
-  /// YKS için hem TYT hem de AYT/YDT, diğer sınavlar için tek deneme
   List<Map<String, dynamic>> _getTrialExamsForWeek(ExamType examType, String? selectedSection) {
     switch (examType) {
       case ExamType.yks:
-        // YKS için özel mantık: Hem TYT hem de AYT/YDT
         if (selectedSection == null || selectedSection.isEmpty || selectedSection == 'TYT') {
-          // Sadece TYT hazırlananlar için her hafta TYT
           return [
-            {
-              'name': 'TYT',
-              'slotsNeeded': 2,
-              'duration': '120 dakika'
-            }
+            {'name': 'TYT', 'slotsNeeded': 2, 'duration': '120 dakika'}
           ];
         } else {
-          // AYT veya YDT hazırlananlar için her hafta hem TYT hem de AYT/YDT
           final secondExam = selectedSection.toLowerCase().contains('ayt')
-              ? {
-                  'name': 'AYT',
-                  'slotsNeeded': 2,
-                  'duration': '180 dakika'
-                }
+              ? {'name': 'AYT', 'slotsNeeded': 2, 'duration': '180 dakika'}
               : selectedSection.toLowerCase().contains('ydt')
-                  ? {
-                      'name': 'YDT',
-                      'slotsNeeded': 2,
-                      'duration': '180 dakika'
-                    }
-                  : {
-                      'name': 'AYT',
-                      'slotsNeeded': 2,
-                      'duration': '180 dakika'
-                    };
+              ? {'name': 'YDT', 'slotsNeeded': 2, 'duration': '180 dakika'}
+              : {'name': 'AYT', 'slotsNeeded': 2, 'duration': '180 dakika'};
 
           return [
-            {
-              'name': 'TYT',
-              'slotsNeeded': 2,
-              'duration': '120 dakika'
-            },
+            {'name': 'TYT', 'slotsNeeded': 2, 'duration': '120 dakika'},
             secondExam,
           ];
         }
-
       case ExamType.lgs:
+      case ExamType.ags:
         return [
-          {
-            'name': 'LGS',
-            'slotsNeeded': 2,
-            'duration': '120 dakika'
-          }
+          {'name': examType.name.toUpperCase(), 'slotsNeeded': 2, 'duration': '120 dakika'}
         ];
-
       case ExamType.kpssLisans:
       case ExamType.kpssOnlisans:
       case ExamType.kpssOrtaogretim:
         if (selectedSection != null && selectedSection.toLowerCase().contains('öabt')) {
           return [
-            {
-              'name': 'ÖABT',
-              'slotsNeeded': 2,
-              'duration': '150 dakika'
-            }
+            {'name': 'ÖABT', 'slotsNeeded': 2, 'duration': '150 dakika'}
           ];
         }
         return [
-          {
-            'name': 'KPSS',
-            'slotsNeeded': 2,
-            'duration': '135 dakika'
-          }
+          {'name': 'KPSS', 'slotsNeeded': 2, 'duration': '135 dakika'}
         ];
-
-      case ExamType.ags:
-        return [
-          {
-            'name': 'AGS',
-            'slotsNeeded': 2,
-            'duration': '120 dakika'
-          }
-        ];
-
       default:
         return [];
     }
   }
 
   /// Deneme sınavları için en uygun günleri bulur
-  /// YKS için: Cumartesi TYT, Pazar AYT/YDT (sabit düzen)
-  /// Diğer sınavlar için: Pazar veya en uygun gün
-  /// Return: Map<dayIndex, trialExamInfo> - Her gün için deneme bilgisi (yoksa null)
   Map<int, Map<String, dynamic>?> _findBestTrialDays(
-    List<String> orderedDays,
-    Map<String, List<String>> weeklyAvailability,
-    List<Map<String, dynamic>> trialExams,
-  ) {
+      List<String> orderedDays,
+      Map<String, List<String>> weeklyAvailability,
+      List<Map<String, dynamic>> trialExams,
+      ) {
     final Map<int, Map<String, dynamic>?> result = {};
 
-    // Tüm günleri başlangıçta null yap
     for (int i = 0; i < orderedDays.length; i++) {
       result[i] = null;
     }
 
     if (trialExams.isEmpty) return result;
 
-    // YKS için özel düzen: Cumartesi TYT, Pazar AYT/YDT
     if (trialExams.length == 2) {
-      // İki deneme var, muhtemelen YKS (TYT + AYT/YDT)
-      final tytExam = trialExams.firstWhere(
-        (e) => e['name'] == 'TYT',
-        orElse: () => trialExams[0],
-      );
-      final otherExam = trialExams.firstWhere(
-        (e) => e['name'] != 'TYT',
-        orElse: () => trialExams[1],
-      );
+      final tytExam = trialExams.firstWhere((e) => e['name'] == 'TYT', orElse: () => trialExams[0]);
+      final otherExam = trialExams.firstWhere((e) => e['name'] != 'TYT', orElse: () => trialExams[1]);
 
-      // Cumartesi'yi bul ve TYT ata
       final saturdayIndex = orderedDays.indexOf('Cumartesi');
       if (saturdayIndex != -1) {
         final saturdaySlots = weeklyAvailability['Cumartesi'] ?? [];
-        final tytSlotsNeeded = tytExam['slotsNeeded'] as int;
-        if (saturdaySlots.length >= tytSlotsNeeded) {
+        if (saturdaySlots.length >= (tytExam['slotsNeeded'] as int)) {
           result[saturdayIndex] = tytExam;
         }
       }
 
-      // Pazar'ı bul ve AYT/YDT ata
       final sundayIndex = orderedDays.indexOf('Pazar');
       if (sundayIndex != -1) {
         final sundaySlots = weeklyAvailability['Pazar'] ?? [];
-        final otherSlotsNeeded = otherExam['slotsNeeded'] as int;
-        if (sundaySlots.length >= otherSlotsNeeded) {
+        if (sundaySlots.length >= (otherExam['slotsNeeded'] as int)) {
           result[sundayIndex] = otherExam;
         }
       }
 
-      // Eğer Cumartesi veya Pazar uygun değilse, alternatif günler bul
       if (saturdayIndex != -1 && result[saturdayIndex] == null) {
-        // TYT için alternatif gün bul
         final altIndex = _findAlternativeDay(orderedDays, weeklyAvailability, tytExam, [sundayIndex]);
-        if (altIndex != -1) {
-          result[altIndex] = tytExam;
-        }
+        if (altIndex != -1) result[altIndex] = tytExam;
       }
 
       if (sundayIndex != -1 && result[sundayIndex] == null) {
-        // AYT/YDT için alternatif gün bul
         final usedIndices = result.entries.where((e) => e.value != null).map((e) => e.key).toList();
         final altIndex = _findAlternativeDay(orderedDays, weeklyAvailability, otherExam, usedIndices);
-        if (altIndex != -1) {
-          result[altIndex] = otherExam;
-        }
+        if (altIndex != -1) result[altIndex] = otherExam;
       }
     } else {
-      // Tek deneme var (LGS, KPSS, AGS vb.)
-      // Pazar'ı tercih et, yoksa en uygun günü bul
       final exam = trialExams[0];
-      final slotsNeeded = exam['slotsNeeded'] as int;
-
       final sundayIndex = orderedDays.indexOf('Pazar');
       if (sundayIndex != -1) {
         final sundaySlots = weeklyAvailability['Pazar'] ?? [];
-        if (sundaySlots.length >= slotsNeeded) {
+        if (sundaySlots.length >= (exam['slotsNeeded'] as int)) {
           result[sundayIndex] = exam;
           return result;
         }
       }
-
-      // Pazar uygun değilse alternatif bul
       final altIndex = _findAlternativeDay(orderedDays, weeklyAvailability, exam, []);
-      if (altIndex != -1) {
-        result[altIndex] = exam;
-      }
+      if (altIndex != -1) result[altIndex] = exam;
     }
 
     return result;
@@ -665,32 +703,25 @@ class WeeklyPlannerService {
 
   /// Deneme için alternatif gün bulur
   int _findAlternativeDay(
-    List<String> orderedDays,
-    Map<String, List<String>> weeklyAvailability,
-    Map<String, dynamic> exam,
-    List<int> excludedIndices,
-  ) {
+      List<String> orderedDays,
+      Map<String, List<String>> weeklyAvailability,
+      Map<String, dynamic> exam,
+      List<int> excludedIndices,
+      ) {
     final slotsNeeded = exam['slotsNeeded'] as int;
     final preferredDays = ['Cumartesi', 'Cuma', 'Perşembe', 'Çarşamba', 'Salı', 'Pazartesi'];
 
-    // Önce tercih edilen günlerden dene
     for (final day in preferredDays) {
       final dayIndex = orderedDays.indexOf(day);
       if (dayIndex == -1 || excludedIndices.contains(dayIndex)) continue;
-
       final slots = weeklyAvailability[day] ?? [];
-      if (slots.length >= slotsNeeded) {
-        return dayIndex;
-      }
+      if (slots.length >= slotsNeeded) return dayIndex;
     }
 
-    // Bulunamadıysa en fazla slotu olan günü bul
     int maxSlots = 0;
     int bestIndex = -1;
-
     for (int i = 0; i < orderedDays.length; i++) {
       if (excludedIndices.contains(i)) continue;
-
       final day = orderedDays[i];
       final slots = weeklyAvailability[day] ?? [];
       if (slots.length > maxSlots && slots.length >= slotsNeeded) {
@@ -698,12 +729,10 @@ class WeeklyPlannerService {
         bestIndex = i;
       }
     }
-
     return bestIndex;
   }
 
-
-  /// Strateji metnini oluşturur (Markdown formatında)
+  /// Strateji metnini oluşturur
   String _buildStrategyText({
     required UserModel user,
     required ExamType examType,
@@ -715,39 +744,25 @@ class WeeklyPlannerService {
     RevisionAnalysis? revisionAnalysis,
   }) {
     final buffer = StringBuffer();
-
-    // Başlık
     buffer.writeln('# ${examType.displayName} Hazırlık Stratejisi\n');
 
-    // Revizyon talebi varsa ekle
     if (revisionRequest != null && revisionRequest.trim().isNotEmpty) {
       buffer.writeln('## 📝 Revizyon Talebi');
       buffer.writeln('> $revisionRequest\n');
-
       if (revisionAnalysis != null && revisionAnalysis.hasChanges) {
         buffer.writeln('### Uygulanan Değişiklikler:');
-
         if (revisionAnalysis.pacingChange != PacingChange.none) {
-          final change = revisionAnalysis.pacingChange == PacingChange.increase
-              ? 'Program temposu artırıldı'
-              : 'Program temposu azaltıldı';
+          final change = revisionAnalysis.pacingChange == PacingChange.increase ? 'Program temposu artırıldı' : 'Program temposu azaltıldı';
           buffer.writeln('- ✅ $change');
         }
-
-        if (revisionAnalysis.subjectAdjustments.isNotEmpty) {
-          revisionAnalysis.subjectAdjustments.forEach((subject, adjustment) {
-            final change = adjustment == SubjectAdjustment.increase
-                ? '$subject dersine daha fazla ağırlık verildi'
-                : '$subject dersi azaltıldı';
-            buffer.writeln('- ✅ $change');
-          });
-        }
-
+        revisionAnalysis.subjectAdjustments.forEach((subject, adjustment) {
+          final change = adjustment == SubjectAdjustment.increase ? '$subject dersine daha fazla ağırlık verildi' : '$subject dersi azaltıldı';
+          buffer.writeln('- ✅ $change');
+        });
         buffer.writeln();
       }
     }
 
-    // Genel Durum
     buffer.writeln('## Genel Durum');
     buffer.writeln('- Sınava Kalan Gün: $daysUntilExam');
 
@@ -758,81 +773,58 @@ class WeeklyPlannerService {
     }
 
     buffer.writeln('- Çalışma Temposu: ${_getPacingDisplayName(pacing)}');
-
-    // YKS için deneme sistemi açıklaması
-    if (examType == ExamType.yks && user.selectedExamSection != null &&
-        user.selectedExamSection != 'TYT' && user.selectedExamSection!.isNotEmpty) {
+    if (examType == ExamType.yks && user.selectedExamSection != null && user.selectedExamSection != 'TYT' && user.selectedExamSection!.isNotEmpty) {
       buffer.writeln('- Deneme Sistemi: Her hafta 1 TYT + 1 ${user.selectedExamSection} denemesi');
     }
-
     buffer.writeln();
 
-    // Ders Bazlı Durum
     buffer.writeln('## Ders Bazlı Durum');
     final subjectAverages = _calculateSubjectAverages(tests);
-
     if (subjectAverages.isNotEmpty) {
-      final sortedSubjects = subjectAverages.entries.toList()
-        ..sort((a, b) => a.value.compareTo(b.value));
-
+      final sortedSubjects = subjectAverages.entries.toList()..sort((a, b) => a.value.compareTo(b.value));
       for (final entry in sortedSubjects) {
-        final subject = entry.key;
-        final avg = entry.value;
-        final status = _getStatusIcon(avg);
-        buffer.writeln('$status **$subject**: ${avg.toStringAsFixed(1)} net');
+        buffer.writeln('${_getStatusIcon(entry.value)} **${entry.key}**: ${entry.value.toStringAsFixed(1)} net');
       }
     } else {
       buffer.writeln('Henüz deneme verisi bulunmuyor.');
     }
 
-    // Öncelikler
     buffer.writeln('\n## Öncelikler');
     final weakTopics = _findWeakTopics(performance);
-
     if (weakTopics.isNotEmpty) {
       buffer.writeln('### Güçlendirilmesi Gereken Konular');
-      for (final topic in weakTopics.take(5)) {
-        buffer.writeln('- $topic');
-      }
+      for (final topic in weakTopics.take(5)) buffer.writeln('- $topic');
     }
 
-    // Hedefler
     buffer.writeln('\n## Hedefler');
     buffer.writeln(_getGoalsByTimeRemaining(daysUntilExam));
 
     return buffer.toString();
   }
 
-  /// Ortalama net hesaplar
   double _calculateAverageNet(List<TestModel> tests) {
     if (tests.isEmpty) return 0.0;
     final totalNet = tests.fold<double>(0.0, (sum, test) => sum + test.totalNet);
     return totalNet / tests.length;
   }
 
-  /// Ders bazlı ortalama netleri hesaplar
   Map<String, double> _calculateSubjectAverages(List<TestModel> tests) {
     if (tests.isEmpty) return {};
-
     final Map<String, List<double>> subjectNets = {};
-
     for (final test in tests) {
       test.scores.forEach((subject, scores) {
         final net = (scores['dogru'] ?? 0.0) - ((scores['yanlis'] ?? 0.0) * test.penaltyCoefficient);
         subjectNets.putIfAbsent(subject, () => []).add(net);
       });
     }
-
     return subjectNets.map((subject, nets) {
       final avg = nets.isEmpty ? 0.0 : nets.reduce((a, b) => a + b) / nets.length;
       return MapEntry(subject, avg);
     });
   }
 
-  /// Zayıf konuları bulur
   List<String> _findWeakTopics(PerformanceSummary performance) {
     final weakTopics = <String>[];
-
     performance.topicPerformances.forEach((subject, topics) {
       topics.forEach((topic, perf) {
         final attempts = perf.correctCount + perf.wrongCount;
@@ -841,45 +833,30 @@ class WeeklyPlannerService {
         }
       });
     });
-
     return weakTopics;
   }
 
-  /// Net skoruna göre durum ikonu
   String _getStatusIcon(double netScore) {
     if (netScore < 5) return '🔴';
     if (netScore < 10) return '🟡';
     return '🟢';
   }
 
-  /// Pacing modu görüntü adı
   String _getPacingDisplayName(String pacing) {
     switch (pacing.toLowerCase()) {
-      case 'intense':
-      case 'yoğun':
-        return 'Yoğun';
-      case 'moderate':
-      case 'dengeli':
-        return 'Dengeli';
-      default:
-        return 'Rahat';
+      case 'intense': case 'yoğun': return 'Yoğun';
+      case 'moderate': case 'dengeli': return 'Dengeli';
+      default: return 'Rahat';
     }
   }
 
-  /// Sınava kalan süreye göre hedefler
   String _getGoalsByTimeRemaining(int daysUntilExam) {
     if (daysUntilExam > 90) {
-      return '''- Müfredatı tamamlamaya odaklanın
-- Her konudan soru çözümü yapın
-- Haftada en az 1 deneme çözün''';
+      return '- Müfredatı tamamlamaya odaklanın\n- Her konudan soru çözümü yapın\n- Haftada en az 1 deneme çözün';
     } else if (daysUntilExam > 30) {
-      return '''- Zayıf konuları pekiştirin
-- Deneme sayısını artırın (haftada 2-3)
-- Hız ve doğruluk dengesi kurun''';
+      return '- Zayıf konuları pekiştirin\n- Deneme sayısını artırın (haftada 2-3)\n- Hız ve doğruluk dengesi kurun';
     } else {
-      return '''- Deneme çözümüne ağırlık verin
-- Sadece en zayıf konulara tekrar yapın
-- Sınav stratejisi ve zaman yönetimine odaklanın''';
+      return '- Deneme çözümüne ağırlık verin\n- Sadece en zayıf konulara tekrar yapın\n- Sınav stratejisi ve zaman yönetimine odaklanın';
     }
   }
 }
@@ -888,37 +865,24 @@ class WeeklyPlannerService {
 // YARDIMCI SINIFLAR
 // ============================================================================
 
-/// Çalışma konusu modeli
 class StudyTopic {
   final String subject;
   final String topic;
-
   StudyTopic({required this.subject, required this.topic});
-
   Map<String, String> toMap() => {'subject': subject, 'topic': topic};
 }
 
-/// Puanlanmış konu (iç kullanım için)
 class _ScoredTopic {
   final String subject;
   final String topic;
   final double priority;
   final int curriculumOrder;
-
-  _ScoredTopic({
-    required this.subject,
-    required this.topic,
-    required this.priority,
-    required this.curriculumOrder,
-  });
+  _ScoredTopic({required this.subject, required this.topic, required this.priority, required this.curriculumOrder});
 }
 
-/// Planlama hataları için özel exception
 class PlannerException implements Exception {
   final String message;
   PlannerException(this.message);
-
   @override
   String toString() => message;
 }
-
