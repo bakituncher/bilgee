@@ -33,34 +33,115 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
   String _currentPromptType = 'user_chat'; // Aktif sohbet modunu saklamak için
   bool _cameWithInitialPrompt = false; // Kullanıcı direkt sohbete mi girdi?
   bool _showSuggestions = true; // Öneri butonlarını göster
+  List<String> _currentSuggestions = []; // Rastgele seçilen öneriler
 
-  // Her sohbet türü için öneri mesajları
-  static const Map<String, List<String>> _suggestionMessages = {
+  // Her sohbet türü için zengin öneri havuzu (her biri 20+)
+  static const Map<String, List<String>> _allSuggestionMessages = {
     'trial_review': [
       'Son denememdeki hatalarımı analiz eder misin?',
       'Net ortalamamı nasıl artırabilirim?',
       'Hangi dersime öncelik vermeliyim?',
       'Zayıf konularımı tespit edebilir misin?',
+      'Deneme sonuçlarımda bir trend var mı?',
+      'En çok hangi soru tiplerinde hata yapıyorum?',
+      'Güçlü olduğum dersleri korumak için ne yapmalıyım?',
+      'Son denememle öncekini karşılaştırır mısın?',
+      'Hangi konulara daha çok zaman ayırmalıyım?',
+      'Yanlışlarımı nasıl analiz etmeliyim?',
+      'Deneme çözme stratejimi değiştirmeli miyim?',
+      'Zaman yönetimim nasıl, geliştirmeli miyim?',
+      'Boş bıraktığım sorular hakkında ne dersin?',
+      'Net artışım için kısa vadeli hedef önerir misin?',
+      'Hangi derste en hızlı net artışı sağlarım?',
+      'Denemede stres yönetimi için önerilerin var mı?',
+      'Paragraf sorularında çok vakit kaybediyorum',
+      'Matematik netim neden düşük, analiz eder misin?',
+      'Fen derslerinde nasıl ilerleme kaydederim?',
+      'Sözel netlerimdeki düşüşün sebebi ne olabilir?',
+      'Deneme çözerken dikkatim dağılıyor, ne yapmalıyım?',
     ],
     'strategy_consult': [
       'Günlük çalışma programı oluşturmama yardım et',
       'Pomodoro tekniği bana uygun mu?',
       'Sınava kaç gün kaldı, nasıl planlamalıyım?',
       'Verimli ders çalışma teknikleri neler?',
+      'Haftalık program nasıl yapmalıyım?',
+      'Konu tekrarlarını ne sıklıkla yapmalıyım?',
+      'Günde kaç saat çalışmak ideal?',
+      'Sabah mı akşam mı çalışmak daha verimli?',
+      'Zayıf derslerime ne kadar zaman ayırmalıyım?',
+      'Soru çözme ve konu çalışma dengesini nasıl kurarım?',
+      'Video ders mi kitap mı daha etkili?',
+      'Deneme çözme sıklığım ne olmalı?',
+      'Konu eksiklerimi nasıl hızlı kapatırım?',
+      'Çalışma ortamımı nasıl düzenlemeliyim?',
+      'Mola vermek verimliliği nasıl etkiler?',
+      'Akıllı telefon dikkat dağıtıyor, ne yapmalıyım?',
+      'Aktif öğrenme teknikleri nelerdir?',
+      'Not tutma stratejileri önerir misin?',
+      'Formül ve kavramları nasıl ezberlerim?',
+      'Son 1 ayda nasıl bir strateji izlemeliyim?',
+      'Hafta sonları nasıl çalışmalıyım?',
+      'Birden fazla kaynaktan çalışmak faydalı mı?',
     ],
     'psych_support': [
       'Sınav stresi yaşıyorum, ne yapmalıyım?',
       'Motivasyonum düştü, kendimi kötü hissediyorum',
       'Çalışmaya başlayamıyorum, sürekli erteliyorum',
       'Ailemi hayal kırıklığına uğratmaktan korkuyorum',
+      'Herkes geziyor ben çalışıyorum, adil değil',
+      'Başarısız olursam ne olacak diye çok korkuyorum',
+      'Konsantre olamıyorum, aklım sürekli dağılıyor',
+      'Kendimi arkadaşlarımla kıyaslıyorum',
+      'Çalıştığım halde netlerim artmıyor, umutsuzum',
+      'Aile baskısı altında eziliyorum',
+      'Uyku düzenim bozuldu, ne yapmalıyım?',
+      'Sınav kaygısını nasıl yenerim?',
+      'Özgüvenim çok düşük, kendime inanamıyorum',
+      'Sosyal medyayı bırakamıyorum, bağımlı gibiyim',
+      'Arkadaşlarımla görüşemiyorum, yalnız hissediyorum',
+      'Çok yorgunum ama dinlenmeye vaktim yok',
+      'Panik atak yaşıyorum, çok korkuyorum',
+      'Gelecek kaygısı beni çok etkiliyor',
+      'Mükemmeliyetçilik beni engelliyor',
+      'Her şeyi erteliyorum, başlayamıyorum',
+      'Ağlama krizleri yaşıyorum, normal mi?',
+      'Kimseyle konuşasım gelmiyor',
     ],
     'motivation_corner': [
       'Bugün hiç çalışmak istemiyorum',
       'Enerjimi nasıl yüksek tutabilirim?',
       'Başaramayacakmışım gibi hissediyorum',
       'Beni motive edecek bir şey söyle',
+      'Çalışma isteği nasıl gelir?',
+      'Hedefime ulaşacağıma inanmak istiyorum',
+      'Disiplinli olmak çok zor geliyor',
+      'Küçük başarıları kutlamayı unutuyorum',
+      'Uzun vadeli motivasyonu nasıl korurum?',
+      'Tembellik yapıyorum, kendimden nefret ediyorum',
+      'Rakiplerim benden önde, yetişemem',
+      'Bu kadar fedakarlık değer mi?',
+      'Sınav bitince ne yapacağımı hayal et',
+      'Bana güç verecek bir söz söyle',
+      'Başarılı insanlar nasıl motive kalıyor?',
+      'Düşük günlerde kendimi nasıl toplarım?',
+      'Hedeflerimi hatırlat bana',
+      'Neden çalıştığımı unutuyorum bazen',
+      'Pes etmek istemiyorum ama çok zor',
+      'Küçük adımlarla ilerlemenin değerini anlat',
+      'Sabah erken kalkamıyorum, motivasyonum yok',
+      'Kendime ödül vermeli miyim?',
     ],
   };
+
+  // Rastgele 4 öneri seçen fonksiyon
+  List<String> _getRandomSuggestions(String promptType) {
+    final allSuggestions = _allSuggestionMessages[promptType] ?? [];
+    if (allSuggestions.isEmpty) return [];
+
+    final shuffled = List<String>.from(allSuggestions)..shuffle();
+    return shuffled.take(4).toList();
+  }
 
   // Sohbetten Süit ekranına dönüş helper
   void _exitToSuite() {
@@ -196,6 +277,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     setState(() {
       _currentPromptType = moodType;
       _showSuggestions = true; // Öneri butonlarını göster
+      _currentSuggestions = _getRandomSuggestions(moodType); // Rastgele 4 öneri seç
     });
 
     Mood mood = Mood.neutral;
@@ -294,7 +376,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
                       child: history.isEmpty && _showSuggestions
                           ? _SuggestionView(
                               promptType: _currentPromptType,
-                              suggestions: _suggestionMessages[_currentPromptType] ?? [],
+                              suggestions: _currentSuggestions,
                               onSuggestionTap: (text) => _sendMessage(quickReply: text),
                             )
                           : ListView.builder(
