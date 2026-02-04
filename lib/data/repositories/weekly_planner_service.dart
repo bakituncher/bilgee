@@ -6,12 +6,15 @@ import 'package:taktik/data/models/performance_summary.dart';
 import 'package:taktik/data/models/plan_document.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/data/models/topic_performance_model.dart';
 import 'package:taktik/data/repositories/exam_schedule.dart';
 import 'package:taktik/data/repositories/plan_revision_service.dart';
 
 /// Haftalık çalışma planı oluşturma servisi
-/// v3.3: Strict Daily Limit (Katı Günlük Limit)
-/// Kullanıcı isteği: "Bir gün içerisinde en fazla 2 kez aynı ders olabilir!"
+/// v3.9: UNLEASHED TOPIC DATA (Serbest Bırakılmış Konu Verisi)
+/// FIX: "Ders Filtresi" kaldırıldı. Test listesinde o dersin adı geçmese bile,
+/// PerformanceSummary içinde verisi (topicPerf) olan her konu değerlendirmeye alınır.
+/// Bu sayede Fizik, Tarih, Matematik gibi derslerdeki eski ama çözülmüş başarısız konular artık plana dahil edilir.
 class WeeklyPlannerService {
   final FirebaseFirestore _firestore;
   final PlanRevisionService _revisionService;
@@ -52,17 +55,15 @@ class WeeklyPlannerService {
       if (revisionRequest != null && revisionRequest.trim().isNotEmpty) {
         revisionAnalysis = _revisionService.analyzeRevisionRequest(revisionRequest);
         effectivePacing = _revisionService.calculateNewPacing(pacing, revisionAnalysis);
-        print('🔄 Revizyon Analizi: ${revisionAnalysis.toString()}');
       }
 
       final totalAvailableSlots = _calculateTotalWeeklySlots(user, effectivePacing);
 
-      // 1. DENEME ANALİZİ (Saf Veri)
+      // 1. TEST ANALİZİ (Sadece Puanlama İçin Kullanılır, Filtreleme İçin Değil)
       final subjectPerformances = _calculateSubjectPerformanceFromTests(tests);
-      print('📊 Ders Başarı Oranları: $subjectPerformances');
+      print('📊 Ders Başarı Oranları (Ref): $subjectPerformances');
 
-      // 2. KONU HAVUZU OLUŞTURMA
-      // Tür: List<_ScoredTopic>
+      // 2. KONU HAVUZU OLUŞTURMA (Ders Kısıtlaması Olmadan)
       List<_ScoredTopic> topicPool = await _getUrgentTopicPool(
         examType,
         user.selectedExamSection,
@@ -72,7 +73,7 @@ class WeeklyPlannerService {
         subjectPerformances,
       );
 
-      // Revizyon varsa havuzu güncelle (Type Fix Koruması)
+      // Revizyon varsa havuzu güncelle
       if (revisionAnalysis != null && revisionAnalysis.hasChanges) {
         final List<StudyTopic> currentTopics = topicPool
             .map((st) => StudyTopic(subject: st.subject, topic: st.topic))
@@ -101,7 +102,7 @@ class WeeklyPlannerService {
         topicPool = newPool;
       }
 
-      // 3. KATI KURALLI DAĞITIM (Strict Distribution)
+      // 3. KATI KURALLI DAĞITIM
       final weeklyPlan = _buildStrictlyBalancedWeeklySchedule(
         user: user,
         topicPool: topicPool,
@@ -125,7 +126,7 @@ class WeeklyPlannerService {
         'weeklyPlan': weeklyPlan,
         'strategy': strategy,
         'createdAt': DateTime.now().toIso8601String(),
-        'version': '3.3', // Strict Daily Limit Fix
+        'version': '3.9', // Unleashed Fix
       };
     } catch (e) {
       if (e is PlannerException) rethrow;
@@ -134,6 +135,12 @@ class WeeklyPlannerService {
   }
 
   // --- Yardımcı Metodlar ---
+
+  /// Firestore'da kullanılan sanitize metodu ile uyumlu key oluşturur
+  /// Boşluk, nokta ve parantezleri alt çizgiye dönüştürür
+  String _sanitizeKey(String key) {
+    return key.replaceAll(RegExp(r'[.\s()]'), '_');
+  }
 
   Future<List<_ScoredTopic>> _getUrgentTopicPool(
       ExamType examType,
@@ -150,12 +157,35 @@ class WeeklyPlannerService {
 
     for (final section in sections) {
       section.subjects.forEach((subjectName, subjectDetails) {
+
+        // KRİTİK DEĞİŞİKLİK (v3.9):
+        // Artık subjectPerformances içinde bu ders yoksa bile (yani listede test yoksa),
+        // döngüyü kırmıyoruz (return demiyoruz). Devam edip PerformanceSummary'e bakıyoruz.
+
+        // Eğer dersin genel başarısı bilinmiyorsa varsayılan 0.5 alalım.
+        // Amaç konuyu engellemek değil, sadece puanlamaya baz oluşturmak.
         final subjectSuccessRate = subjectPerformances[subjectName] ?? 0.5;
+
+        // FİX v3.10: Firestore'da ders ve konu isimleri sanitize edilmiş durumda
+        final sanitizedSubject = _sanitizeKey(subjectName);
 
         for (int i = 0; i < subjectDetails.topics.length; i++) {
           final topic = subjectDetails.topics[i];
           final isCompleted = completedTopicIds.contains(topic.name) ||
               completedTopicIds.contains(topic.name.trim());
+
+          // FİX v3.10: Konu ismini de sanitize et
+          final sanitizedTopic = _sanitizeKey(topic.name);
+
+          // PerformanceSummary'den (Firestore'dan gelen gerçek veri) kontrol et
+          // ÖNCEKİ HATA: Orijinal isimleri kullanıyorduk, sanitize edilmiş key'leri kullanmalıyız!
+          final TopicPerformanceModel? topicPerf = performance.topicPerformances[sanitizedSubject]?[sanitizedTopic];
+
+          // SADECE VE SADECE KONU VERİSİ VARSA LİSTEYE GİRER
+          // Konu hakkında hiç soru çözülmemişse (null veya 0), atla.
+          if (topicPerf == null || (topicPerf.correctCount + topicPerf.wrongCount) == 0) {
+            continue;
+          }
 
           final score = _calculateTopicUrgencyScore(
             topicName: topic.name,
@@ -164,8 +194,10 @@ class WeeklyPlannerService {
             performance: performance,
             subjectSuccessRate: subjectSuccessRate,
             isCompleted: isCompleted,
+            topicPerf: topicPerf,
           );
 
+          // Tamamlanmış ve puanı düşükse alma
           if (isCompleted && score < 60) continue;
 
           allTopics.add(_ScoredTopic(
@@ -180,15 +212,11 @@ class WeeklyPlannerService {
 
     allTopics.sort((a, b) => b.priority.compareTo(a.priority));
 
-    // Havuzu biraz geniş tutalım ki dağıtıcı seçebilsin
     final neededCount = ((totalAvailableSlots / 2) * 1.5).ceil().clamp(15, 60);
     return allTopics.take(neededCount).toList();
   }
 
   /// KATI KURALLI DENGELİ PROGRAM OLUŞTURUCU
-  /// Kullanıcı isteği: "En fazla 2 kez aynı ders"
-  /// Algoritma: 1 Konu = 2 Slot (Anlatım + Soru).
-  /// Bu yüzden "Günde Max 2 Slot" kuralı uygulanırsa, o dersten sadece 1 konu koyulabilir.
   Map<String, dynamic> _buildStrictlyBalancedWeeklySchedule({
     required UserModel user,
     required List<_ScoredTopic> topicPool,
@@ -197,7 +225,7 @@ class WeeklyPlannerService {
     required Map<String, double> subjectPerformances,
   }) {
     if (topicPool.isEmpty) {
-      return {'plan': [], 'summary': 'Çalışılacak konu bulunamadı.'};
+      return {'plan': [], 'summary': 'Analiz edilecek konu test verisi bulunamadı. Lütfen önce test çözün.'};
     }
 
     final trDays = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
@@ -211,7 +239,6 @@ class WeeklyPlannerService {
     final List<Map<String, dynamic>> plan = [];
     final trialDayIndices = _findBestTrialDays(orderedDays, user.weeklyAvailability, trialExams);
 
-    // Dağıtım listesi kopyası
     final List<_ScoredTopic> availableTopics = List.from(topicPool);
     final Set<String> usedTopicSignatures = {};
 
@@ -228,11 +255,9 @@ class WeeklyPlannerService {
       final actualSlotCount = targetSlotCount > availability.length ? availability.length : targetSlotCount;
       final dayActivities = <Map<String, String>>[];
 
-      // GÜNLÜK TAKİP HARİTASI
       final Map<String, int> dailySubjectCounts = {};
       String? lastSubject;
 
-      // Deneme Sınavı Yerleşimi
       final trialExamForToday = trialDayIndices[dayIdx];
       int startSlotIdx = 0;
 
@@ -251,16 +276,12 @@ class WeeklyPlannerService {
         startSlotIdx = slotsToUse;
       }
 
-      // Konu Yerleştirme
       for (int slotIdx = startSlotIdx; slotIdx < actualSlotCount; slotIdx++) {
         final slot = availability[slotIdx];
         _ScoredTopic? selectedTopic;
         int bestCandidateIndex = -1;
 
-        // --- ADAY SEÇİM ALGORİTMASI ---
-
-        // 1. ÖNCELİK: Gün içinde HİÇ kullanılmamış ders (Max Variety)
-        // VE Arka arkaya gelmeme kuralı
+        // 1. ÖNCELİK: Gün içinde HİÇ kullanılmamış ders
         for (int i = 0; i < availableTopics.length; i++) {
           final t = availableTopics[i];
           final count = dailySubjectCounts[t.subject] ?? 0;
@@ -271,35 +292,33 @@ class WeeklyPlannerService {
           }
         }
 
-        // 2. ÖNCELİK: Gün içinde HİÇ kullanılmamış ama mecbur arka arkaya gelen
+        // 2. ÖNCELİK: Gün içinde HİÇ kullanılmamış ama arka arkaya gelen
         if (bestCandidateIndex == -1) {
           for (int i = 0; i < availableTopics.length; i++) {
             final t = availableTopics[i];
             final count = dailySubjectCounts[t.subject] ?? 0;
 
-            if (count == 0) { // Limit 0'da
+            if (count == 0) {
               bestCandidateIndex = i;
               break;
             }
           }
         }
 
-        // 3. ÖNCELİK: Limit < 2 (Kullanıcı İsteği: En fazla 2 kez)
-        // Eğer hiç kullanılmamış ders kalmadıysa, 2. kez (yani toplam 4 slot) koymayı dene.
-        // Ama bu sadece çok az ders varsa devreye girmeli.
+        // 3. ÖNCELİK: Limit < 2
         if (bestCandidateIndex == -1) {
           for (int i = 0; i < availableTopics.length; i++) {
             final t = availableTopics[i];
             final count = dailySubjectCounts[t.subject] ?? 0;
 
-            if (count < 4 && lastSubject != t.subject) { // Count slot bazlıdır (2 slot = 1 konu)
+            if (count < 4 && lastSubject != t.subject) {
               bestCandidateIndex = i;
               break;
             }
           }
         }
 
-        // 4. SON ÇARE: Boş kalmasın diye ne varsa al
+        // 4. SON ÇARE
         if (bestCandidateIndex == -1 && availableTopics.isNotEmpty) {
           bestCandidateIndex = 0;
         }
@@ -308,12 +327,10 @@ class WeeklyPlannerService {
           selectedTopic = availableTopics[bestCandidateIndex];
           availableTopics.removeAt(bestCandidateIndex);
 
-          // 2 Slot birden dolduruyoruz (Konu + Soru)
           dailySubjectCounts[selectedTopic.subject] = (dailySubjectCounts[selectedTopic.subject] ?? 0) + 2;
           lastSubject = selectedTopic.subject;
           usedTopicSignatures.add('${selectedTopic.subject}-${selectedTopic.topic}');
 
-          // Slot 1: Konu Anlatımı / Tekrar
           final subjectSuccess = subjectPerformances[selectedTopic.subject] ?? 0.0;
           final isStrong = subjectSuccess > 0.7;
 
@@ -325,9 +342,8 @@ class WeeklyPlannerService {
             'id': '$slot-${selectedTopic.topic}-0',
           });
 
-          // Slot 2: Soru Çözümü (Eğer yer varsa)
           if (slotIdx + 1 < actualSlotCount) {
-            slotIdx++; // Döngüyü ilerlet
+            slotIdx++;
             final nextSlot = availability[slotIdx];
             dayActivities.add({
               'time': nextSlot,
@@ -351,31 +367,30 @@ class WeeklyPlannerService {
     };
   }
 
-  // --- Diğer Standart Metodlar (Değişiklik Yok) ---
+  // --- İstatistik Metodları ---
 
   Map<String, double> _calculateSubjectPerformanceFromTests(List<TestModel> tests) {
     if (tests.isEmpty) return {};
-    final generalTests = tests.where((t) => !t.isBranchTest).toList();
-    generalTests.sort((a, b) => b.date.compareTo(a.date));
 
-    final List<TestModel> testsToAnalyze = [];
-    final Map<String, int> examTypeCounts = {};
+    final limitDate = DateTime.now().subtract(const Duration(days: 365));
 
-    for (final test in generalTests) {
-      final type = test.examType.name;
-      final count = examTypeCounts[type] ?? 0;
-      if (count < 5) {
-        testsToAnalyze.add(test);
-        examTypeCounts[type] = count + 1;
-      }
-    }
+    // FİLTRE: Tarih + Sadece Branch Test (Konu Testi)
+    // Sadece genel başarıyı hesaplamak için kullanılır, konu elemek için DEĞİL.
+    final List<TestModel> testsToAnalyze = tests.where((test) {
+      return test.date.isAfter(limitDate) && test.isBranchTest;
+    }).toList();
+
+    if (testsToAnalyze.isEmpty) return {};
 
     final Map<String, Map<String, int>> aggregates = {};
+
     for (final test in testsToAnalyze) {
       test.scores.forEach((subject, stats) {
         if (!aggregates.containsKey(subject)) aggregates[subject] = {'dogru': 0, 'toplam': 0};
+
         final dogru = stats['dogru'] ?? 0;
         final toplam = (stats['dogru'] ?? 0) + (stats['yanlis'] ?? 0) + (stats['bos'] ?? 0);
+
         aggregates[subject]!['dogru'] = aggregates[subject]!['dogru']! + dogru;
         aggregates[subject]!['toplam'] = aggregates[subject]!['toplam']! + toplam;
       });
@@ -387,6 +402,7 @@ class WeeklyPlannerService {
       if (toplam < 5) return;
       performances[subject] = stats['dogru']! / toplam;
     });
+
     return performances;
   }
 
@@ -397,28 +413,28 @@ class WeeklyPlannerService {
     required PerformanceSummary performance,
     required double subjectSuccessRate,
     required bool isCompleted,
+    required TopicPerformanceModel? topicPerf,
   }) {
     double score = 0.0;
-    score += (1.0 - subjectSuccessRate) * 100;
 
-    final topicPerf = performance.topicPerformances[subjectName]?[topicName];
-    if (topicPerf != null) {
-      final attempts = topicPerf.correctCount + topicPerf.wrongCount;
-      if (attempts > 5) {
-        final accuracy = topicPerf.correctCount / attempts;
-        if (accuracy < 0.3) score += 80;
-        else if (accuracy < 0.5) score += 50;
-        else if (accuracy < 0.7) score += 20;
-        else score -= 30;
-      } else if (!isCompleted) {
-        score += 30;
-      }
+    // Konu testlerindeki genel ders başarısızlığı puanı (Etkisi biraz azaltıldı, konu başarısı öne çıksın)
+    score += (1.0 - subjectSuccessRate) * 150;
+
+    // Spesifik konu verisi (Artık topicPerf'in null olmadığı garanti)
+    final attempts = topicPerf!.correctCount + topicPerf.wrongCount;
+
+    if (attempts > 0) {
+      final accuracy = topicPerf.correctCount / attempts;
+      if (accuracy < 0.3) score += 200; // Çok başarısız konu - ZİRVE ÖNCELİK
+      else if (accuracy < 0.5) score += 120;
+      else if (accuracy < 0.7) score += 60;
+      else score -= 50;
     } else {
-      if (!isCompleted) score += 40;
+      score += 20;
     }
 
-    score += (50 - curriculumOrder).clamp(0, 20);
-    if (isCompleted) score -= 100;
+    score += (50 - curriculumOrder).clamp(0, 15);
+    if (isCompleted) score -= 150;
 
     return score;
   }
