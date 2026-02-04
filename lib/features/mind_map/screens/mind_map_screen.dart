@@ -6,6 +6,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'dart:convert';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/data/models/exam_model.dart';
+import 'package:taktik/core/utils/exam_utils.dart';
+import 'package:taktik/features/mind_map/screens/saved_mind_maps_screen.dart';
 
 // -----------------------------------------------------------------------------
 // MODELS
@@ -54,6 +58,14 @@ class MindMapNode {
       type: type,
       children: parsedChildren,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'label': label,
+      'description': description,
+      'children': children.map((child) => child.toJson()).toList(),
+    };
   }
 }
 
@@ -150,7 +162,11 @@ class MindMapScreen extends ConsumerStatefulWidget {
 
 class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProviderStateMixin {
   final TransformationController _transformationController = TransformationController();
-  final _topicController = TextEditingController();
+
+  Map<String, List<String>> _topicsBySubject = {};
+  String? _selectedSubject;
+  String? _selectedTopic;
+  String _searchQuery = '';
 
   static const double _rootRadius = 60.0;
   static const double _level1Distance = 250.0; // Biraz daha açtık
@@ -164,12 +180,12 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _centerCanvas();
+      _loadTopics();
     });
   }
 
   @override
   void dispose() {
-    _topicController.dispose();
     _transformationController.dispose();
     super.dispose();
   }
@@ -183,6 +199,79 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
 
     _transformationController.value = Matrix4.identity()
       ..translate(x, y);
+  }
+
+  Future<void> _loadTopics() async {
+    final user = ref.read(userProfileProvider).value;
+    if (user == null) return;
+
+    try {
+      if (user.selectedExam == null) return;
+      final ExamType examEnum = ExamType.values.byName(user.selectedExam!);
+      final examData = await ExamData.getExamByType(examEnum);
+
+      final Map<String, List<String>> topicsBySubject = {};
+
+      // ExamUtils zaten doğru sırayı (Curriculum Order) döndürür
+      final relevantSections = ExamUtils.getRelevantSectionsForUser(user, examData);
+
+      for (var section in relevantSections) {
+        section.subjects.forEach((subjectName, subjectDetails) {
+          final topicNames = subjectDetails.topics.map((t) => t.name).toList();
+
+          if (topicNames.isNotEmpty) {
+            // Eğer aynı ders başka section'da da varsa birleştir
+            if (topicsBySubject.containsKey(subjectName)) {
+              final existingTopics = topicsBySubject[subjectName]!;
+              final newTopics = topicNames.where((topic) => !existingTopics.contains(topic)).toList();
+              topicsBySubject[subjectName] = [...existingTopics, ...newTopics];
+            } else {
+              // Map'e ekleme sırası korunur
+              topicsBySubject[subjectName] = topicNames;
+            }
+          }
+        });
+      }
+
+      if (mounted) {
+        setState(() {
+          _topicsBySubject = topicsBySubject;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading topics: $e');
+    }
+  }
+
+  Map<String, List<String>> _filterTopics(Map<String, List<String>> allTopics) {
+    if (_searchQuery.isEmpty) {
+      return allTopics;
+    }
+
+    final filtered = <String, List<String>>{};
+
+    for (var entry in allTopics.entries) {
+      final subject = entry.key;
+      final topics = entry.value;
+
+      // Ders adında arama
+      final subjectMatches = subject.toLowerCase().contains(_searchQuery);
+
+      // Konularda arama
+      final matchingTopics = topics.where((topic) {
+        return topic.toLowerCase().contains(_searchQuery);
+      }).toList();
+
+      if (subjectMatches) {
+        // Ders adı eşleşiyorsa tüm konuları göster
+        filtered[subject] = topics;
+      } else if (matchingTopics.isNotEmpty) {
+        // Sadece eşleşen konuları göster
+        filtered[subject] = matchingTopics;
+      }
+    }
+
+    return filtered;
   }
 
   // JSON Temizleme (Markdown vb. silme)
@@ -241,10 +330,17 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   }
 
   Future<void> _generateMindMap() async {
-    final topic = _topicController.text.trim();
-    if (topic.isEmpty) return;
+    final topic = _selectedTopic;
+    if (topic == null || topic.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Lütfen bir konu seçin"),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
 
-    FocusScope.of(context).unfocus();
     ref.read(isGeneratingProvider.notifier).state = true;
 
     try {
@@ -308,6 +404,68 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     }
   }
 
+  void _saveMindMap() async {
+    final rootNode = ref.read(mindMapNodeProvider);
+    final user = ref.read(userProfileProvider).value;
+
+    if (rootNode == null || user == null) return;
+
+    try {
+      final firestoreService = ref.read(firestoreServiceProvider);
+
+      // MindMapNode'u JSON'a çevir
+      final mindMapJson = rootNode.toJson();
+
+      // Firestore'a kaydet
+      final docId = await firestoreService.saveMindMap(
+        userId: user.id,
+        topic: _selectedTopic ?? rootNode.label,
+        subject: _selectedSubject ?? 'Genel',
+        mindMapData: mindMapJson,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text('${_selectedTopic ?? "Zihin haritası"} başarıyla kaydedildi!'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+            action: SnackBarAction(
+              label: 'Görüntüle',
+              textColor: Colors.white,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SavedMindMapsScreen(),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Kaydetme hatası: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
   void _showNodeDetails(MindMapNode node) {
     showModalBottomSheet(
       context: context,
@@ -343,11 +501,169 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     );
   }
 
+  void _showTopicSelectionSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final filteredTopics = _filterTopics(_topicsBySubject);
+          final colorScheme = Theme.of(context).colorScheme;
+
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.75,
+            decoration: const BoxDecoration(
+              color: Color(0xFF1A1D21),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Colors.white.withOpacity(0.1)),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.school, color: Colors.amber),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'Konu Seç',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white54),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Arama çubuğu
+                      TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Ders veya konu ara...',
+                          hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                          prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.05),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                        onChanged: (value) {
+                          setModalState(() {
+                            _searchQuery = value.toLowerCase();
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Content
+                Expanded(
+                  child: filteredTopics.isEmpty
+                      ? Center(
+                          child: Text(
+                            _searchQuery.isEmpty
+                                ? 'Konu bulunamadı'
+                                : 'Arama sonucu bulunamadı',
+                            style: TextStyle(color: colorScheme.onSurfaceVariant),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: filteredTopics.length,
+                          itemBuilder: (context, index) {
+                            final subject = filteredTopics.keys.elementAt(index);
+                            final topics = filteredTopics[subject]!;
+
+                            return Card(
+                              color: Colors.white.withOpacity(0.05),
+                              margin: const EdgeInsets.only(bottom: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: ExpansionTile(
+                                tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                title: Text(
+                                  subject,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  '${topics.length} konu',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.6),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                iconColor: Colors.amber,
+                                collapsedIconColor: Colors.white54,
+                                children: topics.map((topic) {
+                                  final isSelected = _selectedTopic == topic;
+                                  return ListTile(
+                                    dense: true,
+                                    title: Text(
+                                      topic,
+                                      style: TextStyle(
+                                        color: isSelected ? Colors.amber : Colors.white,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      ),
+                                    ),
+                                    leading: Icon(
+                                      isSelected ? Icons.check_circle : Icons.circle_outlined,
+                                      color: isSelected ? Colors.amber : Colors.white54,
+                                      size: 20,
+                                    ),
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedTopic = topic;
+                                        _selectedSubject = subject;
+                                      });
+                                      Navigator.pop(context);
+                                      _generateMindMap();
+                                    },
+                                  );
+                                }).toList(),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final rootNode = ref.watch(mindMapNodeProvider);
     final isGenerating = ref.watch(isGeneratingProvider);
-    final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F1115),
@@ -358,11 +674,24 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
         elevation: 0,
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.folder_outlined),
+            tooltip: 'Kaydedilenler',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SavedMindMapsScreen(),
+                ),
+              );
+            },
+          ),
           if (rootNode != null)
             IconButton(
               icon: const Icon(Icons.center_focus_strong),
+              tooltip: 'Ortala',
               onPressed: _centerCanvas,
-            )
+            ),
         ],
       ),
       body: Stack(
@@ -412,36 +741,36 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
       ),
       bottomNavigationBar: (rootNode != null && !isGenerating)
           ? Container(
-        padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-            left: 16, right: 16, top: 16
-        ),
-        color: const Color(0xFF0F1115),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _topicController,
-                decoration: InputDecoration(
-                  hintText: 'Yeni konu...',
-                  filled: true,
-                  fillColor: Colors.white10,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                ),
-                style: const TextStyle(color: Colors.white),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1D21),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: 8),
-            FloatingActionButton(
-              onPressed: _generateMindMap,
-              backgroundColor: theme.primaryColor,
-              mini: true,
-              child: const Icon(Icons.auto_awesome),
-            ),
-          ],
-        ),
-      )
+              child: SafeArea(
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: FilledButton.icon(
+                    onPressed: _saveMindMap,
+                    icon: const Icon(Icons.save_rounded),
+                    label: const Text(
+                      'Zihin Haritasını Kaydet',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.amber,
+                      foregroundColor: Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            )
           : null,
     );
   }
@@ -461,33 +790,32 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
             ),
             const SizedBox(height: 12),
             const Text(
-              "Karmaşık konuları görselleştir. Bir konu gir ve yapay zeka senin için dallara ayırsın.",
+              "Karmaşık konuları görselleştir. Listeden bir konu seç, yapay zeka senin için dallara ayırsın.",
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white54),
             ),
             const SizedBox(height: 32),
-            TextField(
-              controller: _topicController,
-              decoration: InputDecoration(
-                hintText: 'Örn: Fotosentez, Türev',
-                filled: true,
-                fillColor: Colors.white10,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                prefixIcon: const Icon(Icons.search, color: Colors.white54),
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-              ),
-              style: const TextStyle(color: Colors.white),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: FilledButton.icon(
-                onPressed: _generateMindMap,
-                icon: const Icon(Icons.auto_awesome),
-                label: const Text("Oluştur"),
-              ),
-            ),
+
+            // Konu Seçme Butonu
+            if (_topicsBySubject.isNotEmpty)
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: FilledButton.icon(
+                  onPressed: _showTopicSelectionSheet,
+                  icon: const Icon(Icons.school_rounded),
+                  label: Text(
+                    _selectedTopic ?? 'Konu Seç',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.amber,
+                    foregroundColor: Colors.black,
+                  ),
+                ),
+              )
+            else
+              const CircularProgressIndicator(color: Colors.amber),
           ],
         ),
       ),
