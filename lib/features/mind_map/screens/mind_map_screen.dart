@@ -6,10 +6,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'dart:convert';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/core/utils/exam_utils.dart';
 import 'package:taktik/features/mind_map/screens/saved_mind_maps_screen.dart';
+import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 // -----------------------------------------------------------------------------
 // MODELS
@@ -98,7 +98,7 @@ class ConnectionPainter extends CustomPainter {
 
   void _drawRecursive(Canvas canvas, MindMapNode node, Paint paint) {
     for (var child in node.children) {
-      paint.color = child.color.withOpacity(0.6);
+      paint.color = child.color.withValues(alpha: 0.6);
       paint.strokeWidth = (node.type == NodeType.root ? 3.0 : 1.5);
 
       final p1 = node.position;
@@ -129,10 +129,14 @@ class ConnectionPainter extends CustomPainter {
 }
 
 class GridPainter extends CustomPainter {
+  final bool isDark;
+
+  GridPainter({required this.isDark});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.05)
+      ..color = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05)
       ..strokeWidth = 1;
 
     const spacing = 40.0;
@@ -146,7 +150,7 @@ class GridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant GridPainter oldDelegate) => oldDelegate.isDark != isDark;
 }
 
 // -----------------------------------------------------------------------------
@@ -168,7 +172,6 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   String? _selectedTopic;
   String _searchQuery = '';
 
-  static const double _rootRadius = 60.0;
   static const double _level1Distance = 250.0; // Biraz daha açtık
   static const double _level2Distance = 200.0;
 
@@ -198,7 +201,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     final y = -_center.dy + size.height / 2;
 
     _transformationController.value = Matrix4.identity()
-      ..translate(x, y);
+      ..translateByVector3(Vector3(x, y, 0));
   }
 
   Future<void> _loadTopics() async {
@@ -417,7 +420,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
       final mindMapJson = rootNode.toJson();
 
       // Firestore'a kaydet
-      final docId = await firestoreService.saveMindMap(
+      await firestoreService.saveMindMap(
         userId: user.id,
         topic: _selectedTopic ?? rootNode.label,
         subject: _selectedSubject ?? 'Genel',
@@ -467,15 +470,25 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   }
 
   void _showNodeDetails(MindMapNode node) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: const Color(0xFF1A1D21),
+          color: colorScheme.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           border: Border(top: BorderSide(color: node.color, width: 4)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+              blurRadius: 20,
+            ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -483,8 +496,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
           children: [
             Text(
               node.label,
-              style: TextStyle(
-                fontSize: 24,
+              style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: node.color,
               ),
@@ -492,7 +504,9 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
             const SizedBox(height: 12),
             Text(
               node.description.isEmpty ? "Ek açıklama yok." : node.description,
-              style: const TextStyle(color: Colors.white70, fontSize: 16),
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 24),
           ],
@@ -502,6 +516,9 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   }
 
   void _showTopicSelectionSheet() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -509,13 +526,19 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
           final filteredTopics = _filterTopics(_topicsBySubject);
-          final colorScheme = Theme.of(context).colorScheme;
+          final isDark = theme.brightness == Brightness.dark;
 
           return Container(
             height: MediaQuery.of(context).size.height * 0.75,
-            decoration: const BoxDecoration(
-              color: Color(0xFF1A1D21),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+                  blurRadius: 20,
+                ),
+              ],
             ),
             child: Column(
               children: [
@@ -524,27 +547,26 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     border: Border(
-                      bottom: BorderSide(color: Colors.white.withOpacity(0.1)),
+                      bottom: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
                     ),
                   ),
                   child: Column(
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.school, color: Colors.amber),
+                          Icon(Icons.school, color: colorScheme.primary),
                           const SizedBox(width: 12),
-                          const Expanded(
+                          Expanded(
                             child: Text(
                               'Konu Seç',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
+                              style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
+                                color: colorScheme.onSurface,
                               ),
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.close, color: Colors.white54),
+                            icon: Icon(Icons.close, color: colorScheme.onSurfaceVariant),
                             onPressed: () => Navigator.pop(context),
                           ),
                         ],
@@ -554,10 +576,10 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                       TextField(
                         decoration: InputDecoration(
                           hintText: 'Ders veya konu ara...',
-                          hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                          prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                          hintStyle: TextStyle(color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
+                          prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
                           filled: true,
-                          fillColor: Colors.white.withOpacity(0.05),
+                          fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -567,7 +589,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                             vertical: 12,
                           ),
                         ),
-                        style: const TextStyle(color: Colors.white),
+                        style: TextStyle(color: colorScheme.onSurface),
                         onChanged: (value) {
                           setModalState(() {
                             _searchQuery = value.toLowerCase();
@@ -586,7 +608,9 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                             _searchQuery.isEmpty
                                 ? 'Konu bulunamadı'
                                 : 'Arama sonucu bulunamadı',
-                            style: TextStyle(color: colorScheme.onSurfaceVariant),
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         )
                       : ListView.builder(
@@ -597,44 +621,46 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                             final topics = filteredTopics[subject]!;
 
                             return Card(
-                              color: Colors.white.withOpacity(0.05),
+                              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                               margin: const EdgeInsets.only(bottom: 12),
+                              elevation: isDark ? 0 : 2,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(
+                                  color: colorScheme.outline.withValues(alpha: 0.2),
+                                ),
                               ),
                               child: ExpansionTile(
                                 tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 title: Text(
                                   subject,
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                    color: colorScheme.onSurface,
                                   ),
                                 ),
                                 subtitle: Text(
                                   '${topics.length} konu',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.6),
-                                    fontSize: 12,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
                                   ),
                                 ),
-                                iconColor: Colors.amber,
-                                collapsedIconColor: Colors.white54,
+                                iconColor: colorScheme.primary,
+                                collapsedIconColor: colorScheme.onSurfaceVariant,
                                 children: topics.map((topic) {
                                   final isSelected = _selectedTopic == topic;
                                   return ListTile(
                                     dense: true,
                                     title: Text(
                                       topic,
-                                      style: TextStyle(
-                                        color: isSelected ? Colors.amber : Colors.white,
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: isSelected ? colorScheme.primary : colorScheme.onSurface,
                                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                       ),
                                     ),
                                     leading: Icon(
                                       isSelected ? Icons.check_circle : Icons.circle_outlined,
-                                      color: isSelected ? Colors.amber : Colors.white54,
+                                      color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
                                       size: 20,
                                     ),
                                     onTap: () {
@@ -664,9 +690,12 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   Widget build(BuildContext context) {
     final rootNode = ref.watch(mindMapNodeProvider);
     final isGenerating = ref.watch(isGeneratingProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1115),
+      backgroundColor: theme.scaffoldBackgroundColor,
       // AppBar ekledik ki geri dönme sorunu yaşanmasın
       appBar: AppBar(
         title: const Text("Zihin Haritası"),
@@ -708,7 +737,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                 height: _canvasSize.height,
                 child: Stack(
                   children: [
-                    Positioned.fill(child: CustomPaint(painter: GridPainter())),
+                    Positioned.fill(child: CustomPaint(painter: GridPainter(isDark: isDark))),
                     Positioned.fill(
                       child: CustomPaint(
                         painter: ConnectionPainter(rootNode: rootNode, scale: 1.0),
@@ -724,15 +753,19 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
 
           if (isGenerating)
             Container(
-              color: Colors.black.withOpacity(0.7),
-              child: const Center(
+              color: colorScheme.surface.withValues(alpha: 0.8),
+              child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(color: Colors.amber),
-                    SizedBox(height: 20),
-                    Text("Zihin haritası oluşturuluyor...",
-                        style: TextStyle(color: Colors.white, fontSize: 16)),
+                    CircularProgressIndicator(color: colorScheme.primary),
+                    const SizedBox(height: 20),
+                    Text(
+                      "Zihin haritası oluşturuluyor...",
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -743,10 +776,16 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
           ? Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1D21),
+                color: colorScheme.surface,
+                border: Border(
+                  top: BorderSide(
+                    color: colorScheme.outline.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),
@@ -764,8 +803,8 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     style: FilledButton.styleFrom(
-                      backgroundColor: Colors.amber,
-                      foregroundColor: Colors.black,
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
                     ),
                   ),
                 ),
@@ -776,23 +815,31 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.hub, size: 80, color: Colors.white24),
+            Icon(Icons.hub, size: 80, color: colorScheme.primary.withValues(alpha: 0.3)),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               "Zihin Haritası",
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               "Karmaşık konuları görselleştir. Listeden bir konu seç, yapay zeka senin için dallara ayırsın.",
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white54),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 32),
 
@@ -809,13 +856,13 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: Colors.amber,
-                    foregroundColor: Colors.black,
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
                   ),
                 ),
               )
             else
-              const CircularProgressIndicator(color: Colors.amber),
+              CircularProgressIndicator(color: colorScheme.primary),
           ],
         ),
       ),
@@ -864,6 +911,9 @@ class _NodeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
     final isRoot = node.type == NodeType.root;
 
     return GestureDetector(
@@ -873,7 +923,9 @@ class _NodeWidget extends StatelessWidget {
         height: height,
         padding: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
-          color: const Color(0xFF1A1D21),
+          color: isDark
+              ? colorScheme.surfaceContainerHighest
+              : colorScheme.surface,
           borderRadius: BorderRadius.circular(isRoot ? 35 : 12),
           border: Border.all(
             color: node.color,
@@ -881,7 +933,7 @@ class _NodeWidget extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: node.color.withOpacity(0.4),
+              color: node.color.withValues(alpha: 0.4),
               blurRadius: 16,
               spreadRadius: 0,
             )
@@ -894,7 +946,7 @@ class _NodeWidget extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: Colors.white,
+            color: isDark ? colorScheme.onSurface : colorScheme.onSurface,
             fontSize: isRoot ? 14 : 11,
             fontWeight: isRoot ? FontWeight.bold : FontWeight.w600,
           ),

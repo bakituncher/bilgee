@@ -12,6 +12,9 @@ class SavedMindMapsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(userProfileProvider).value;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
 
     if (user == null) {
       return Scaffold(
@@ -21,7 +24,7 @@ class SavedMindMapsScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1115),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Kaydedilmiş Zihin Haritaları'),
         backgroundColor: Colors.transparent,
@@ -31,8 +34,8 @@ class SavedMindMapsScreen extends ConsumerWidget {
         stream: ref.read(firestoreServiceProvider).getSavedMindMaps(user.id),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Colors.amber),
+            return Center(
+              child: CircularProgressIndicator(color: colorScheme.primary),
             );
           }
 
@@ -40,7 +43,9 @@ class SavedMindMapsScreen extends ConsumerWidget {
             return Center(
               child: Text(
                 'Hata: ${snapshot.error}',
-                style: const TextStyle(color: Colors.white70),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
             );
           }
@@ -52,11 +57,13 @@ class SavedMindMapsScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.hub_outlined, size: 80, color: Colors.white24),
+                  Icon(Icons.hub_outlined, size: 80, color: colorScheme.primary.withValues(alpha: 0.3)),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Henüz kayıtlı zihin haritası yok',
-                    style: TextStyle(color: Colors.white54, fontSize: 16),
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   FilledButton.icon(
@@ -64,8 +71,8 @@ class SavedMindMapsScreen extends ConsumerWidget {
                     icon: const Icon(Icons.add),
                     label: const Text('Yeni Zihin Haritası Oluştur'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: Colors.amber,
-                      foregroundColor: Colors.black,
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
                     ),
                   ),
                 ],
@@ -86,25 +93,33 @@ class SavedMindMapsScreen extends ConsumerWidget {
                   : '';
 
               return Card(
-                color: const Color(0xFF1A1D21),
+                color: isDark
+                    ? colorScheme.surfaceContainerHighest
+                    : colorScheme.surface,
                 margin: const EdgeInsets.only(bottom: 12),
+                elevation: isDark ? 0 : 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: colorScheme.outline.withValues(alpha: 0.2),
+                  ),
+                ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(16),
                   leading: Container(
                     width: 50,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: Colors.amber.withOpacity(0.2),
+                      color: colorScheme.primary.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.hub, color: Colors.amber),
+                    child: Icon(Icons.hub, color: colorScheme.primary),
                   ),
                   title: Text(
                     topic,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   subtitle: Column(
@@ -114,34 +129,46 @@ class SavedMindMapsScreen extends ConsumerWidget {
                         const SizedBox(height: 4),
                         Text(
                           subject,
-                          style: const TextStyle(color: Colors.white54, fontSize: 13),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                       if (dateStr.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Text(
                           dateStr,
-                          style: const TextStyle(color: Colors.white38, fontSize: 12),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                          ),
                         ),
                       ],
                     ],
                   ),
                   trailing: PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert, color: Colors.white54),
-                    color: const Color(0xFF2A2D31),
+                    icon: Icon(Icons.more_vert, color: colorScheme.onSurfaceVariant),
+                    color: isDark
+                        ? colorScheme.surfaceContainerHigh
+                        : colorScheme.surface,
                     onSelected: (value) async {
                       if (value == 'delete') {
                         final confirmed = await showDialog<bool>(
                           context: context,
                           builder: (context) => AlertDialog(
-                            backgroundColor: const Color(0xFF1A1D21),
-                            title: const Text(
+                            backgroundColor: isDark
+                                ? colorScheme.surfaceContainerHigh
+                                : colorScheme.surface,
+                            title: Text(
                               'Sil',
-                              style: TextStyle(color: Colors.white),
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                color: colorScheme.onSurface,
+                              ),
                             ),
                             content: Text(
                               '$topic zihin haritasını silmek istediğinize emin misiniz?',
-                              style: const TextStyle(color: Colors.white70),
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
                             ),
                             actions: [
                               TextButton(
@@ -151,7 +178,7 @@ class SavedMindMapsScreen extends ConsumerWidget {
                               TextButton(
                                 onPressed: () => Navigator.pop(context, true),
                                 style: TextButton.styleFrom(
-                                  foregroundColor: Colors.red,
+                                  foregroundColor: colorScheme.error,
                                 ),
                                 child: const Text('Sil'),
                               ),
@@ -165,9 +192,9 @@ class SavedMindMapsScreen extends ConsumerWidget {
                               .deleteMindMap(user.id, mindMap['id']);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Zihin haritası silindi'),
-                                backgroundColor: Colors.orange,
+                              SnackBar(
+                                content: const Text('Zihin haritası silindi'),
+                                backgroundColor: colorScheme.primary,
                               ),
                             );
                           }
@@ -175,13 +202,15 @@ class SavedMindMapsScreen extends ConsumerWidget {
                       }
                     },
                     itemBuilder: (context) => [
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                            SizedBox(width: 12),
-                            Text('Sil', style: TextStyle(color: Colors.white)),
+                            Icon(Icons.delete_outline, color: colorScheme.error, size: 20),
+                            const SizedBox(width: 12),
+                            Text('Sil', style: theme.textTheme.bodyLarge?.copyWith(
+                              color: colorScheme.onSurface,
+                            )),
                           ],
                         ),
                       ),
@@ -205,6 +234,9 @@ class SavedMindMapsScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> mindMapData,
   ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     try {
       final data = mindMapData['mindMapData'] as Map<String, dynamic>?;
       if (data == null) return;
@@ -224,7 +256,7 @@ class SavedMindMapsScreen extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Yükleme hatası: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: colorScheme.error,
         ),
       );
     }
