@@ -282,17 +282,6 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
           'redirectRoute': '/ai-hub/motivation-chat',
           'imageAsset': 'assets/images/bunnyy.png',
         };
-      case '/ai-hub/analysis-strategy':
-        return {
-          'title': 'Analiz & Strateji',
-          'subtitle': 'Verilerle konuşan koç.',
-          'icon': Icons.radar_rounded,
-          'color': const Color(0xFFF43F5E),
-          'heroTag': 'analysis-strategy-offer',
-          'marketingTitle': 'Tuzağı Fark Et!',
-          'marketingSubtitle': 'Denemelerde neden takılıyorsun? Detaylı analiz sistemi, seni aşağı çeken konuları nokta atışı tespit etsin.',
-          'redirectRoute': '/ai-hub/analysis-strategy',
-        };
       default:
         return null;
     }

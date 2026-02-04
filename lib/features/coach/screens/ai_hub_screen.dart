@@ -12,8 +12,7 @@ import 'package:taktik/shared/widgets/pro_badge.dart';
 
 // --- KEY TANIMLAMALARI (Spotlight için) ---
 final GlobalKey _weeklyPlanKey = GlobalKey();
-final GlobalKey _solverKey = GlobalKey(); // Bu key tanımlı ama aşağıda kullanılmamıştı
-final GlobalKey _analysisKey = GlobalKey();
+final GlobalKey _solverKey = GlobalKey();
 final GlobalKey _studyRoomKey = GlobalKey();
 final GlobalKey _coachKey = GlobalKey();
 
@@ -54,27 +53,21 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
           buttonText: "Harika",
         ),
         TutorialStep(
-          highlightKey: _solverKey, // Burada referans veriliyor
+          highlightKey: _solverKey,
           title: "Özel Ders Cebinde",
           text: "Çözemediğin bir soru mu var? Sadece fotoğrafını çek. Taktik Tavşan sana cevabı vermekle kalmaz, öğretmenden dinlemiş gibi adım adım mantığını anlatır.",
           buttonText: "Süper",
         ),
         TutorialStep(
-          highlightKey: _analysisKey,
-          title: "Net Arttırma Uzmanı",
-          text: "Deneme analizlerinle 'Neden netlerim artmıyor?' sorusuna son. Seni tuzağa düşüren konuları tespit eder ve nokta atışı uyarılar yapar.",
+          highlightKey: _coachKey,
+          title: "Mentor & Analiz Merkezi",
+          text: "Taktik Tavşan hem mentalini güçlendirir, hem de deneme analizlerinle netlerini arttırmak için nokta atışı stratejiler sunar.",
           buttonText: "Devam",
         ),
         TutorialStep(
           highlightKey: _studyRoomKey,
           title: "Akıllı Etüt Odası",
           text: "Burası senin eksik kapatma merkezin. Taktik Tavşan senin zayıf olduğun konulardan sana özel konu özetleri ve testler üretir.",
-          buttonText: "Anladım",
-        ),
-        TutorialStep(
-          highlightKey: _coachKey,
-          title: "Motivasyonel Üstünlük",
-          text: "Sınav sadece bilgi değildir. Motivasyonun düştüğünde veya stres olduğunda Taktik Tavşan seni mental olarak ayağa kaldırmak için burada.",
           buttonText: "Keşfetmeye Başla",
         ),
       ];
@@ -383,55 +376,26 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
 
             const SizedBox(height: gap),
 
-            // Satır 2
-            Row(
-              children: [
-                Expanded(
-                  child: KeyedSubtree(
-                    key: _analysisKey,
-                    child: _BentoCard(
-                      title: 'Analiz &\nStrateji',
-                      description: 'Nasıl daha çok net\nyapacağını söyler.',
-                      icon: Icons.radar_rounded,
-                      color: const Color(0xFFF43F5E),
-                      isPremium: isPremium,
-                      height: 160,
-                      onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/analysis-strategy', offerData: {
-                        'title': 'Analiz & Strateji',
-                        'subtitle': 'Verilerle konuşan koç.',
-                        'iconName': 'radar',
-                        'color': const Color(0xFFF43F5E),
-                        'marketingTitle': 'Tuzağı Fark Et!',
-                        'marketingSubtitle': 'Denemelerde sürekli aynı yanlışları mı yapıyorsun? Seni aşağı çeken konuları nokta atışı tespit et.',
-                        'redirectRoute': '/ai-hub/analysis-strategy',
-                      }),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: gap),
-                Expanded(
-                  child: KeyedSubtree(
-                    key: _studyRoomKey,
-                    child: _BentoCard(
-                      title: 'Etüt\nOdası',
-                      description: 'Eksik konularına özel\nçalışma setleri.',
-                      icon: Icons.menu_book_rounded,
-                      color: const Color(0xFF8B5CF6),
-                      isPremium: isPremium,
-                      height: 160,
-                      onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/weakness-workshop', offerData: {
-                        'title': 'Etüt Odası',
-                        'subtitle': 'Kişiye özel çalışma materyalleri.',
-                        'iconName': 'menu_book',
-                        'color': const Color(0xFF8B5CF6),
-                        'marketingTitle': 'Eksiklerini Kapat!',
-                        'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
-                        'redirectRoute': '/ai-hub/weakness-workshop',
-                      }),
-                    ),
-                  ),
-                ),
-              ],
+            // Satır 2 - Etüt Odası (tam genişlik)
+            KeyedSubtree(
+              key: _studyRoomKey,
+              child: _BentoCard(
+                title: 'Etüt Odası',
+                description: 'Eksik konularına özel çalışma setleri üretir.',
+                icon: Icons.menu_book_rounded,
+                color: const Color(0xFF8B5CF6),
+                isPremium: isPremium,
+                height: 160,
+                onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/weakness-workshop', offerData: {
+                  'title': 'Etüt Odası',
+                  'subtitle': 'Kişiye özel çalışma materyalleri.',
+                  'iconName': 'menu_book',
+                  'color': const Color(0xFF8B5CF6),
+                  'marketingTitle': 'Eksiklerini Kapat!',
+                  'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
+                  'redirectRoute': '/ai-hub/weakness-workshop',
+                }),
+              ),
             ),
 
             const SizedBox(height: 32),
@@ -855,7 +819,10 @@ class _HeroCoachCard extends StatelessWidget {
   final bool isPremium;
   final VoidCallback onTap;
 
-  const _HeroCoachCard({required this.isPremium, required this.onTap});
+  const _HeroCoachCard({
+    required this.isPremium,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -939,6 +906,64 @@ class _HeroCoachCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// Analiz butonları için yardımcı widget
+class _AnalysisButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _AnalysisButton({
+    required this.icon,
+    required this.label,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF312E81).withOpacity(0.4) : Colors.white.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isDark ? Colors.indigoAccent.withOpacity(0.3) : const Color(0xFF4338CA).withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 24,
+                color: isDark ? Colors.indigoAccent : const Color(0xFF4338CA),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white70 : const Color(0xFF312E81),
+                  height: 1.2,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

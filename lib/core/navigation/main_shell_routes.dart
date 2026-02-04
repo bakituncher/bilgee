@@ -6,7 +6,6 @@ import 'package:taktik/data/models/topic_performance_model.dart';
 import 'package:taktik/features/arena/screens/arena_screen.dart';
 import 'package:taktik/features/arena/screens/public_profile_screen.dart';
 import 'package:taktik/features/coach/screens/ai_hub_screen.dart';
-import 'package:taktik/features/coach/screens/analysis_strategy_screen.dart'; // YENİ: Analiz & Strateji ekranı
 import 'package:taktik/features/coach/screens/coach_screen.dart';
 import 'package:taktik/features/coach/screens/motivation_chat_screen.dart';
 import 'package:taktik/features/coach/screens/select_subject_screen.dart';
@@ -205,12 +204,6 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
                   final prompt = state.extra;
                   return buildPageWithFadeTransition(context: context, state: state, child: MotivationChatScreen(initialPrompt: prompt));
                 },
-              ),
-              GoRoute(
-                path: AppRoutes.analysisStrategy, // YENİ rota
-                name: 'AnalysisStrategy',
-                parentNavigatorKey: rootNavigatorKey,
-                pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const AnalysisStrategyScreen()),
               ),
               GoRoute(
                 path: AppRoutes.coachPushed,

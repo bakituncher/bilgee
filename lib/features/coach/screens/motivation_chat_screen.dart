@@ -492,7 +492,7 @@ class _SmartBriefingView extends ConsumerWidget {
                         ).animate().fadeIn(delay: 100.ms).scale(curve: Curves.elasticOut),
                         const SizedBox(height: 16),
                         Text(
-                          'Motivasyon & Destek',
+                          'Mentörun Taktik Tavşan',
                           style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w700,
                             letterSpacing: -0.3,
@@ -500,7 +500,7 @@ class _SmartBriefingView extends ConsumerWidget {
                         ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3),
                         const SizedBox(height: 8),
                         Text(
-                          'Stresini yönet, enerjini topla. Zihinsel performansın için yargısız, güvenli alanın burası. 🫶',
+                          'Motivasyon, strateji, analiz ve destek... Taktik Tavşan sınav yolculuğunda her alanda yanında! 🚀',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                             height: 1.5,
@@ -545,6 +545,38 @@ class _SmartBriefingView extends ConsumerWidget {
                     accentColor: isDark ? const Color(0xFFFFAB40) : const Color(0xFFF57C00),
                   ),
 
+                  const SizedBox(height: 12),
+
+                  _BriefingButton(
+                    icon: Icons.analytics_rounded,
+                    title: 'Deneme Analizi',
+                    subtitle: 'Hatalarını keşfet. Eksiklerini MR gibi tarayalım, netlerini artıralım. 💡',
+                    onTap: () => onPromptSelected('trial_review'),
+                    delay: 550.ms,
+                    gradient: LinearGradient(
+                      colors: isDark
+                          ? [const Color(0xFF6B4226), const Color(0xFF8B5A2B)]
+                          : [const Color(0xFFFFD54F), const Color(0xFFFFB300)],
+                    ),
+                    accentColor: isDark ? const Color(0xFFFFD54F) : const Color(0xFFFF8F00),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  _BriefingButton(
+                    icon: Icons.rocket_launch_rounded,
+                    title: 'Strateji Danışma',
+                    subtitle: 'Stratejik program ve kişiye özel yol haritası. Planla ve kazan! 🔥',
+                    onTap: () => onPromptSelected('strategy_consult'),
+                    delay: 600.ms,
+                    gradient: LinearGradient(
+                      colors: isDark
+                          ? [const Color(0xFF1A4D6D), const Color(0xFF2563A8)]
+                          : [const Color(0xFF42A5F5), const Color(0xFF1E88E5)],
+                    ),
+                    accentColor: isDark ? const Color(0xFF64B5F6) : const Color(0xFF0D47A1),
+                  ),
+
                   const SizedBox(height: 24),
 
                   // Disclaimer
@@ -577,7 +609,7 @@ class _SmartBriefingView extends ConsumerWidget {
                         ),
                       ],
                     ),
-                  ).animate().fadeIn(delay: 600.ms),
+                  ).animate().fadeIn(delay: 650.ms),
                 ],
               ),
             ),

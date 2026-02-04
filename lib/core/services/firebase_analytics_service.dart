@@ -197,7 +197,7 @@ class ImportantScreenObserver extends NavigatorObserver {
     'Home', 'AIHub', 'Coach', 'Arena', 'Profile', 'Settings', 'Library',
     'Premium', 'Stats', 'StatsOverview', 'Notifications', 'Pomodoro',
     'TestDetail', 'TestResultSummary', 'StrategicPlanning', 'WeaknessWorkshop',
-    'SavedWorkshops', 'SavedWorkshopDetail', 'AnalysisStrategy', 'UserGuide',
+    'SavedWorkshops', 'SavedWorkshopDetail', 'UserGuide',
   };
 
   void _maybeLog(Route? route) {
