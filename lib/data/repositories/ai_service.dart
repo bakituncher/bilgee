@@ -798,7 +798,8 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
     String prompt;
 
     // Chat türüne göre dinamik temperature
-    double chatTemperature = 0.75;
+    // Daha yüksek temperature = daha yaratıcı ve uzun yanıtlar
+    double chatTemperature = 0.85;
 
     switch (promptType) {
       case 'trial_review':
@@ -811,7 +812,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
           conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        chatTemperature = 0.65;
+        chatTemperature = 0.80; // Veri odaklı ama samimi
         break;
       case 'strategy_consult':
         prompt = StrategyConsultPrompt.build(
@@ -823,7 +824,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
           conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        chatTemperature = 0.6;
+        chatTemperature = 0.75; // Stratejik ama yaratıcı
         break;
       case 'psych_support':
         prompt = PsychSupportPrompt.build(
@@ -833,7 +834,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
           conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        chatTemperature = 1.0; // MAKSİMUM DOĞALLIK VE YARATICILIK
+        chatTemperature = 1.0; // MAKSİMUM DOĞALLIK VE EMPATİ
         break;
       case 'motivation_corner':
         prompt = MotivationCornerPrompt.build(
@@ -842,7 +843,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
           conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        chatTemperature = 0.95; // YÜKSEK ENERJİ İÇİN YÜKSEK ISI
+        chatTemperature = 0.95; // YÜKSEK ENERJİ VE YARATICILIK
         break;
       default:
         // Diğer durumlar için fallback

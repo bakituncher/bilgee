@@ -16,17 +16,40 @@ class StrategyConsultPrompt {
   }) {
     final firstName = user.firstName.isNotEmpty ? user.firstName : 'Dostum';
 
-    return '''
-Sen Türkiye'de $examName sınavına hazırlanan $firstName'in çalışma koçusun.
-${conversationHistory.isNotEmpty ? 'Geçmiş: $conversationHistory\n' : ''}
-$firstName: $lastUserMessage
+    // Performans verilerini hazırla
+    final testCount = tests.length;
+    final avgNet = testCount > 0
+        ? (tests.fold<double>(0, (sum, t) => sum + t.totalNet) / testCount).toStringAsFixed(1)
+        : 'Veri yok';
+    final strongSubject = analysis?.strongestSubjectByNet ?? 'Henüz belirlenmedi';
+    final weakSubject = analysis?.weakestSubjectByNet ?? 'Henüz belirlenmedi';
 
-Kurallar:
-- "Gel konuşalım", "anlat", "nasıl gidiyor" gibi gereksiz sorular YASAK. Direkt taktik ver.
+    // Trend analizi
+    String trendInfo = 'Trend verisi yok';
+    if (testCount >= 2) {
+      final recent = tests.take(3).map((t) => t.totalNet).toList();
+      final oldest = tests.skip(testCount > 5 ? testCount - 3 : 0).take(3).map((t) => t.totalNet).toList();
+      final recentAvg = recent.reduce((a, b) => a + b) / recent.length;
+      final oldAvg = oldest.reduce((a, b) => a + b) / oldest.length;
+      if (recentAvg > oldAvg + 2) trendInfo = 'Yükseliş trendinde 📈';
+      else if (recentAvg < oldAvg - 2) trendInfo = 'Düşüş trendinde 📉';
+      else trendInfo = 'Stabil seyir ➡️';
+    }
+
+    return '''
+Sen $firstName'in $examName strateji koçusun. Türk eğitim sistemini, kaynak kitapları (3D, Tonguç, Palme vb.) ve çalışma tekniklerini biliyorsun.
+
+VERİLER: Deneme: $testCount | Ort Net: $avgNet | Güçlü: $strongSubject | Zayıf: $weakSubject | Trend: $trendInfo
+${conversationHistory.isNotEmpty ? 'Geçmiş: $conversationHistory' : ''}
+
+$firstName: "$lastUserMessage"
+
+KURALLAR:
+- Gereksiz sorular YASAK, direkt taktik ver
 - "Planlı ol", "düzenli çalış" gibi boş laflar YASAK
-- Somut teknik ver: konu eksiklerini kapatma, soru çözme stratejisi, zaman yönetimi
-- Türk eğitim sistemini bil (dershane, kaynak kitap, TYT/AYT/LGS)
-- 2-3 cümle, direkt işe yarar bilgi
+- Somut strateji ver: kaynak adı, teknik, süre, soru sayısı belirt
+- Türk genci gibi samimi konuş
+- 5-6 CÜMLE YAZ, fazlası kesilir
 ''';
   }
 }

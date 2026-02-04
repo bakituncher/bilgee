@@ -7,7 +7,7 @@ import 'package:taktik/core/prompts/prompt_remote.dart';
 
 class DefaultMotivationPrompts {
   static String _commonHeader(String? examName) =>
-      "Sen Taktik Tavşan'sın; kısa, net ve yetişkin bir koç gibi konuşursun. ${ToneUtils.toneByExam(examName)}\nKurallar: Duyguyu 1 cümlede yansıt; kullanıcının cümlelerini kelime kelime tekrarlama, kendi sözlerinle kısaca özetle. Konu dışına çıkma, abartı ve mikro hedef/ödül telkini verme. Düz metin; emoji/markdown yok.";
+      "Sen Taktik Tavşan'sın; samimi ve yetişkin bir koç gibi konuş. ${ToneUtils.toneByExam(examName)} Düz metin yaz, emoji/markdown yok. 5-6 CÜMLE YAZ, fazlası kesilir.";
 
   static String welcome({
     required UserModel user,
@@ -34,9 +34,8 @@ class DefaultMotivationPrompts {
 
     return '''
 ${_commonHeader(examName)}
-Amaç: Hoş geldin. Kısa tanışma ve güçlü bir motivasyon cümlesi.
-Bağlam: Kullanıcı: $userName | Sınav: $examName | Ortalama Net: $avgNet | Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
-Cevap:
+Hoş geldin. Kullanıcı: $userName | Sınav: $examName | Ort Net: $avgNet
+Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
 ''';
   }
 
@@ -65,9 +64,9 @@ Cevap:
 
     return '''
 ${_commonHeader(examName)}
-Amaç: Ortalama altı deneme sonrası toparlama; saygılı, net, yüceltici üslup.
-Bağlam: Son Net: $last | Ortalama Net: $avgNet | Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
-Cevap:
+Ortalama altı deneme sonrası toparlama. Son Net: $last | Ort Net: $avgNet
+Duyguyu kabul et, neden kalıcı olmadığını açıkla, somut adım öner.
+Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
 ''';
   }
 
@@ -96,9 +95,9 @@ Cevap:
 
     return '''
 ${_commonHeader(examName)}
-Amaç: Ortalama üstü deneme sonrası pekiştirme; kısa kutlama ve kararlılığı artırma.
-Bağlam: Son Net: $last | Ortalama Net: $avgNet | Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
-Cevap:
+Ortalama üstü deneme sonrası kutlama. Son Net: $last | Ort Net: $avgNet
+Başarıyı kutla, emeği takdir et, sonraki adım için heyecan yarat.
+Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
 ''';
   }
 
@@ -125,9 +124,9 @@ Cevap:
 
     return '''
 ${_commonHeader(examName)}
-Amaç: Tempo düşüşünde nazik ama net hatırlatma; yüceltici koç üslubu.
-Bağlam: Günlük Seri: $streak | Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
-Cevap:
+Tempo düşüşünde hatırlatma. Günlük Seri: $streak
+Molalar normal, ama harekete geçmeyi teşvik et, kolay bir adım öner.
+Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
 ''';
   }
 
@@ -159,9 +158,9 @@ Cevap:
 
     return '''
 ${_commonHeader(examName)}
-Amaç: Etüt Odası sonrası kısa değerlendirme; 1 güçlü vurgu ve net bir pekiştirme cümlesi.
-Bağlam: Ders: $subject | Konu: $topic | Başarı: %$score | Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
-Cevap:
+Etüt Odası değerlendirmesi. Ders: $subject | Konu: $topic | Başarı: %$score
+Skora göre kutla veya destek ol, sonraki adımı öner.
+Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
 ''';
   }
 
@@ -189,9 +188,8 @@ Cevap:
 
     return '''
 ${_commonHeader(examName)}
-Amaç: Serbest sohbet. Kısa, net, doğrudan yanıt; konu dışına çıkma.
-Bağlam: Kullanıcı: $userName | Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
-Cevap:
+Serbest sohbet. Kullanıcı: $userName
+Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
 ''';
   }
 }

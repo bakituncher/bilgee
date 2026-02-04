@@ -20,11 +20,33 @@ class TrialReviewPrompt {
     final lastNet = lastTest?.totalNet.toStringAsFixed(1) ?? '0';
     final bestSubject = analysis?.strongestSubjectByNet ?? 'Yok';
     final worstSubject = analysis?.weakestSubjectByNet ?? 'Yok';
+    final testCount = tests.length;
 
-    String trend = 'sabit';
+    // Ortalama net hesaplama
+    final avgNet = testCount > 0
+        ? (tests.fold<double>(0, (sum, t) => sum + t.totalNet) / testCount).toStringAsFixed(1)
+        : '0';
+
+    // Trend analizi (son 3 deneme vs önceki 3 deneme)
+    String trend = 'henüz yeterli veri yok';
+    String trendDetail = '';
     if (tests.length >= 2) {
-      if (tests[0].totalNet > tests[1].totalNet) trend = 'yükseliş';
-      else if (tests[0].totalNet < tests[1].totalNet) trend = 'düşüş';
+      final diff = tests[0].totalNet - tests[1].totalNet;
+      if (diff > 3) {
+        trend = 'güçlü yükseliş 📈';
+        trendDetail = '+${diff.toStringAsFixed(1)} net artış';
+      } else if (diff > 0) {
+        trend = 'hafif yükseliş 📈';
+        trendDetail = '+${diff.toStringAsFixed(1)} net artış';
+      } else if (diff < -3) {
+        trend = 'düşüş 📉';
+        trendDetail = '${diff.toStringAsFixed(1)} net';
+      } else if (diff < 0) {
+        trend = 'hafif düşüş 📉';
+        trendDetail = '${diff.toStringAsFixed(1)} net';
+      } else {
+        trend = 'stabil ➡️';
+      }
     }
 
     String examContext = "Genel Deneme";
@@ -33,18 +55,39 @@ class TrialReviewPrompt {
       examContext = "Branş Denemesi ($lessonName)";
     }
 
+    // Zayıf konu detayları
+    final weakTopicInfo = analysis?.getWeakestTopicWithDetails();
+    final weakTopic = weakTopicInfo != null
+        ? '${weakTopicInfo['topic']} (${weakTopicInfo['subject']})'
+        : 'Belirlenmedi';
+
+    // Ders bazlı performans özeti
+    String subjectBreakdown = '';
+    if (lastTest != null && lastTest.scores.isNotEmpty) {
+      final subjectNets = lastTest.scores.entries.map((e) {
+        final dogru = e.value['dogru'] ?? 0;
+        final yanlis = e.value['yanlis'] ?? 0;
+        final net = dogru - (yanlis * lastTest.penaltyCoefficient);
+        return '${e.key}: ${net.toStringAsFixed(1)} net';
+      }).join(', ');
+      subjectBreakdown = subjectNets;
+    }
+
     return '''
-Sen Türkiye'de $examName sınavına hazırlanan $firstName'in deneme koçusun.
+Sen $firstName'in $examName deneme koçusun. Türk eğitim sistemini (TYT/AYT/LGS/KPSS) biliyorsun.
 
-Veri: Net: $lastNet | Trend: $trend | Güçlü: $bestSubject | Zayıf: $worstSubject | Tür: $examContext
-${conversationHistory.isNotEmpty ? 'Geçmiş: $conversationHistory\n' : ''}
-$firstName: $lastUserMessage
+VERİLER: Son Net: $lastNet | Ort: $avgNet ($testCount deneme) | Trend: $trend $trendDetail | Güçlü: $bestSubject | Zayıf: $worstSubject | Zayıf Konu: $weakTopic
+${subjectBreakdown.isNotEmpty ? 'Ders Dağılımı: $subjectBreakdown' : ''}
+${conversationHistory.isNotEmpty ? 'Geçmiş: $conversationHistory' : ''}
 
-Kurallar:
-- "Gel konuşalım", "detay ver", "anlat" gibi gereksiz sorular YASAK. Direkt cevap ver.
-- Somut öneri ver: hangi konu, hangi kaynak, kaç soru
-- Türk eğitim sistemini bil (TYT/AYT/LGS, dershane, kaynak kitaplar)
-- 2-3 cümle, boş laf yok
+$firstName: "$lastUserMessage"
+
+KURALLAR:
+- Gereksiz sorular YASAK, elinde veri var direkt analiz yap
+- "Daha çok çalış" gibi boş laflar YASAK, somut öneriler ver
+- Verilere referans ver, spesifik konu/kaynak/soru sayısı belirt
+- Türk genci gibi samimi konuş
+- 5-6 CÜMLE YAZ, fazlası kesilir
 ''';
   }
 }

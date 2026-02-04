@@ -260,6 +260,8 @@ exports.generateGemini = onCall(
         effectiveMaxTokens = 50000; // Haftalık planlar için yüksek limit
       } else if (requestType === 'workshop') {
         effectiveMaxTokens = 10000; // 30k çok fazla, latency yaratıyor. 10k fazlasıyla yeterli.
+      } else if (requestType === 'chat') {
+        effectiveMaxTokens = 4096; // Sohbet/motivasyon için artırıldı (2048 yetersizdi, yarım kalıyordu)
       }
 
       if (typeof reqMaxTokensRaw === 'number' && isFinite(reqMaxTokensRaw)) {
