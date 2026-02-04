@@ -102,11 +102,11 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
       'Sosyal medyayı bırakamıyorum, bağımlı gibiyim',
       'Arkadaşlarımla görüşemiyorum, yalnız hissediyorum',
       'Çok yorgunum ama dinlenmeye vaktim yok',
-      'Panik atak yaşıyorum, çok korkuyorum',
+      'Sosyal medyada çok vakit geçiriyorum',
       'Gelecek kaygısı beni çok etkiliyor',
       'Mükemmeliyetçilik beni engelliyor',
       'Her şeyi erteliyorum, başlayamıyorum',
-      'Ağlama krizleri yaşıyorum, normal mi?',
+      'Yalnız hissediyorum, ne yapabilirim?'
       'Kimseyle konuşasım gelmiyor',
     ],
     'motivation_corner': [
