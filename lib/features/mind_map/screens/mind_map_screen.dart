@@ -1,70 +1,145 @@
 // lib/features/mind_map/screens/mind_map_screen.dart
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'dart:convert';
-import 'package:lottie/lottie.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
-// Zihin haritası adımları
-enum MindMapStep {
-  input,      // Kullanıcıdan konu ve detay alma
-  generating, // AI ile zihin haritası oluşturma
-  result,     // Sonucu gösterme
-}
+// -----------------------------------------------------------------------------
+// MODELS
+// -----------------------------------------------------------------------------
 
-// Zihin haritası state'i
-final mindMapStepProvider = StateProvider<MindMapStep>((ref) => MindMapStep.input);
-final mindMapTopicProvider = StateProvider<String>((ref) => '');
-final mindMapDetailsProvider = StateProvider<String>((ref) => '');
-final mindMapResultProvider = StateProvider<MindMapResult?>((ref) => null);
+enum NodeType { root, mainBranch, subBranch, leaf }
 
-// Zihin haritası sonuç modeli
-class MindMapResult {
-  final String topic;
-  final String mainConcept;
-  final List<MindMapBranch> branches;
-
-  MindMapResult({
-    required this.topic,
-    required this.mainConcept,
-    required this.branches,
-  });
-
-  factory MindMapResult.fromJson(Map<String, dynamic> json) {
-    return MindMapResult(
-      topic: json['topic'] ?? '',
-      mainConcept: json['mainConcept'] ?? '',
-      branches: (json['branches'] as List?)
-          ?.map((b) => MindMapBranch.fromJson(b))
-          .toList() ?? [],
-    );
-  }
-}
-
-class MindMapBranch {
-  final String title;
+class MindMapNode {
+  final String id;
+  final String label;
   final String description;
-  final List<String> subTopics;
-  final List<String> keyPoints;
+  final NodeType type;
+  final List<MindMapNode> children;
 
-  MindMapBranch({
-    required this.title,
+  // UI State (Layout sonrası hesaplanır)
+  Offset position;
+  Color color;
+
+  MindMapNode({
+    required this.id,
+    required this.label,
     required this.description,
-    required this.subTopics,
-    required this.keyPoints,
+    required this.type,
+    this.children = const [],
+    this.position = Offset.zero,
+    this.color = Colors.blue,
   });
 
-  factory MindMapBranch.fromJson(Map<String, dynamic> json) {
-    return MindMapBranch(
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      subTopics: List<String>.from(json['subTopics'] ?? []),
-      keyPoints: List<String>.from(json['keyPoints'] ?? []),
+  factory MindMapNode.fromJson(Map<String, dynamic> json, [NodeType type = NodeType.root]) {
+    final childrenJson = json['children'];
+    List<MindMapNode> parsedChildren = [];
+
+    NodeType childType;
+    if (type == NodeType.root) childType = NodeType.mainBranch;
+    else if (type == NodeType.mainBranch) childType = NodeType.subBranch;
+    else childType = NodeType.leaf;
+
+    if (childrenJson is List) {
+      parsedChildren = childrenJson.map((c) => MindMapNode.fromJson(c, childType)).toList();
+    }
+
+    return MindMapNode(
+      id: DateTime.now().microsecondsSinceEpoch.toString() + (math.Random().nextInt(1000).toString()),
+      label: json['label']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      type: type,
+      children: parsedChildren,
     );
   }
 }
+
+// -----------------------------------------------------------------------------
+// PROVIDERS
+// -----------------------------------------------------------------------------
+
+final mindMapNodeProvider = StateProvider<MindMapNode?>((ref) => null);
+final isGeneratingProvider = StateProvider<bool>((ref) => false);
+
+// -----------------------------------------------------------------------------
+// PAINTERS (Çizim Motoru)
+// -----------------------------------------------------------------------------
+
+class ConnectionPainter extends CustomPainter {
+  final MindMapNode rootNode;
+  final double scale;
+
+  ConnectionPainter({required this.rootNode, required this.scale});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
+
+    _drawRecursive(canvas, rootNode, paint);
+  }
+
+  void _drawRecursive(Canvas canvas, MindMapNode node, Paint paint) {
+    for (var child in node.children) {
+      paint.color = child.color.withOpacity(0.6);
+      paint.strokeWidth = (node.type == NodeType.root ? 3.0 : 1.5);
+
+      final p1 = node.position;
+      final p2 = child.position;
+
+      final path = Path();
+      path.moveTo(p1.dx, p1.dy);
+
+      final midPoint = Offset((p1.dx + p2.dx) / 2, (p1.dy + p2.dy) / 2);
+
+      if (node.type == NodeType.root) {
+        path.quadraticBezierTo(midPoint.dx, midPoint.dy, p2.dx, p2.dy);
+      } else {
+        path.cubicTo(
+            p1.dx + (p2.dx - p1.dx) / 2, p1.dy,
+            p1.dx + (p2.dx - p1.dx) / 2, p2.dy,
+            p2.dx, p2.dy
+        );
+      }
+
+      canvas.drawPath(path, paint);
+      _drawRecursive(canvas, child, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant ConnectionPainter oldDelegate) => true;
+}
+
+class GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.05)
+      ..strokeWidth = 1;
+
+    const spacing = 40.0;
+    // Basit bir grid
+    for (double i = 0; i < size.width; i += spacing) {
+      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    }
+    for (double i = 0; i < size.height; i += spacing) {
+      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// -----------------------------------------------------------------------------
+// MAIN SCREEN
+// -----------------------------------------------------------------------------
 
 class MindMapScreen extends ConsumerStatefulWidget {
   const MindMapScreen({super.key});
@@ -73,593 +148,448 @@ class MindMapScreen extends ConsumerStatefulWidget {
   ConsumerState<MindMapScreen> createState() => _MindMapScreenState();
 }
 
-class _MindMapScreenState extends ConsumerState<MindMapScreen> {
+class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProviderStateMixin {
+  final TransformationController _transformationController = TransformationController();
   final _topicController = TextEditingController();
-  final _detailsController = TextEditingController();
-  bool _isGenerating = false;
+
+  static const double _rootRadius = 60.0;
+  static const double _level1Distance = 250.0; // Biraz daha açtık
+  static const double _level2Distance = 200.0;
+
+  static const Size _canvasSize = Size(4000, 4000);
+  static const Offset _center = Offset(2000, 2000);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _centerCanvas();
+    });
+  }
 
   @override
   void dispose() {
     _topicController.dispose();
-    _detailsController.dispose();
+    _transformationController.dispose();
     super.dispose();
+  }
+
+  void _centerCanvas() {
+    if (!mounted) return;
+    // Ekran boyutunu al
+    final size = MediaQuery.of(context).size;
+    final x = -_center.dx + size.width / 2;
+    final y = -_center.dy + size.height / 2;
+
+    _transformationController.value = Matrix4.identity()
+      ..translate(x, y);
+  }
+
+  // JSON Temizleme (Markdown vb. silme)
+  String _cleanJson(String text) {
+    text = text.replaceAll('```json', '').replaceAll('```', '').trim();
+    if (text.startsWith('json')) text = text.substring(4).trim();
+    return text;
+  }
+
+  void _calculateLayout(MindMapNode root) {
+    root.position = _center;
+    root.color = Colors.amber;
+
+    final mainBranches = root.children;
+    final angleStep = (2 * math.pi) / (mainBranches.isEmpty ? 1 : mainBranches.length);
+
+    final colors = [
+      Colors.blueAccent, Colors.redAccent, Colors.greenAccent,
+      Colors.purpleAccent, Colors.orangeAccent, Colors.tealAccent
+    ];
+
+    for (int i = 0; i < mainBranches.length; i++) {
+      final angle = i * angleStep;
+      final node = mainBranches[i];
+
+      node.position = Offset(
+        _center.dx + _level1Distance * math.cos(angle),
+        _center.dy + _level1Distance * math.sin(angle),
+      );
+      node.color = colors[i % colors.length];
+
+      _layoutChildren(node, angle, _level2Distance);
+    }
+  }
+
+  void _layoutChildren(MindMapNode parent, double parentAngle, double distance) {
+    if (parent.children.isEmpty) return;
+
+    final childCount = parent.children.length;
+    final wedgeSize = math.pi / 2.0;
+    final startAngle = parentAngle - (wedgeSize / 2);
+    final angleStep = wedgeSize / (childCount > 1 ? childCount - 1 : 1);
+
+    for (int i = 0; i < childCount; i++) {
+      final angle = childCount == 1 ? parentAngle : startAngle + (i * angleStep);
+      final child = parent.children[i];
+
+      child.position = Offset(
+        parent.position.dx + distance * math.cos(angle),
+        parent.position.dy + distance * math.sin(angle),
+      );
+      child.color = parent.color;
+
+      // 3. seviye için recursive devam edilebilir, şimdilik 2 seviye yeterli
+    }
   }
 
   Future<void> _generateMindMap() async {
     final topic = _topicController.text.trim();
-    final details = _detailsController.text.trim();
+    if (topic.isEmpty) return;
 
-    if (topic.isEmpty) {
-      _showErrorSnackBar('Lütfen bir konu girin');
-      return;
-    }
-
-    setState(() => _isGenerating = true);
-    ref.read(mindMapStepProvider.notifier).state = MindMapStep.generating;
+    FocusScope.of(context).unfocus();
+    ref.read(isGeneratingProvider.notifier).state = true;
 
     try {
       final user = ref.read(userProfileProvider).value;
-      if (user == null) throw Exception('Kullanıcı bilgisi bulunamadı');
 
-      // AI prompt hazırlama
-      final prompt = _buildMindMapPrompt(topic, details, user.selectedExam ?? 'YKS');
+      final prompt = '''
+      Konu: "$topic". Sınav Seviyesi: ${user?.selectedExam ?? 'Genel'}.
+      Bu konu için detaylı bir zihin haritası JSON çıktısı oluştur.
+      
+      Format:
+      {
+        "label": "$topic",
+        "description": "Ana konu",
+        "children": [
+          {
+            "label": "Alt Konu",
+            "description": "Açıklama",
+            "children": [
+              { "label": "Detay", "description": "Detay açıklama" }
+            ]
+          }
+        ]
+      }
+      En az 4 ana dal ve her dalın altında 2-3 detay olsun. JSON dışında hiçbir şey yazma.
+      ''';
 
-      // Firebase Functions ile AI çağrısı
       final callable = FirebaseFunctions.instanceFor(region: 'us-central1')
           .httpsCallable('ai-generateGemini');
 
       final result = await callable.call({
         'prompt': prompt,
         'expectJson': true,
-        'requestType': 'mind_map',
-        'maxOutputTokens': 10000,
-        'temperature': 0.6,
-      }).timeout(const Duration(seconds: 150));
+        'requestType': 'mind_map', // Backend için gerekli olabilir
+        'maxOutputTokens': 4000,
+        'temperature': 0.7,
+      });
 
-      // Sonucu parse et
-      final responseData = result.data;
-      final rawText = responseData['raw'] as String;
+      final rawText = result.data['raw'] as String;
+      final cleanText = _cleanJson(rawText); // JSON temizleme
 
-      // JSON parse et
-      final jsonData = jsonDecode(rawText);
-      final mindMapResult = MindMapResult.fromJson(jsonData);
+      final jsonMap = jsonDecode(cleanText);
+      final rootNode = MindMapNode.fromJson(jsonMap, NodeType.root);
 
-      // Sonucu kaydet
-      ref.read(mindMapResultProvider.notifier).state = mindMapResult;
-      ref.read(mindMapStepProvider.notifier).state = MindMapStep.result;
+      _calculateLayout(rootNode);
+
+      ref.read(mindMapNodeProvider.notifier).state = rootNode;
+      _centerCanvas(); // Yeni harita gelince ortala
 
     } catch (e) {
-      _showErrorSnackBar('Zihin haritası oluşturulamadı: ${e.toString()}');
-      ref.read(mindMapStepProvider.notifier).state = MindMapStep.input;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Hata oluştu: $e"),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     } finally {
-      setState(() => _isGenerating = false);
+      ref.read(isGeneratingProvider.notifier).state = false;
     }
   }
 
-  String _buildMindMapPrompt(String topic, String details, String exam) {
-    return '''
-Sen bir eğitim asistanısın. Öğrencinin verdiği konu hakkında detaylı ve yapılandırılmış bir zihin haritası oluştur.
-
-**Konu:** $topic
-**Sınav:** $exam
-${details.isNotEmpty ? '**Ek Detaylar:** $details' : ''}
-
-**Görevin:**
-1. Konuyu merkeze al ve ana kavramı belirle
-2. 4-6 ana dal oluştur (her dal konunun bir yönünü temsil etmeli)
-3. Her dalın altında:
-   - Alt başlıklar (2-4 adet)
-   - Anahtar noktalar (3-5 adet)
-   - Kısa açıklama
-
-**ÖNEMLİ:** Cevabını sadece JSON formatında ver, başka metin ekleme.
-
-JSON Formatı:
-{
-  "topic": "Konu başlığı",
-  "mainConcept": "Ana kavram açıklaması (1-2 cümle)",
-  "branches": [
-    {
-      "title": "Dal başlığı",
-      "description": "Dalın kısa açıklaması",
-      "subTopics": ["Alt başlık 1", "Alt başlık 2", ...],
-      "keyPoints": ["Anahtar nokta 1", "Anahtar nokta 2", ...]
-    }
-  ]
-}
-''';
-  }
-
-  void _showErrorSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Theme.of(context).colorScheme.error,
+  void _showNodeDetails(MindMapNode node) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1D21),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border(top: BorderSide(color: node.color, width: 4)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              node.label,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: node.color,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              node.description.isEmpty ? "Ek açıklama yok." : node.description,
+              style: const TextStyle(color: Colors.white70, fontSize: 16),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
-  }
-
-  void _resetMindMap() {
-    ref.read(mindMapStepProvider.notifier).state = MindMapStep.input;
-    ref.read(mindMapResultProvider.notifier).state = null;
-    _topicController.clear();
-    _detailsController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
-    final step = ref.watch(mindMapStepProvider);
+    final rootNode = ref.watch(mindMapNodeProvider);
+    final isGenerating = ref.watch(isGeneratingProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0F1115),
+      // AppBar ekledik ki geri dönme sorunu yaşanmasın
       appBar: AppBar(
-        title: const Text('Zihin Haritası'),
+        title: const Text("Zihin Haritası"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         centerTitle: true,
         actions: [
-          if (step == MindMapStep.result)
+          if (rootNode != null)
             IconButton(
-              icon: const Icon(Icons.refresh_rounded),
-              onPressed: _resetMindMap,
-              tooltip: 'Yeni Harita',
-            ),
+              icon: const Icon(Icons.center_focus_strong),
+              onPressed: _centerCanvas,
+            )
         ],
       ),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 400),
-        child: _buildStepContent(step),
-      ),
-    );
-  }
-
-  Widget _buildStepContent(MindMapStep step) {
-    switch (step) {
-      case MindMapStep.input:
-        return _buildInputStep();
-      case MindMapStep.generating:
-        return _buildGeneratingStep();
-      case MindMapStep.result:
-        return _buildResultStep();
-    }
-  }
-
-  Widget _buildInputStep() {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: Stack(
         children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  colorScheme.primaryContainer,
-                  colorScheme.secondaryContainer,
-                ],
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.account_tree_rounded,
-                  size: 48,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Zihin Haritası Oluştur',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Herhangi bir konuyu görselleştir ve daha iyi anla',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ).animate().fadeIn().slideY(begin: -0.1, end: 0),
-
-          const SizedBox(height: 32),
-
-          // Konu girişi
-          Text(
-            'Konu',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _topicController,
-            decoration: InputDecoration(
-              hintText: 'Örn: Fotosentez, Newton Kanunları, Osmanlı Tarihi',
-              filled: true,
-              fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              prefixIcon: const Icon(Icons.lightbulb_outline_rounded),
-            ),
-            maxLength: 100,
-          ).animate(delay: 100.ms).fadeIn().slideX(begin: -0.1, end: 0),
-
-          const SizedBox(height: 24),
-
-          // Ek detaylar (opsiyonel)
-          Text(
-            'Ek Detaylar (Opsiyonel)',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _detailsController,
-            decoration: InputDecoration(
-              hintText: 'Odaklanmak istediğin belirli yönler, sorular veya notlar...',
-              filled: true,
-              fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              prefixIcon: const Icon(Icons.notes_rounded),
-            ),
-            maxLines: 4,
-            maxLength: 500,
-          ).animate(delay: 200.ms).fadeIn().slideX(begin: -0.1, end: 0),
-
-          const SizedBox(height: 32),
-
-          // Oluştur butonu
-          FilledButton.icon(
-            onPressed: _isGenerating ? null : _generateMindMap,
-            icon: _isGenerating
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.auto_awesome_rounded),
-            label: Text(_isGenerating ? 'Oluşturuluyor...' : 'Zihin Haritası Oluştur'),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ).animate(delay: 300.ms).fadeIn().scale(),
-
-          const SizedBox(height: 16),
-
-          // Bilgilendirme
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: colorScheme.outline.withValues(alpha: 0.2),
-              ),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  size: 20,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Zihin haritası, konuyu ana dallarına ayırıp görsel olarak yapılandırır. Daha iyi anlama ve hatırlama sağlar.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      height: 1.5,
+          if (rootNode != null)
+            InteractiveViewer(
+              transformationController: _transformationController,
+              boundaryMargin: const EdgeInsets.all(2000),
+              minScale: 0.1,
+              maxScale: 3.0,
+              constrained: false,
+              child: SizedBox(
+                width: _canvasSize.width,
+                height: _canvasSize.height,
+                child: Stack(
+                  children: [
+                    Positioned.fill(child: CustomPaint(painter: GridPainter())),
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: ConnectionPainter(rootNode: rootNode, scale: 1.0),
+                      ),
                     ),
-                  ),
+                    ..._buildNodeWidgets(rootNode),
+                  ],
                 ),
-              ],
-            ),
-          ).animate(delay: 400.ms).fadeIn(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGeneratingStep() {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 200,
-            height: 200,
-            child: Lottie.asset(
-              'assets/lotties/Data Analysis.json',
-              fit: BoxFit.contain,
-              repeat: true,
-            ),
-          ).animate(onPlay: (c) => c.repeat(reverse: true))
-              .scale(begin: const Offset(0.95, 0.95), end: const Offset(1.05, 1.05), duration: 2000.ms),
-          const SizedBox(height: 24),
-          Text(
-            'Zihin Haritası Oluşturuluyor...',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ).animate(onPlay: (c) => c.repeat())
-              .fadeIn(duration: 800.ms)
-              .then()
-              .fadeOut(duration: 800.ms),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 48),
-            child: Text(
-              'Konunu analiz edip yapılandırılmış bir harita oluşturuyorum...',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 32),
-          SizedBox(
-            width: 200,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                color: colorScheme.secondary,
-                backgroundColor: colorScheme.onSurface.withValues(alpha: 0.1),
-                minHeight: 6,
+            )
+          else
+            _buildEmptyState(),
+
+          if (isGenerating)
+            Container(
+              color: Colors.black.withOpacity(0.7),
+              child: const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: Colors.amber),
+                    SizedBox(height: 20),
+                    Text("Zihin haritası oluşturuluyor...",
+                        style: TextStyle(color: Colors.white, fontSize: 16)),
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildResultStep() {
-    final result = ref.watch(mindMapResultProvider);
-    if (result == null) {
-      return const Center(child: Text('Sonuç bulunamadı'));
-    }
-
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Başlık ve ana kavram
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  colorScheme.primaryContainer,
-                  colorScheme.secondaryContainer,
-                ],
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.account_tree_rounded,
-                  size: 40,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  result.topic,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  result.mainConcept,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ).animate().fadeIn().scale(),
-
-          const SizedBox(height: 24),
-
-          // Dallar
-          ...result.branches.asMap().entries.map((entry) {
-            final index = entry.key;
-            final branch = entry.value;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: _buildBranchCard(branch, index),
-            ).animate(delay: (index * 100).ms).fadeIn().slideX(begin: -0.1, end: 0);
-          }).toList(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBranchCard(MindMapBranch branch, int index) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    // Her dal için farklı renk
-    final colors = [
-      Colors.blue,
-      Colors.green,
-      Colors.orange,
-      Colors.purple,
-      Colors.pink,
-      Colors.teal,
-    ];
-    final branchColor = colors[index % colors.length];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: branchColor.withValues(alpha: 0.3),
-          width: 2,
+      bottomNavigationBar: (rootNode != null && !isGenerating)
+          ? Container(
+        padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            left: 16, right: 16, top: 16
         ),
-        boxShadow: [
-          BoxShadow(
-            color: branchColor.withValues(alpha: 0.1),
-            blurRadius: 8,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Dal başlığı
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: branchColor.withValues(alpha: 0.1),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(14),
-                topRight: Radius.circular(14),
+        color: const Color(0xFF0F1115),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _topicController,
+                decoration: InputDecoration(
+                  hintText: 'Yeni konu...',
+                  filled: true,
+                  fillColor: Colors.white10,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                ),
+                style: const TextStyle(color: Colors.white),
               ),
             ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: branchColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.folder_rounded,
-                    color: branchColor,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    branch.title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: branchColor,
-                    ),
-                  ),
-                ),
-              ],
+            const SizedBox(width: 8),
+            FloatingActionButton(
+              onPressed: _generateMindMap,
+              backgroundColor: theme.primaryColor,
+              mini: true,
+              child: const Icon(Icons.auto_awesome),
             ),
-          ),
+          ],
+        ),
+      )
+          : null,
+    );
+  }
 
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Açıklama
-                Text(
-                  branch.description,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-
-                if (branch.subTopics.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    'Alt Başlıklar',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: branchColor,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  ...branch.subTopics.map((subTopic) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.arrow_right_rounded,
-                          color: branchColor,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            subTopic,
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )).toList(),
-                ],
-
-                if (branch.keyPoints.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    'Anahtar Noktalar',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: branchColor,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  ...branch.keyPoints.map((keyPoint) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.star_rounded,
-                          color: Colors.amber,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            keyPoint,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )).toList(),
-                ],
-              ],
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.hub, size: 80, color: Colors.white24),
+            const SizedBox(height: 24),
+            const Text(
+              "Zihin Haritası",
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            const Text(
+              "Karmaşık konuları görselleştir. Bir konu gir ve yapay zeka senin için dallara ayırsın.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white54),
+            ),
+            const SizedBox(height: 32),
+            TextField(
+              controller: _topicController,
+              decoration: InputDecoration(
+                hintText: 'Örn: Fotosentez, Türev',
+                filled: true,
+                fillColor: Colors.white10,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+              ),
+              style: const TextStyle(color: Colors.white),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: FilledButton.icon(
+                onPressed: _generateMindMap,
+                icon: const Icon(Icons.auto_awesome),
+                label: const Text("Oluştur"),
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  List<Widget> _buildNodeWidgets(MindMapNode node) {
+    List<Widget> widgets = [];
+
+    // Node'u tam merkezinden yerleştirmek için offset ayarı
+    double w = node.type == NodeType.root ? 140 : 110;
+    double h = node.type == NodeType.root ? 70 : 55;
+
+    widgets.add(
+      Positioned(
+        left: node.position.dx - (w / 2),
+        top: node.position.dy - (h / 2),
+        child: _NodeWidget(
+          node: node,
+          width: w,
+          height: h,
+          onTap: () => _showNodeDetails(node),
+        ),
+      ),
+    );
+
+    for (var child in node.children) {
+      widgets.addAll(_buildNodeWidgets(child));
+    }
+    return widgets;
+  }
+}
+
+class _NodeWidget extends StatelessWidget {
+  final MindMapNode node;
+  final VoidCallback onTap;
+  final double width;
+  final double height;
+
+  const _NodeWidget({
+    required this.node,
+    required this.onTap,
+    required this.width,
+    required this.height,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isRoot = node.type == NodeType.root;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: width,
+        height: height,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1D21),
+          borderRadius: BorderRadius.circular(isRoot ? 35 : 12),
+          border: Border.all(
+            color: node.color,
+            width: isRoot ? 3 : 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: node.color.withOpacity(0.4),
+              blurRadius: 16,
+              spreadRadius: 0,
+            )
+          ],
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          node.label,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: isRoot ? 14 : 11,
+            fontWeight: isRoot ? FontWeight.bold : FontWeight.w600,
+          ),
+        ),
+      )
+          .animate()
+          .scale(duration: 400.ms, curve: Curves.elasticOut)
+          .fadeIn(duration: 300.ms),
     );
   }
 }
 
+// -----------------------------------------------------------------------------
+// LEGACY SUPPORT (Eski kodlar kırılmasın diye)
+// -----------------------------------------------------------------------------
+
+@deprecated
+enum MindMapStep { input, generating, result }
+
+@deprecated
+class MindMapResult {
+  final String topic;
+  final String mainConcept;
+  final List<dynamic> branches;
+  MindMapResult({required this.topic, required this.mainConcept, required this.branches});
+}
