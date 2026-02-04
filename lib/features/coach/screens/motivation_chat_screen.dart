@@ -32,6 +32,35 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
   late AnimationController _backgroundAnimationController;
   String _currentPromptType = 'user_chat'; // Aktif sohbet modunu saklamak için
   bool _cameWithInitialPrompt = false; // Kullanıcı direkt sohbete mi girdi?
+  bool _showSuggestions = true; // Öneri butonlarını göster
+
+  // Her sohbet türü için öneri mesajları
+  static const Map<String, List<String>> _suggestionMessages = {
+    'trial_review': [
+      'Son denememdeki hatalarımı analiz eder misin?',
+      'Net ortalamamı nasıl artırabilirim?',
+      'Hangi dersime öncelik vermeliyim?',
+      'Zayıf konularımı tespit edebilir misin?',
+    ],
+    'strategy_consult': [
+      'Günlük çalışma programı oluşturmama yardım et',
+      'Pomodoro tekniği bana uygun mu?',
+      'Sınava kaç gün kaldı, nasıl planlamalıyım?',
+      'Verimli ders çalışma teknikleri neler?',
+    ],
+    'psych_support': [
+      'Sınav stresi yaşıyorum, ne yapmalıyım?',
+      'Motivasyonum düştü, kendimi kötü hissediyorum',
+      'Çalışmaya başlayamıyorum, sürekli erteliyorum',
+      'Ailemi hayal kırıklığına uğratmaktan korkuyorum',
+    ],
+    'motivation_corner': [
+      'Bugün hiç çalışmak istemiyorum',
+      'Enerjimi nasıl yüksek tutabilirim?',
+      'Başaramayacakmışım gibi hissediyorum',
+      'Beni motive edecek bir şey söyle',
+    ],
+  };
 
   // Sohbetten Süit ekranına dönüş helper
   void _exitToSuite() {
@@ -100,6 +129,9 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     final text = quickReply ?? _controller.text.trim();
     if (text.isEmpty) return;
 
+    // Öneri butonlarını gizle
+    setState(() => _showSuggestions = false);
+
     ref.read(chatHistoryProvider.notifier).update((state) => [...state, ChatMessage(text, isUser: true)]);
     _controller.clear();
     FocusScope.of(context).unfocus();
@@ -163,6 +195,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
 
     setState(() {
       _currentPromptType = moodType;
+      _showSuggestions = true; // Öneri butonlarını göster
     });
 
     Mood mood = Mood.neutral;
@@ -191,27 +224,8 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
     }
 
     ref.read(chatScreenStateProvider.notifier).state = mood;
-    setState(() => _isTyping = true);
-
-    final history = ref.read(chatHistoryProvider);
-    final historySummary = _buildConversationHistory(history);
-
-    final aiResponse = await aiService.getPersonalizedMotivation(
-      user: user,
-      tests: tests,
-      performance: performance,
-      promptType: moodType,
-      emotion: null,
-      workshopContext: extraContext,
-      conversationHistory: historySummary,
-      lastUserMessage: '',
-    );
-
-    if (!mounted) return;
-
-    ref.read(chatHistoryProvider.notifier).state = [ChatMessage(aiResponse, isUser: false)];
-    setState(() => _isTyping = false);
-    _scrollToBottom(isNewMessage: true);
+    // Sohbet geçmişini temizle ve kullanıcının mesaj yazmasını bekle
+    ref.read(chatHistoryProvider.notifier).state = [];
   }
 
   void _scrollToBottom({bool isNewMessage = false}) {
@@ -277,25 +291,30 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
                     child: selectedMood == null
                         ? _SmartBriefingView(onPromptSelected: _onMoodSelected)
                         : RepaintBoundary(
-                      child: ListView.builder(
-                        controller: _scrollController,
-                        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                        cacheExtent: 300,
-                        addAutomaticKeepAlives: false,
-                        addRepaintBoundaries: true,
-                        addSemanticIndexes: false,
-                        // DÜZELTME: Liste padding'ine klavye boşluğu eklemiyoruz çünkü input kutusu onu yukarı itecek
-                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                        itemCount: history.length + (_isTyping ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (_isTyping && index == history.length) {
-                            return const _TypingBubble();
-                          }
-                          final message = history[index];
-                          final bool isLastRealMessage = index == history.length - 1;
-                          return _MessageBubble(message: message, animate: isLastRealMessage);
-                        },
-                      ),
+                      child: history.isEmpty && _showSuggestions
+                          ? _SuggestionView(
+                              promptType: _currentPromptType,
+                              suggestions: _suggestionMessages[_currentPromptType] ?? [],
+                              onSuggestionTap: (text) => _sendMessage(quickReply: text),
+                            )
+                          : ListView.builder(
+                              controller: _scrollController,
+                              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                              cacheExtent: 300,
+                              addAutomaticKeepAlives: false,
+                              addRepaintBoundaries: true,
+                              addSemanticIndexes: false,
+                              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                              itemCount: history.length + (_isTyping ? 1 : 0),
+                              itemBuilder: (context, index) {
+                                if (_isTyping && index == history.length) {
+                                  return const _TypingBubble();
+                                }
+                                final message = history[index];
+                                final bool isLastRealMessage = index == history.length - 1;
+                                return _MessageBubble(message: message, animate: isLastRealMessage);
+                              },
+                            ),
                     ),
                   ),
                 ),
@@ -926,3 +945,274 @@ class _TypingBubble extends StatelessWidget {
     );
   }
 }
+
+// Öneri mesajları widget'ı
+class _SuggestionView extends StatelessWidget {
+  final String promptType;
+  final List<String> suggestions;
+  final Function(String) onSuggestionTap;
+
+  const _SuggestionView({
+    required this.promptType,
+    required this.suggestions,
+    required this.onSuggestionTap,
+  });
+
+  String get _title {
+    switch (promptType) {
+      case 'trial_review':
+        return 'Deneme Analizi';
+      case 'strategy_consult':
+        return 'Strateji Danışma';
+      case 'psych_support':
+        return 'Dostça Destek';
+      case 'motivation_corner':
+        return 'Motivasyon Köşesi';
+      default:
+        return 'Sohbet';
+    }
+  }
+
+  String get _subtitle {
+    switch (promptType) {
+      case 'trial_review':
+        return 'Deneme sonuçlarını birlikte değerlendirelim';
+      case 'strategy_consult':
+        return 'Çalışma stratejin hakkında konuşalım';
+      case 'psych_support':
+        return 'Seni dinliyorum, ne hissediyorsun?';
+      case 'motivation_corner':
+        return 'Enerjini yükseltmeye hazır mısın?';
+      default:
+        return 'Nasıl yardımcı olabilirim?';
+    }
+  }
+
+  IconData get _icon {
+    switch (promptType) {
+      case 'trial_review':
+        return Icons.analytics_rounded;
+      case 'strategy_consult':
+        return Icons.rocket_launch_rounded;
+      case 'psych_support':
+        return Icons.favorite_rounded;
+      case 'motivation_corner':
+        return Icons.bolt_rounded;
+      default:
+        return Icons.chat_rounded;
+    }
+  }
+
+  Color _getAccentColor(ColorScheme colorScheme, bool isDark) {
+    switch (promptType) {
+      case 'trial_review':
+        return isDark ? const Color(0xFFFFD54F) : const Color(0xFFFF8F00);
+      case 'strategy_consult':
+        return isDark ? const Color(0xFF64B5F6) : const Color(0xFF1976D2);
+      case 'psych_support':
+        return isDark ? const Color(0xFFBA68C8) : const Color(0xFFC2185B);
+      case 'motivation_corner':
+        return isDark ? const Color(0xFFFFAB40) : const Color(0xFFF57C00);
+      default:
+        return colorScheme.primary;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final accentColor = _getAccentColor(colorScheme, isDark);
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Tavşan Avatar ve Başlık
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: accentColor.withOpacity(0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: accentColor.withOpacity(0.5), width: 2),
+                    ),
+                    child: const CircleAvatar(
+                      backgroundColor: Colors.transparent,
+                      radius: 32,
+                      backgroundImage: AssetImage('assets/images/bunnyy.png'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(_icon, color: accentColor, size: 22),
+                      const SizedBox(width: 8),
+                      Text(
+                        _title,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _subtitle,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ).animate().fadeIn(duration: 300.ms).scale(begin: const Offset(0.95, 0.95)),
+
+            const SizedBox(height: 24),
+
+            // Öneri başlığı
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: accentColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.lightbulb_outline_rounded, size: 16, color: accentColor),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Önerilen Sorular',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: accentColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ).animate().fadeIn(delay: 150.ms),
+
+            const SizedBox(height: 16),
+
+            // Öneri butonları
+            ...suggestions.asMap().entries.map((entry) {
+              final index = entry.key;
+              final suggestion = entry.value;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _SuggestionChip(
+                  text: suggestion,
+                  accentColor: accentColor,
+                  onTap: () => onSuggestionTap(suggestion),
+                ),
+              ).animate().fadeIn(delay: (200 + index * 80).ms).slideX(begin: 0.1);
+            }),
+
+            const SizedBox(height: 20),
+
+            // Alt bilgi
+            Text(
+              'Veya aşağıya kendi mesajını yazabilirsin',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+              ),
+            ).animate().fadeIn(delay: 500.ms),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SuggestionChip extends StatelessWidget {
+  final String text;
+  final Color accentColor;
+  final VoidCallback onTap;
+
+  const _SuggestionChip({
+    required this.text,
+    required this.accentColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: accentColor.withOpacity(0.25),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: accentColor.withOpacity(isDark ? 0.1 : 0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  text,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: accentColor.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 16,
+                  color: accentColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+

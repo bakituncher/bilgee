@@ -792,15 +792,8 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
     final examType = user.selectedExam != null ? ExamType.values.byName(user.selectedExam!) : null;
     final analysis = _ref.read(overallStatsAnalysisProvider).value;
 
-    final bool shouldUseMemory = ['strategy_consult', 'psych_support', 'user_chat', 'trial_review', 'motivation_corner'].contains(promptType);
-
-    // Eğer UI'dan history gelmediyse, DB'den çek
+    // Sohbet hafızası sadece UI tarafından yönetiliyor (Firestore'a yazılmıyor)
     String historyToUse = conversationHistory;
-    String mem = '';
-    if (shouldUseMemory && historyToUse.trim().isEmpty) {
-      mem = await _getChatMemory(user.id, promptType);
-      historyToUse = mem;
-    }
 
     String prompt;
 
@@ -871,17 +864,8 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
       requestType: 'chat',
     );
 
-    if (shouldUseMemory) {
-      unawaited(
-        _updateChatMemory(
-          user.id,
-          promptType,
-          lastUserMessage: lastUserMessage,
-          aiResponse: raw,
-          previous: mem,
-        ),
-      );
-    }
+    // NOT: Firestore'a yazma devre dışı - sohbet hafızası sadece session içinde tutuluyor
+    // conversationHistory parametresi UI tarafından yönetiliyor
 
     return raw;
   }

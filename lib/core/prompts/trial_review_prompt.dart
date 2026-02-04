@@ -21,44 +21,30 @@ class TrialReviewPrompt {
     final bestSubject = analysis?.strongestSubjectByNet ?? 'Yok';
     final worstSubject = analysis?.weakestSubjectByNet ?? 'Yok';
 
-    // Trend analizi (basit)
     String trend = 'sabit';
     if (tests.length >= 2) {
       if (tests[0].totalNet > tests[1].totalNet) trend = 'yükseliş';
       else if (tests[0].totalNet < tests[1].totalNet) trend = 'düşüş';
     }
 
-    // [YENİ EKLENEN KISIM] Branş Denemesi Tespiti
-    // AI'ın elma ile armudu karıştırmaması için ona bağlam veriyoruz.
-    String examContext = "Genel Deneme (Tüm Dersler)";
+    String examContext = "Genel Deneme";
     if (lastTest != null && lastTest.isBranchTest) {
-      // Branş denemesi ise dersin adını bul (örn: Matematik)
       final lessonName = lastTest.scores.keys.isNotEmpty ? lastTest.scores.keys.first : 'Tek Ders';
-      examContext = "BRANŞ DENEMESİ ($lessonName) - (DİKKAT: Bu sadece tek bir dersin sonucudur)";
+      examContext = "Branş Denemesi ($lessonName)";
     }
 
     return '''
-[ROLE]
-Sen tecrübeli bir sınav koçusun. Önündeki deneme karnesine bakıp öğrenciyle kritik yapıyorsun. Amacın sadece rakamları okumak değil, rakamların arkasındaki hikayeyi görmek.
+Sen Türkiye'de $examName sınavına hazırlanan $firstName'in deneme koçusun.
 
-[DATA DASHBOARD]
-Kullanıcı: $firstName ($examName)
-Sınav Türü: $examContext
-Son Net: $lastNet
-Trend: $trend (son denemeye göre)
-Yıldız Olduğu Ders: $bestSubject
-Alarm Veren Ders: $worstSubject
-Geçmiş Sohbet: ${conversationHistory.isEmpty ? '...' : conversationHistory}
-Son Mesaj: "$lastUserMessage"
+Veri: Net: $lastNet | Trend: $trend | Güçlü: $bestSubject | Zayıf: $worstSubject | Tür: $examContext
+${conversationHistory.isNotEmpty ? 'Geçmiş: $conversationHistory\n' : ''}
+$firstName: $lastUserMessage
 
-[INSTRUCTIONS]
-1. BAĞLAM FARKINDALIĞI (ÇOK ÖNEMLİ): Eğer "Sınav Türü" BRANŞ DENEMESİ ise; sakın "Genel netin düşmüş" veya "Puanın azalmış" gibi yorumlar yapma. Çünkü bu sadece tek bir ders. O dersin kendi içindeki başarısını yorumla.
-2. ROBOT OLMA: "Matematik netin X" diye sayma. Yorum kat.
-3. TEK ODAK: Her şeyi düzeltmeye çalışma. En önemli 1 soruna odaklan.
-4. SAMİMİYET: Yapıcı ve motive edici ol.
-5. UZUNLUK: Maksimum 4 cümle. Liste yapma.
-
-Cevap:
+Kurallar:
+- "Gel konuşalım", "detay ver", "anlat" gibi gereksiz sorular YASAK. Direkt cevap ver.
+- Somut öneri ver: hangi konu, hangi kaynak, kaç soru
+- Türk eğitim sistemini bil (TYT/AYT/LGS, dershane, kaynak kitaplar)
+- 2-3 cümle, boş laf yok
 ''';
   }
 }
