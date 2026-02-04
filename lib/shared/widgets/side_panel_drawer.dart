@@ -136,6 +136,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                         _navTile(context, currentLocation: location, icon: Icons.bar_chart_rounded, title: 'Deneme Gelişimi', route: '/home/stats'),
                         _navTile(context, currentLocation: location, icon: Icons.insights_rounded, title: 'Genel Bakış', route: '/stats/overview'),
                         _navTileStrategy(context, currentLocation: location, planDoc: planDoc),
+                        _navTile(context, currentLocation: location, icon: Icons.account_tree_rounded, title: 'Zihin Haritası', route: '/ai-hub/mind-map', isPremium: true, showPremiumBadge: true),
                         _navTile(context, currentLocation: location, icon: Icons.inventory_2_outlined, title: 'Deneme Arşivi', route: '/library'),
 
                         // --- EKLENEN SORU KUTUSU ---
@@ -439,6 +440,17 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
           if (isPremium && !userIsPremium) {
             if (route == '/library') {
               context.push('/stats-premium-offer?source=archive');
+            } else if (route == '/ai-hub/mind-map') {
+              context.go('/ai-hub/offer', extra: {
+                'title': 'Zihin Haritası',
+                'subtitle': 'Konuları görselleştir, daha iyi anla ve hatırla',
+                'icon': Icons.account_tree_rounded,
+                'color': const Color(0xFF6366F1),
+                'heroTag': 'offer-mind-map',
+                'marketingTitle': 'Düşüncelerini Haritala!',
+                'marketingSubtitle': 'Karmaşık konuları görsel zihin haritalarına dönüştür. Daha iyi anla, daha kolay hatırla.',
+                'redirectRoute': '/ai-hub/mind-map',
+              });
             } else {
               context.go('/stats-premium-offer');
             }

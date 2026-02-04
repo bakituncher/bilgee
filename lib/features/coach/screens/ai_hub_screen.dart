@@ -398,6 +398,27 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
               ),
             ),
 
+            const SizedBox(height: gap),
+
+            // Satır 3 - Zihin Haritası (tam genişlik)
+            _BentoCard(
+              title: 'Zihin Haritası',
+              description: 'Konuları görselleştir, daha iyi anla ve hatırla.',
+              icon: Icons.account_tree_rounded,
+              color: const Color(0xFF6366F1),
+              isPremium: isPremium,
+              height: 160,
+              onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/mind-map', offerData: {
+                'title': 'Zihin Haritası',
+                'subtitle': 'Konuları görselleştir ve daha iyi anla.',
+                'iconName': 'account_tree',
+                'color': const Color(0xFF6366F1),
+                'marketingTitle': 'Düşüncelerini Haritala!',
+                'marketingSubtitle': 'Karmaşık konuları görsel zihin haritalarına dönüştür. Daha iyi anla, daha kolay hatırla.',
+                'redirectRoute': '/ai-hub/mind-map',
+              }),
+            ),
+
             const SizedBox(height: 32),
 
             if (!isPremium)

@@ -29,6 +29,7 @@ class AppRoutes {
   static const String motivationChat = 'motivation-chat';
   static const String coachPushed = 'coach-pushed';
   static const String strategyReview = 'strategy-review';
+  static const String mindMap = 'mind-map';
 
   // Yeni eklenen rota: Soru Kutusu
   static const String questionBox = '/question-box';
