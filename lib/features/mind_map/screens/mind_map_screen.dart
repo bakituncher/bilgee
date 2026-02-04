@@ -73,8 +73,8 @@ class MindMapNode {
 // PROVIDERS
 // -----------------------------------------------------------------------------
 
-final mindMapNodeProvider = StateProvider<MindMapNode?>((ref) => null);
-final isGeneratingProvider = StateProvider<bool>((ref) => false);
+final mindMapNodeProvider = StateProvider.autoDispose<MindMapNode?>((ref) => null);
+final isGeneratingProvider = StateProvider.autoDispose<bool>((ref) => false);
 
 // -----------------------------------------------------------------------------
 // PAINTERS (Çizim Motoru)
@@ -181,6 +181,8 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   @override
   void initState() {
     super.initState();
+    // Ekran açıldığında önceki haritayı temizle
+    ref.read(mindMapNodeProvider.notifier).state = null;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _centerCanvas();
       _loadTopics();
@@ -286,14 +288,22 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
 
   void _calculateLayout(MindMapNode root) {
     root.position = _center;
-    root.color = Colors.amber;
+    // Root node için belirgin bir renk (mavi-mor arası)
+    root.color = const Color(0xFF6366F1); // Indigo
 
     final mainBranches = root.children;
     final angleStep = (2 * math.pi) / (mainBranches.isEmpty ? 1 : mainBranches.length);
 
+    // Ana dallar için canlı renkler
     final colors = [
-      Colors.blueAccent, Colors.redAccent, Colors.greenAccent,
-      Colors.purpleAccent, Colors.orangeAccent, Colors.tealAccent
+      const Color(0xFF3B82F6), // Blue
+      const Color(0xFFEF4444), // Red
+      const Color(0xFF10B981), // Green
+      const Color(0xFFA855F7), // Purple
+      const Color(0xFFF59E0B), // Amber
+      const Color(0xFF14B8A6), // Teal
+      const Color(0xFFEC4899), // Pink
+      const Color(0xFF6366F1), // Indigo
     ];
 
     for (int i = 0; i < mainBranches.length; i++) {
@@ -304,6 +314,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
         _center.dx + _level1Distance * math.cos(angle),
         _center.dy + _level1Distance * math.sin(angle),
       );
+      // Her ana dala farklı renk ata
       node.color = colors[i % colors.length];
 
       _layoutChildren(node, angle, _level2Distance);
