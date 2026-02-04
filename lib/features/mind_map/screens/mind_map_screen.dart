@@ -703,18 +703,19 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
         elevation: 0,
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.folder_outlined),
-            tooltip: 'Kaydedilenler',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SavedMindMapsScreen(),
-                ),
-              );
-            },
-          ),
+          if (rootNode == null)
+            IconButton(
+              icon: const Icon(Icons.folder_outlined),
+              tooltip: 'Kaydedilenler',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SavedMindMapsScreen(),
+                  ),
+                );
+              },
+            ),
           if (rootNode != null)
             IconButton(
               icon: const Icon(Icons.center_focus_strong),
