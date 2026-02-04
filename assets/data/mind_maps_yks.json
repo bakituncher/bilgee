@@ -1,0 +1,394 @@
+{
+  "maps": [
+    {
+      "id": "yks_1",
+      "topic": "Limit ve Süreklilik",
+      "subject": "Matematik",
+      "label": "Limit ve Süreklilik",
+      "description": "Fonksiyonlarda limit kavramı ve süreklilik",
+      "children": [
+        {
+          "label": "Limit Kavramı",
+          "description": "Bir fonksiyonun belirli bir noktadaki yaklaşma değeri",
+          "children": [
+            {
+              "label": "Sağdan Limit",
+              "description": "x değeri sağdan yaklaşırken fonksiyonun aldığı değer"
+            },
+            {
+              "label": "Soldan Limit",
+              "description": "x değeri soldan yaklaşırken fonksiyonun aldığı değer"
+            },
+            {
+              "label": "Limit Var Olma Şartı",
+              "description": "Sağdan ve soldan limitler eşit olmalı"
+            }
+          ]
+        },
+        {
+          "label": "Limit Teoremleri",
+          "description": "Limit hesaplamada kullanılan kurallar",
+          "children": [
+            {
+              "label": "Toplam ve Fark",
+              "description": "lim(f±g) = limf ± limg"
+            },
+            {
+              "label": "Çarpım Kuralı",
+              "description": "lim(f·g) = limf · limg"
+            },
+            {
+              "label": "Bölüm Kuralı",
+              "description": "lim(f/g) = limf / limg, limg≠0"
+            }
+          ]
+        },
+        {
+          "label": "Süreklilik",
+          "description": "Fonksiyonun grafiğinde kesinti olmaması durumu",
+          "children": [
+            {
+              "label": "Süreklilik Şartları",
+              "description": "f(a) tanımlı, lim f(x) var ve f(a)'ya eşit"
+            },
+            {
+              "label": "Sürekli Fonksiyonlar",
+              "description": "Polinom, trigonometrik, üstel fonksiyonlar"
+            }
+          ]
+        },
+        {
+          "label": "Belirsizlik Durumları",
+          "description": "Özel limit hesaplama yöntemleri gereken durumlar",
+          "children": [
+            {
+              "label": "0/0 Belirsizliği",
+              "description": "Sadeleştirme veya L'Hospital kuralı"
+            },
+            {
+              "label": "∞/∞ Belirsizliği",
+              "description": "En yüksek dereceli terimlerle sadeleştirme"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "yks_2",
+      "topic": "Osmanlı Devleti'nin Kuruluşu",
+      "subject": "Tarih",
+      "label": "Osmanlı Devleti'nin Kuruluşu",
+      "description": "13. yüzyılda Anadolu'da kurulan beylik ve devletleşme süreci",
+      "children": [
+        {
+          "label": "Kuruluş Dönemi",
+          "description": "1299-1362 arası Osman ve Orhan Bey dönemi",
+          "children": [
+            {
+              "label": "Osman Bey Dönemi",
+              "description": "Beyliğin kurulması ve ilk fetihler (1299-1326)"
+            },
+            {
+              "label": "Orhan Bey Dönemi",
+              "description": "Bursa'nın fethi ve devletleşme (1326-1362)"
+            }
+          ]
+        },
+        {
+          "label": "Coğrafi Konum",
+          "description": "Söğüt-Domaniç bölgesi, Bizans sınırı",
+          "children": [
+            {
+              "label": "Stratejik Avantaj",
+              "description": "Bizans topraklarına yakınlık, gaza fırsatı"
+            },
+            {
+              "label": "Ticaret Yolları",
+              "description": "İpek Yolu güzergahına erişim"
+            }
+          ]
+        },
+        {
+          "label": "İlk Fetihler",
+          "description": "Beyliği güçlendiren ilk askeri başarılar",
+          "children": [
+            {
+              "label": "Karacahisar (1288)",
+              "description": "İlk önemli kale fethi"
+            },
+            {
+              "label": "Bursa (1326)",
+              "description": "İlk başkent, ekonomik merkez"
+            },
+            {
+              "label": "İznik (1331)",
+              "description": "Stratejik şehir fethi"
+            }
+          ]
+        },
+        {
+          "label": "Toplumsal Yapı",
+          "description": "Beyliğin sosyal ve idari organizasyonu",
+          "children": [
+            {
+              "label": "Gaziler",
+              "description": "Sınır boylarında savaşan gönüllü gruplar"
+            },
+            {
+              "label": "Alpler",
+              "description": "Osman Bey'in etrafındaki askeri liderler"
+            },
+            {
+              "label": "Ahiler",
+              "description": "Esnaf teşkilatı, sosyal düzen"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "yks_3",
+      "topic": "Hücre Bölünmeleri",
+      "subject": "Biyoloji",
+      "label": "Hücre Bölünmeleri",
+      "description": "Mitoz ve Mayoz bölünme süreçleri",
+      "children": [
+        {
+          "label": "Mitoz Bölünme",
+          "description": "Eşey hücresi olmayan tüm hücrelerde görülen bölünme",
+          "children": [
+            {
+              "label": "Profaz",
+              "description": "Kromozomların görünür hale gelmesi, çekirdek zarının parçalanması"
+            },
+            {
+              "label": "Metafaz",
+              "description": "Kromozomların ekvator düzleminde dizilmesi"
+            },
+            {
+              "label": "Anafaz",
+              "description": "Kardeş kromatitlerin kutuplara çekilmesi"
+            },
+            {
+              "label": "Telofaz",
+              "description": "Çekirdek zarının oluşması, sitoplazmik bölünme"
+            }
+          ]
+        },
+        {
+          "label": "Mayoz Bölünme",
+          "description": "Eşey hücrelerinin oluşumu için iki aşamalı bölünme",
+          "children": [
+            {
+              "label": "Mayoz I",
+              "description": "Homolog kromozomların ayrılması, indirgeme bölünmesi"
+            },
+            {
+              "label": "Mayoz II",
+              "description": "Kardeş kromatitlerin ayrılması, eşitlik bölünmesi"
+            }
+          ]
+        },
+        {
+          "label": "Bölünme Öncesi",
+          "description": "İnterfaz evresi ve hazırlık",
+          "children": [
+            {
+              "label": "G1 Fazı",
+              "description": "Hücre büyümesi ve protein sentezi"
+            },
+            {
+              "label": "S Fazı",
+              "description": "DNA replikasyonu, kromozom sayısı aynı kalır"
+            },
+            {
+              "label": "G2 Fazı",
+              "description": "Bölünmeye son hazırlık, organel çoğalması"
+            }
+          ]
+        },
+        {
+          "label": "Farklılıklar",
+          "description": "Mitoz ve Mayoz arasındaki temel farklar",
+          "children": [
+            {
+              "label": "Bölünme Sayısı",
+              "description": "Mitoz: 1 kez, Mayoz: 2 kez"
+            },
+            {
+              "label": "Oluşan Hücre Sayısı",
+              "description": "Mitoz: 2 hücre, Mayoz: 4 hücre"
+            },
+            {
+              "label": "Kromozom Sayısı",
+              "description": "Mitoz: 2n→2n, Mayoz: 2n→n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "yks_4",
+      "topic": "Asit-Baz Dengesi",
+      "subject": "Kimya",
+      "label": "Asit-Baz Dengesi",
+      "description": "Asit ve bazların özellikleri, pH kavramı",
+      "children": [
+        {
+          "label": "Asit Tanımları",
+          "description": "Farklı asit tanımları ve özellikleri",
+          "children": [
+            {
+              "label": "Arrhenius Asit",
+              "description": "Suda H+ iyonu veren maddeler"
+            },
+            {
+              "label": "Bronsted-Lowry Asit",
+              "description": "Proton (H+) veren maddeler"
+            },
+            {
+              "label": "Lewis Asit",
+              "description": "Elektron çifti kabul eden maddeler"
+            }
+          ]
+        },
+        {
+          "label": "Baz Tanımları",
+          "description": "Farklı baz tanımları ve özellikleri",
+          "children": [
+            {
+              "label": "Arrhenius Baz",
+              "description": "Suda OH- iyonu veren maddeler"
+            },
+            {
+              "label": "Bronsted-Lowry Baz",
+              "description": "Proton (H+) alan maddeler"
+            },
+            {
+              "label": "Lewis Baz",
+              "description": "Elektron çifti veren maddeler"
+            }
+          ]
+        },
+        {
+          "label": "pH Kavramı",
+          "description": "Çözeltilerin asitlik-bazlık derecesinin ölçüsü",
+          "children": [
+            {
+              "label": "pH Hesabı",
+              "description": "pH = -log[H+], asidik: pH<7, bazik: pH>7"
+            },
+            {
+              "label": "pOH Hesabı",
+              "description": "pOH = -log[OH-], pH + pOH = 14"
+            },
+            {
+              "label": "İndikatörler",
+              "description": "pH'a göre renk değiştiren maddeler (turnusol, fenolftalein)"
+            }
+          ]
+        },
+        {
+          "label": "Nötrleşme",
+          "description": "Asit ve bazın tepkimesi ile tuz oluşumu",
+          "children": [
+            {
+              "label": "Genel Tepkime",
+              "description": "Asit + Baz → Tuz + Su"
+            },
+            {
+              "label": "Kuvvetli Asit-Baz",
+              "description": "Tam nötrleşme, pH=7"
+            },
+            {
+              "label": "Zayıf Asit-Baz",
+              "description": "Kısmi iyonlaşma, denge kurulur"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "yks_5",
+      "topic": "Newton'un Hareket Yasaları",
+      "subject": "Fizik",
+      "label": "Newton'un Hareket Yasaları",
+      "description": "Klasik mekaniğin temel yasaları",
+      "children": [
+        {
+          "label": "I. Yasa (Eylemsizlik)",
+          "description": "Bir cisim dengede ise dengesini korur",
+          "children": [
+            {
+              "label": "Durgun Cisim",
+              "description": "Üzerine etki eden net kuvvet sıfırsa durgun kalır"
+            },
+            {
+              "label": "Sabit Hızlı Hareket",
+              "description": "Net kuvvet sıfırsa düzgün doğrusal hareket yapar"
+            },
+            {
+              "label": "Kütle ve Eylemsizlik",
+              "description": "Kütle arttıkça hareket değişimine direnç artar"
+            }
+          ]
+        },
+        {
+          "label": "II. Yasa (F=ma)",
+          "description": "Bir cisme etki eden net kuvvet, kütle ve ivme çarpımına eşittir",
+          "children": [
+            {
+              "label": "Net Kuvvet",
+              "description": "Tüm kuvvetlerin vektörel toplamı"
+            },
+            {
+              "label": "İvme Yönü",
+              "description": "İvme, net kuvvetle aynı yönde oluşur"
+            },
+            {
+              "label": "Kütle Etkisi",
+              "description": "Kütle arttıkça aynı kuvvetle daha az ivme alınır"
+            }
+          ]
+        },
+        {
+          "label": "III. Yasa (Etki-Tepki)",
+          "description": "Her etkiye eşit ve zıt yönde bir tepki vardır",
+          "children": [
+            {
+              "label": "Kuvvet Çiftleri",
+              "description": "Farklı cisimlere etki eder, dengelenmez"
+            },
+            {
+              "label": "Roket Hareketi",
+              "description": "Gazların geriye itilmesi, roketin ileri hareketi"
+            },
+            {
+              "label": "Yürüme",
+              "description": "Ayak yere kuvvet uygular, yer insanı iter"
+            }
+          ]
+        },
+        {
+          "label": "Uygulamalar",
+          "description": "Günlük hayatta Newton yasalarının görülmesi",
+          "children": [
+            {
+              "label": "Sürtünme Kuvveti",
+              "description": "Harekete zıt yönde etki eden temas kuvveti"
+            },
+            {
+              "label": "Serbest Düşme",
+              "description": "Sadece yerçekimi etkisindeki hareket (g=10 m/s²)"
+            },
+            {
+              "label": "Ağırlık",
+              "description": "G = m·g, yerçekiminin cisme uyguladığı kuvvet"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+

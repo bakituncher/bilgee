@@ -1,6 +1,7 @@
 // lib/features/mind_map/screens/mind_map_screen.dart
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
@@ -75,6 +76,58 @@ class MindMapNode {
 
 final mindMapNodeProvider = StateProvider.autoDispose<MindMapNode?>((ref) => null);
 final isGeneratingProvider = StateProvider.autoDispose<bool>((ref) => false);
+
+// Hazır zihin haritaları için model
+class PreMadeMindMap {
+  final String id;
+  final String topic;
+  final String subject;
+  final Map<String, dynamic> data;
+
+  PreMadeMindMap({
+    required this.id,
+    required this.topic,
+    required this.subject,
+    required this.data,
+  });
+
+  factory PreMadeMindMap.fromJson(Map<String, dynamic> json) {
+    return PreMadeMindMap(
+      id: json['id'],
+      topic: json['topic'],
+      subject: json['subject'],
+      data: json,
+    );
+  }
+}
+
+// Hazır haritaları yükleyen provider
+final preMadeMapsProvider = FutureProvider.autoDispose<List<PreMadeMindMap>>((ref) async {
+  final user = ref.watch(userProfileProvider).value;
+  if (user?.selectedExam == null) return [];
+
+  final examType = user!.selectedExam!.toLowerCase();
+
+  // KPSS türleri için ortak dosya
+  String assetPath;
+  if (examType.contains('kpss')) {
+    assetPath = 'assets/data/mind_maps_kpss.json';
+  } else {
+    assetPath = 'assets/data/mind_maps_$examType.json';
+  }
+
+  try {
+    final jsonString = await rootBundle.loadString(assetPath);
+    final jsonData = jsonDecode(jsonString);
+    final maps = (jsonData['maps'] as List)
+        .map((m) => PreMadeMindMap.fromJson(m))
+        .toList();
+    return maps;
+  } catch (e) {
+    debugPrint('Hazır haritalar yüklenemedi: $e');
+    return [];
+  }
+});
 
 // -----------------------------------------------------------------------------
 // PAINTERS (Çizim Motoru)
@@ -565,11 +618,11 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.school, color: colorScheme.primary),
+                          Icon(Icons.auto_awesome, color: colorScheme.primary),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Konu Seç',
+                              'AI ile Konu Seç',
                               style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: colorScheme.onSurface,
@@ -634,7 +687,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                             return Card(
                               color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                               margin: const EdgeInsets.only(bottom: 12),
-                              elevation: isDark ? 0 : 2,
+                              elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 side: BorderSide(
@@ -697,6 +750,69 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     );
   }
 
+  Widget _buildPreMadeMapsHorizontalList(ThemeData theme, ColorScheme colorScheme) {
+    final preMadeMapsAsync = ref.watch(preMadeMapsProvider);
+
+    return preMadeMapsAsync.when(
+      data: (maps) {
+        if (maps.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Container(
+          height: 240,
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            border: Border(
+              bottom: BorderSide(
+                color: colorScheme.outline.withValues(alpha: 0.2),
+                width: 1,
+              ),
+            ),
+          ),
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            itemCount: maps.length,
+            itemBuilder: (context, index) {
+              final map = maps[index];
+              return _PreMadeMapCard(
+                map: map,
+                theme: theme,
+                colorScheme: colorScheme,
+                onTap: () {
+                  setState(() {
+                    _selectedTopic = map.topic;
+                    _selectedSubject = map.subject;
+                  });
+                  _loadPreMadeMap(map);
+                },
+              );
+            },
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (error, stack) => const SizedBox.shrink(),
+    );
+  }
+
+  void _loadPreMadeMap(PreMadeMindMap map) {
+    try {
+      final rootNode = MindMapNode.fromJson(map.data, NodeType.root);
+      _calculateLayout(rootNode);
+      ref.read(mindMapNodeProvider.notifier).state = rootNode;
+      _centerCanvas();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Harita yüklenirken hata oluştu: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final rootNode = ref.watch(mindMapNodeProvider);
@@ -735,53 +851,63 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
             ),
         ],
       ),
-      body: Stack(
+      body: Column(
         children: [
-          if (rootNode != null)
-            InteractiveViewer(
-              transformationController: _transformationController,
-              boundaryMargin: const EdgeInsets.all(2000),
-              minScale: 0.1,
-              maxScale: 3.0,
-              constrained: false,
-              child: SizedBox(
-                width: _canvasSize.width,
-                height: _canvasSize.height,
-                child: Stack(
-                  children: [
-                    Positioned.fill(child: CustomPaint(painter: GridPainter(isDark: isDark))),
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: ConnectionPainter(rootNode: rootNode, scale: 1.0),
-                      ),
-                    ),
-                    ..._buildNodeWidgets(rootNode),
-                  ],
-                ),
-              ),
-            )
-          else
-            _buildEmptyState(),
+          // Hazır haritalar banner'ı - sadece harita yokken göster
+          if (rootNode == null) _buildPreMadeMapsHorizontalList(theme, colorScheme),
 
-          if (isGenerating)
-            Container(
-              color: colorScheme.surface.withValues(alpha: 0.8),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(color: colorScheme.primary),
-                    const SizedBox(height: 20),
-                    Text(
-                      "Zihin haritası oluşturuluyor...",
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: colorScheme.onSurface,
+          // Ana içerik
+          Expanded(
+            child: Stack(
+              children: [
+                if (rootNode != null)
+                  InteractiveViewer(
+                    transformationController: _transformationController,
+                    boundaryMargin: const EdgeInsets.all(2000),
+                    minScale: 0.1,
+                    maxScale: 3.0,
+                    constrained: false,
+                    child: SizedBox(
+                      width: _canvasSize.width,
+                      height: _canvasSize.height,
+                      child: Stack(
+                        children: [
+                          Positioned.fill(child: CustomPaint(painter: GridPainter(isDark: isDark))),
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: ConnectionPainter(rootNode: rootNode, scale: 1.0),
+                            ),
+                          ),
+                          ..._buildNodeWidgets(rootNode),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
+                  )
+                else
+                  _buildEmptyState(),
+
+                if (isGenerating)
+                  Container(
+                    color: colorScheme.surface.withValues(alpha: 0.8),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(color: colorScheme.primary),
+                          const SizedBox(height: 20),
+                          Text(
+                            "Zihin haritası oluşturuluyor...",
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
             ),
+          ),
         ],
       ),
       bottomNavigationBar: (rootNode != null && !isGenerating)
@@ -969,6 +1095,310 @@ class _NodeWidget extends StatelessWidget {
           .fadeIn(duration: 300.ms),
     );
   }
+}
+
+class _PreMadeMapCard extends StatelessWidget {
+  final PreMadeMindMap map;
+  final ThemeData theme;
+  final ColorScheme colorScheme;
+  final VoidCallback onTap;
+
+  const _PreMadeMapCard({
+    required this.map,
+    required this.theme,
+    required this.colorScheme,
+    required this.onTap,
+  });
+
+  List<Widget> _buildPreviewNodeWidgets(MindMapNode node, double scale) {
+    List<Widget> widgets = [];
+
+    // Node boyutlarını scale'e göre ayarla
+    double w = (node.type == NodeType.root ? 140 : 110) * scale;
+    double h = (node.type == NodeType.root ? 70 : 55) * scale;
+
+    // Canvas merkezi 2000,2000 - bunu 160,80'e dönüştürmek için offset gerekiyor
+    const canvasCenter = 2000.0;
+    const previewCenterX = 160.0;
+    const previewCenterY = 80.0;
+
+    // Node pozisyonunu scale'le ve offset'le
+    final scaledX = (node.position.dx - canvasCenter) * scale + previewCenterX;
+    final scaledY = (node.position.dy - canvasCenter) * scale + previewCenterY;
+
+    widgets.add(
+      Positioned(
+        left: scaledX - (w / 2),
+        top: scaledY - (h / 2),
+        child: Container(
+          width: w,
+          height: h,
+          padding: EdgeInsets.symmetric(horizontal: 2 * scale),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(node.type == NodeType.root ? 35 * scale : 12 * scale),
+            border: Border.all(
+              color: node.color,
+              width: (node.type == NodeType.root ? 3 : 1.5) * scale,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: node.color.withValues(alpha: 0.3),
+                blurRadius: 8 * scale,
+                spreadRadius: 0,
+              )
+            ],
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            node.label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontSize: (node.type == NodeType.root ? 14 : 11) * scale,
+              fontWeight: node.type == NodeType.root ? FontWeight.bold : FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    for (var child in node.children) {
+      widgets.addAll(_buildPreviewNodeWidgets(child, scale));
+    }
+    return widgets;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Zihin haritasını node'a çevir ve GERÇEK layout hesapla
+    MindMapNode? previewNode;
+    try {
+      previewNode = MindMapNode.fromJson(map.data, NodeType.root);
+      // Gerçek layout fonksiyonunu kullan - aynı _MindMapScreenState'teki gibi
+      _calculateRealLayout(previewNode);
+    } catch (e) {
+      debugPrint('Preview node oluşturulamadı: $e');
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 320,
+        height: 220, // Toplam yükseklik tanımlandı: 160 (önizleme) + 60 (başlık alanı)
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: colorScheme.outline.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Önizleme alanı - GERÇEK zihin haritasının küçültülmüş hali
+            Container(
+              height: 160,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    colorScheme.primaryContainer.withValues(alpha: 0.15),
+                    colorScheme.secondaryContainer.withValues(alpha: 0.15),
+                  ],
+                ),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+              ),
+              child: previewNode != null
+                  ? ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                      child: Stack(
+                        children: [
+                          // Grid arka plan (çok ince)
+                          CustomPaint(
+                            painter: GridPainter(isDark: isDark),
+                            size: const Size(320, 160),
+                          ),
+                          // Bağlantılar
+                          CustomPaint(
+                            painter: _ScaledConnectionPainter(
+                              rootNode: previewNode,
+                              scale: 0.12, // Daha büyük önizleme için scale artırıldı
+                              offsetX: 160,
+                              offsetY: 80,
+                            ),
+                            size: const Size(320, 160),
+                          ),
+                          // Node'lar - gerçek widget'lar ama küçültülmüş
+                          ..._buildPreviewNodeWidgets(previewNode, 0.12),
+                        ],
+                      ),
+                    )
+                  : Center(
+                      child: Icon(
+                        Icons.error_outline,
+                        color: colorScheme.error.withValues(alpha: 0.5),
+                        size: 32,
+                      ),
+                    ),
+            ),
+
+            // Konu başlığı
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    map.topic,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                      height: 1.3,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(duration: 300.ms).slideX(begin: 0.2, duration: 400.ms);
+  }
+
+  void _calculateRealLayout(MindMapNode root) {
+    // GERÇEK layout - ana ekrandaki ile aynı
+    const center = Offset(2000, 2000); // 4000x4000 canvas merkezi
+    root.position = center;
+    root.color = const Color(0xFF6366F1);
+
+    final mainBranches = root.children;
+    final angleStep = (2 * math.pi) / (mainBranches.isEmpty ? 1 : mainBranches.length);
+
+    final colors = [
+      const Color(0xFF3B82F6),
+      const Color(0xFFEF4444),
+      const Color(0xFF10B981),
+      const Color(0xFFA855F7),
+      const Color(0xFFF59E0B),
+      const Color(0xFF14B8A6),
+      const Color(0xFFEC4899),
+      const Color(0xFF6366F1),
+    ];
+
+    const level1Distance = 250.0;
+
+    for (int i = 0; i < mainBranches.length; i++) {
+      final angle = i * angleStep;
+      final node = mainBranches[i];
+
+      node.position = Offset(
+        center.dx + level1Distance * math.cos(angle),
+        center.dy + level1Distance * math.sin(angle),
+      );
+      node.color = colors[i % colors.length];
+
+      _layoutRealChildren(node, angle, 200.0);
+    }
+  }
+
+  void _layoutRealChildren(MindMapNode parent, double parentAngle, double distance) {
+    if (parent.children.isEmpty) return;
+
+    final childCount = parent.children.length;
+    final wedgeSize = math.pi / 2.0;
+    final startAngle = parentAngle - (wedgeSize / 2);
+    final angleStep = wedgeSize / (childCount > 1 ? childCount - 1 : 1);
+
+    for (int i = 0; i < childCount; i++) {
+      final angle = childCount == 1 ? parentAngle : startAngle + (i * angleStep);
+      final child = parent.children[i];
+
+      child.position = Offset(
+        parent.position.dx + distance * math.cos(angle),
+        parent.position.dy + distance * math.sin(angle),
+      );
+      child.color = parent.color;
+    }
+  }
+}
+
+// Scaled connection painter - önizleme için
+class _ScaledConnectionPainter extends CustomPainter {
+  final MindMapNode rootNode;
+  final double scale;
+  final double offsetX;
+  final double offsetY;
+
+  _ScaledConnectionPainter({
+    required this.rootNode,
+    required this.scale,
+    required this.offsetX,
+    required this.offsetY,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
+
+    _drawRecursive(canvas, rootNode, paint);
+  }
+
+  void _drawRecursive(Canvas canvas, MindMapNode node, Paint paint) {
+    for (var child in node.children) {
+      paint.color = child.color.withValues(alpha: 0.4);
+      paint.strokeWidth = (node.type == NodeType.root ? 3.0 : 1.5) * scale;
+
+      final p1 = Offset(
+        (node.position.dx - 2000) * scale + offsetX,
+        (node.position.dy - 2000) * scale + offsetY,
+      );
+      final p2 = Offset(
+        (child.position.dx - 2000) * scale + offsetX,
+        (child.position.dy - 2000) * scale + offsetY,
+      );
+
+      final path = Path();
+      path.moveTo(p1.dx, p1.dy);
+
+      final midPoint = Offset((p1.dx + p2.dx) / 2, (p1.dy + p2.dy) / 2);
+
+      if (node.type == NodeType.root) {
+        path.quadraticBezierTo(midPoint.dx, midPoint.dy, p2.dx, p2.dy);
+      } else {
+        path.cubicTo(
+          p1.dx + (p2.dx - p1.dx) / 2, p1.dy,
+          p1.dx + (p2.dx - p1.dx) / 2, p2.dy,
+          p2.dx, p2.dy,
+        );
+      }
+
+      canvas.drawPath(path, paint);
+      _drawRecursive(canvas, child, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ScaledConnectionPainter oldDelegate) => false;
 }
 
 // -----------------------------------------------------------------------------

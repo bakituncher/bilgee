@@ -1,0 +1,398 @@
+{
+  "maps": [
+    {
+      "id": "ags_1",
+      "topic": "Özel Öğretim Yöntemleri",
+      "subject": "Eğitim Bilimleri",
+      "label": "Özel Öğretim Yöntemleri",
+      "description": "Alana özgü öğretim yaklaşımları",
+      "children": [
+        {
+          "label": "Planlama",
+          "description": "Ders öncesi hazırlık ve organizasyon",
+          "children": [
+            {
+              "label": "Kazanım Belirleme",
+              "description": "Öğrencilerin neyi öğreneceğinin tespiti"
+            },
+            {
+              "label": "İçerik Seçimi",
+              "description": "Kazanımlara uygun konu ve etkinlik seçimi"
+            },
+            {
+              "label": "Zaman Yönetimi",
+              "description": "Dersin bölümlerine zaman dağılımı"
+            }
+          ]
+        },
+        {
+          "label": "Öğretim Stratejileri",
+          "description": "Farklı öğretim yaklaşımları",
+          "children": [
+            {
+              "label": "Sunuş Yoluyla Öğretim",
+              "description": "Öğretmen merkezli, bilginin doğrudan aktarılması"
+            },
+            {
+              "label": "Buluş Yoluyla Öğretim",
+              "description": "Öğrenci merkezli, keşfederek öğrenme"
+            },
+            {
+              "label": "Araştırma-İnceleme",
+              "description": "Problem çözme ve sorgulama temelli yaklaşım"
+            }
+          ]
+        },
+        {
+          "label": "Materyal Kullanımı",
+          "description": "Öğretim materyalleri ve araç-gereçler",
+          "children": [
+            {
+              "label": "Görsel Materyaller",
+              "description": "Slayt, poster, diagram, video"
+            },
+            {
+              "label": "İşitsel Materyaller",
+              "description": "Ses kayıtları, müzik, podcast"
+            },
+            {
+              "label": "Dijital Araçlar",
+              "description": "Etkileşimli tahta, tablet, eğitim yazılımları"
+            }
+          ]
+        },
+        {
+          "label": "Değerlendirme",
+          "description": "Öğrenme çıktılarının ölçülmesi",
+          "children": [
+            {
+              "label": "Tanı Edici",
+              "description": "Ders öncesi ön bilgi tespiti"
+            },
+            {
+              "label": "Biçimlendirici",
+              "description": "Ders sırasında anlık geri bildirim"
+            },
+            {
+              "label": "Düzey Belirleyici",
+              "description": "Ders sonunda başarı tespiti"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ags_2",
+      "topic": "Program Geliştirme",
+      "subject": "Eğitim Bilimleri",
+      "label": "Program Geliştirme",
+      "description": "Eğitim programlarının tasarlanması ve değerlendirilmesi",
+      "children": [
+        {
+          "label": "Program Ögeleri",
+          "description": "Bir eğitim programının temel bileşenleri",
+          "children": [
+            {
+              "label": "Hedef/Kazanım",
+              "description": "Öğrencilerin ulaşması beklenen davranışlar"
+            },
+            {
+              "label": "İçerik",
+              "description": "Öğretilecek konu, bilgi ve beceriler"
+            },
+            {
+              "label": "Öğrenme-Öğretme Süreci",
+              "description": "Yöntem, teknik, strateji seçimi"
+            },
+            {
+              "label": "Ölçme-Değerlendirme",
+              "description": "Hedeflere ulaşma durumunun tespiti"
+            }
+          ]
+        },
+        {
+          "label": "Program Geliştirme Modelleri",
+          "description": "Farklı yaklaşımlar",
+          "children": [
+            {
+              "label": "Tyler Modeli",
+              "description": "Hedef-içerik-öğretim-değerlendirme döngüsü"
+            },
+            {
+              "label": "Taba Modeli",
+              "description": "Tümevarım yaklaşımı, esneklik"
+            },
+            {
+              "label": "Oliva Modeli",
+              "description": "Kapsamlı, çok boyutlu model"
+            }
+          ]
+        },
+        {
+          "label": "Program Türleri",
+          "description": "İçerik düzenleme biçimleri",
+          "children": [
+            {
+              "label": "Konu Merkezli",
+              "description": "Disiplinler arası, akademik içerik odaklı"
+            },
+            {
+              "label": "Öğrenci Merkezli",
+              "description": "İhtiyaçlar, ilgiler, yaşantılar ön planda"
+            },
+            {
+              "label": "Problem Merkezli",
+              "description": "Toplumsal sorunları çözmeye yönelik"
+            }
+          ]
+        },
+        {
+          "label": "Program Değerlendirme",
+          "description": "Programın etkililiğinin incelenmesi",
+          "children": [
+            {
+              "label": "İhtiyaç Analizi",
+              "description": "Program öncesi eksikliklerin belirlenmesi"
+            },
+            {
+              "label": "Süreç Değerlendirme",
+              "description": "Uygulama sırasında izleme"
+            },
+            {
+              "label": "Ürün Değerlendirme",
+              "description": "Sonuçların hedeflerle karşılaştırılması"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ags_3",
+      "topic": "Sınıf Yönetimi",
+      "subject": "Eğitim Bilimleri",
+      "label": "Sınıf Yönetimi",
+      "description": "Etkili bir sınıf ortamının oluşturulması",
+      "children": [
+        {
+          "label": "Fiziksel Düzenleme",
+          "description": "Sınıf ortamının tasarlanması",
+          "children": [
+            {
+              "label": "Oturma Düzeni",
+              "description": "U, küme, tiyatro gibi farklı düzenlemeler"
+            },
+            {
+              "label": "Aydınlatma-Havalandırma",
+              "description": "Sağlıklı ve konforlu ortam koşulları"
+            },
+            {
+              "label": "Pano ve Araç-Gereç",
+              "description": "Görsel zenginlik ve erişilebilirlik"
+            }
+          ]
+        },
+        {
+          "label": "Zaman Yönetimi",
+          "description": "Derste zamanın verimli kullanımı",
+          "children": [
+            {
+              "label": "Geçiş Süreleri",
+              "description": "Etkinlikler arası hızlı ve düzenli geçiş"
+            },
+            {
+              "label": "Planlı Çalışma",
+              "description": "Ders planına sadakat, esnek olmak"
+            }
+          ]
+        },
+        {
+          "label": "Davranış Yönetimi",
+          "description": "İstenmeyen davranışlarla başa çıkma",
+          "children": [
+            {
+              "label": "Önleme",
+              "description": "Kurallar koymak, beklentileri netleştirmek"
+            },
+            {
+              "label": "Müdahale",
+              "description": "Olumlu pekiştirme, görmezden gelme, uyarı"
+            },
+            {
+              "label": "Düzeltme",
+              "description": "Mantıksal sonuçlar, davranış sözleşmesi"
+            }
+          ]
+        },
+        {
+          "label": "İletişim ve Motivasyon",
+          "description": "Olumlu sınıf iklimi oluşturma",
+          "children": [
+            {
+              "label": "Empatik İletişim",
+              "description": "Öğrenciyi anlamak, dinlemek"
+            },
+            {
+              "label": "Teşvik Etmek",
+              "description": "Başarıyı fark etmek, övgü kullanmak"
+            },
+            {
+              "label": "Adaletli Olmak",
+              "description": "Herkese eşit mesafede, objektif davranmak"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ags_4",
+      "topic": "Ölçme ve Değerlendirme",
+      "subject": "Eğitim Bilimleri",
+      "label": "Ölçme ve Değerlendirme",
+      "description": "Eğitimde test ve değerlendirme teknikleri",
+      "children": [
+        {
+          "label": "Ölçme Araçları",
+          "description": "Farklı ölçme türleri ve araçları",
+          "children": [
+            {
+              "label": "Yazılı Sınavlar",
+              "description": "Çoktan seçmeli, doğru-yanlış, açık uçlu sorular"
+            },
+            {
+              "label": "Performans Görevleri",
+              "description": "Proje, sunum, deney gibi uygulamalar"
+            },
+            {
+              "label": "Portfolyo",
+              "description": "Öğrencinin çalışmalarının sistematik toplanması"
+            }
+          ]
+        },
+        {
+          "label": "Geçerlik ve Güvenirlik",
+          "description": "Ölçme araçlarının nitelik kriterleri",
+          "children": [
+            {
+              "label": "Geçerlik",
+              "description": "Ölçme aracının ölçmek istediğini ölçme derecesi"
+            },
+            {
+              "label": "Güvenirlik",
+              "description": "Ölçme sonuçlarının tutarlı ve kararlı olması"
+            }
+          ]
+        },
+        {
+          "label": "Soru Yazma Teknikleri",
+          "description": "Kaliteli soru hazırlama ilkeleri",
+          "children": [
+            {
+              "label": "Hedef-Soru Uyumu",
+              "description": "Her sorunun bir kazanımı ölçmesi"
+            },
+            {
+              "label": "Açık ve Anlaşılır Dil",
+              "description": "Karmaşık cümle yapılarından kaçınma"
+            },
+            {
+              "label": "Bilişsel Düzey",
+              "description": "Bloom Taksonomisi'ne göre farklı seviyelerde soru"
+            }
+          ]
+        },
+        {
+          "label": "Not Verme ve Raporlama",
+          "description": "Değerlendirme sonuçlarının iletilmesi",
+          "children": [
+            {
+              "label": "Norm Referanslı",
+              "description": "Öğrencilerin birbirine göre sıralanması"
+            },
+            {
+              "label": "Ölçüt Referanslı",
+              "description": "Öğrencilerin belirlenen kriterlere göre değerlendirilmesi"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ags_5",
+      "topic": "Rehberlik ve Psikolojik Danışma",
+      "subject": "Eğitim Bilimleri",
+      "label": "Rehberlik ve PDR",
+      "description": "Öğrenciye rehberlik hizmetleri",
+      "children": [
+        {
+          "label": "Rehberlik Türleri",
+          "description": "Farklı alanlarda rehberlik",
+          "children": [
+            {
+              "label": "Eğitsel Rehberlik",
+              "description": "Ders seçimi, çalışma becerileri, başarı artırma"
+            },
+            {
+              "label": "Mesleki Rehberlik",
+              "description": "Meslek seçimi, kariyer planlama"
+            },
+            {
+              "label": "Kişisel-Sosyal Rehberlik",
+              "description": "Duygusal problemler, ilişkiler, benlik saygısı"
+            }
+          ]
+        },
+        {
+          "label": "Rehberlik Hizmetleri",
+          "description": "Sunulan hizmet türleri",
+          "children": [
+            {
+              "label": "Tanıma Hizmeti",
+              "description": "Öğrencinin özelliklerini belirleme (test, gözlem)"
+            },
+            {
+              "label": "Bilgi Verme",
+              "description": "Eğitim, meslek, sınav bilgilendirme"
+            },
+            {
+              "label": "Yöneltme-Yerleştirme",
+              "description": "Uygun program, okul, meslek seçimine yardım"
+            },
+            {
+              "label": "İzleme",
+              "description": "Öğrencinin gelişiminin takibi"
+            }
+          ]
+        },
+        {
+          "label": "Psikolojik Danışma",
+          "description": "Bireysel veya grup danışmanlığı",
+          "children": [
+            {
+              "label": "Bireysel Danışma",
+              "description": "Öğrenciyle birebir görüşme"
+            },
+            {
+              "label": "Grup Danışması",
+              "description": "Benzer sorunları olan öğrencilerle grup çalışması"
+            }
+          ]
+        },
+        {
+          "label": "Özel Durumlar",
+          "description": "Özel ihtiyaç gerektiren durumlar",
+          "children": [
+            {
+              "label": "Özel Eğitim",
+              "description": "Özel gereksinimli öğrenciler için destek"
+            },
+            {
+              "label": "Kriz Müdahalesi",
+              "description": "Travma, kayıp, afet gibi acil durumlarda destek"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
