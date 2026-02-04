@@ -146,12 +146,13 @@ class TestResultSummaryScreen extends ConsumerWidget {
                       context.push('${AppRoutes.aiHub}/${AppRoutes.motivationChat}', extra: prompt);
                     } else {
                       context.push('/ai-hub/offer', extra: {
-                        'title': 'Analiz & Strateji',
+                        'title': 'Taktik Tavşan',
                         'subtitle': 'Deneme değerlendirme ve strateji danışmanı',
-                        'icon': Icons.dashboard_customize_rounded,
-                        'color': Colors.amberAccent,
-                        'heroTag': 'analysis-strategy-offer',
-                        'redirectRoute': '/ai-hub/analysis-strategy',
+                        'icon': Icons.psychology_rounded,
+                        'color': Colors.indigoAccent,
+                        'heroTag': 'motivation-chat-offer',
+                        'redirectRoute': '/ai-hub/motivation-chat',
+                        'imageAsset': 'assets/images/bunnyy.png',
                       });
                     }
                   },

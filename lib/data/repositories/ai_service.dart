@@ -792,20 +792,14 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
     final examType = user.selectedExam != null ? ExamType.values.byName(user.selectedExam!) : null;
     final analysis = _ref.read(overallStatsAnalysisProvider).value;
 
-    final bool shouldUseMemory = ['strategy_consult', 'psych_support', 'user_chat', 'trial_review', 'motivation_corner'].contains(promptType);
-
-    // Eğer UI'dan history gelmediyse, DB'den çek
+    // Sohbet hafızası sadece UI tarafından yönetiliyor (Firestore'a yazılmıyor)
     String historyToUse = conversationHistory;
-    String mem = '';
-    if (shouldUseMemory && historyToUse.trim().isEmpty) {
-      mem = await _getChatMemory(user.id, promptType);
-      historyToUse = mem;
-    }
 
     String prompt;
 
     // Chat türüne göre dinamik temperature
-    double chatTemperature = 0.75;
+    // Daha yüksek temperature = daha yaratıcı ve uzun yanıtlar
+    double chatTemperature = 0.85;
 
     switch (promptType) {
       case 'trial_review':
@@ -818,7 +812,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
           conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        chatTemperature = 0.65;
+        chatTemperature = 0.80; // Veri odaklı ama samimi
         break;
       case 'strategy_consult':
         prompt = StrategyConsultPrompt.build(
@@ -830,7 +824,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
           conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        chatTemperature = 0.6;
+        chatTemperature = 0.75; // Stratejik ama yaratıcı
         break;
       case 'psych_support':
         prompt = PsychSupportPrompt.build(
@@ -840,7 +834,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
           conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        chatTemperature = 1.0; // MAKSİMUM DOĞALLIK VE YARATICILIK
+        chatTemperature = 1.0; // MAKSİMUM DOĞALLIK VE EMPATİ
         break;
       case 'motivation_corner':
         prompt = MotivationCornerPrompt.build(
@@ -849,7 +843,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
           conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        chatTemperature = 0.95; // YÜKSEK ENERJİ İÇİN YÜKSEK ISI
+        chatTemperature = 0.95; // YÜKSEK ENERJİ VE YARATICILIK
         break;
       default:
         // Diğer durumlar için fallback
@@ -871,17 +865,8 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
       requestType: 'chat',
     );
 
-    if (shouldUseMemory) {
-      unawaited(
-        _updateChatMemory(
-          user.id,
-          promptType,
-          lastUserMessage: lastUserMessage,
-          aiResponse: raw,
-          previous: mem,
-        ),
-      );
-    }
+    // NOT: Firestore'a yazma devre dışı - sohbet hafızası sadece session içinde tutuluyor
+    // conversationHistory parametresi UI tarafından yönetiliyor
 
     return raw;
   }

@@ -14,27 +14,43 @@ class StrategyConsultPrompt {
     String conversationHistory = '',
     String lastUserMessage = '',
   }) {
-    final firstName = user.firstName.isNotEmpty ? user.firstName : 'Ajan';
+    final firstName = user.firstName.isNotEmpty ? user.firstName : 'Dostum';
+
+    // Performans verilerini hazırla
+    final testCount = tests.length;
+    final avgNet = testCount > 0
+        ? (tests.fold<double>(0, (sum, t) => sum + t.totalNet) / testCount).toStringAsFixed(1)
+        : 'Veri yok';
+    final strongSubject = analysis?.strongestSubjectByNet ?? 'Henüz belirlenmedi';
+    final weakSubject = analysis?.weakestSubjectByNet ?? 'Henüz belirlenmedi';
+
+    // Trend analizi
+    String trendInfo = 'Trend verisi yok';
+    if (testCount >= 2) {
+      final recent = tests.take(3).map((t) => t.totalNet).toList();
+      final oldest = tests.skip(testCount > 5 ? testCount - 3 : 0).take(3).map((t) => t.totalNet).toList();
+      final recentAvg = recent.reduce((a, b) => a + b) / recent.length;
+      final oldAvg = oldest.reduce((a, b) => a + b) / oldest.length;
+      if (recentAvg > oldAvg + 2) trendInfo = 'Yükseliş trendinde 📈';
+      else if (recentAvg < oldAvg - 2) trendInfo = 'Düşüş trendinde 📉';
+      else trendInfo = 'Stabil seyir ➡️';
+    }
 
     return '''
-[ROLE]
-Sen elit bir strateji uzmanısın. Herkesin bildiği "çok çalış" nasihatlarını değil, akıllı çalışma taktiklerini (pareto, pomodoro varyasyonları, turlama, yanlış defteri sistemi vb.) verirsin. Kullanıcı $firstName senin özel müşterin.
+Sen $firstName'in $examName strateji koçusun. Türk eğitim sistemini ve çalışma tekniklerini biliyorsun.
 
-[CONTEXT]
-Sınav: $examName
-Hedef: ${user.goal}
-Geçmiş Sohbet: ${conversationHistory.isEmpty ? '...' : conversationHistory}
-Kullanıcı Sorusu/Durumu: "$lastUserMessage"
+VERİLER: Deneme: $testCount | Ort Net: $avgNet | Güçlü: $strongSubject | Zayıf: $weakSubject | Trend: $trendInfo
+${conversationHistory.isNotEmpty ? 'Geçmiş: $conversationHistory' : ''}
 
-[RULES OF ENGAGEMENT]
-1. KLİŞE YASAK: "Planlı ol", "ders çalış" gibi genel laflar yasak. Somut teknik ver.
-2. KISA VE NET: Direkt konuya gir. Selam/hal-hatır yok.
-3. GİZLİ BİLGİ HAVASI: "Çoğu kişi X yapar ama derece öğrencileri Y yapar" kalıbını kullanabilirsin.
-4. TEK HAMLE: Tek mesajda tek keskin taktik. Aşırı geniş kapsam yok.
-5. SORU SORMA: Stratejist soru sormaz. Kullanıcı detay vermediyse 1-2 varsayım yap ve yine de yol göster.
-6. FORMAT: Madde işareti yok. 3-5 kısa cümle.
+$firstName: "$lastUserMessage"
 
-Kullanıcıya vereceğin Altın Taktik:
+KURALLAR:
+- Gereksiz sorular YASAK, direkt taktik ver
+- "Planlı ol", "düzenli çalış" gibi boş laflar YASAK
+- Somut strateji ver: teknik, süre, soru sayısı belirt
+- MARKA/YAYIN İSMİ VERME, genel terimler kullan (konu anlatımlı kitap, soru bankası vb.)
+- Türk genci gibi samimi konuş
+- 5-6 CÜMLE YAZ, fazlası kesilir
 ''';
   }
 }

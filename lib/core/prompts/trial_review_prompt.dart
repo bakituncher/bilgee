@@ -20,45 +20,75 @@ class TrialReviewPrompt {
     final lastNet = lastTest?.totalNet.toStringAsFixed(1) ?? '0';
     final bestSubject = analysis?.strongestSubjectByNet ?? 'Yok';
     final worstSubject = analysis?.weakestSubjectByNet ?? 'Yok';
+    final testCount = tests.length;
 
-    // Trend analizi (basit)
-    String trend = 'sabit';
+    // Ortalama net hesaplama
+    final avgNet = testCount > 0
+        ? (tests.fold<double>(0, (sum, t) => sum + t.totalNet) / testCount).toStringAsFixed(1)
+        : '0';
+
+    // Trend analizi (son 3 deneme vs önceki 3 deneme)
+    String trend = 'henüz yeterli veri yok';
+    String trendDetail = '';
     if (tests.length >= 2) {
-      if (tests[0].totalNet > tests[1].totalNet) trend = 'yükseliş';
-      else if (tests[0].totalNet < tests[1].totalNet) trend = 'düşüş';
+      final diff = tests[0].totalNet - tests[1].totalNet;
+      if (diff > 3) {
+        trend = 'güçlü yükseliş 📈';
+        trendDetail = '+${diff.toStringAsFixed(1)} net artış';
+      } else if (diff > 0) {
+        trend = 'hafif yükseliş 📈';
+        trendDetail = '+${diff.toStringAsFixed(1)} net artış';
+      } else if (diff < -3) {
+        trend = 'düşüş 📉';
+        trendDetail = '${diff.toStringAsFixed(1)} net';
+      } else if (diff < 0) {
+        trend = 'hafif düşüş 📉';
+        trendDetail = '${diff.toStringAsFixed(1)} net';
+      } else {
+        trend = 'stabil ➡️';
+      }
     }
 
-    // [YENİ EKLENEN KISIM] Branş Denemesi Tespiti
-    // AI'ın elma ile armudu karıştırmaması için ona bağlam veriyoruz.
-    String examContext = "Genel Deneme (Tüm Dersler)";
+    String examContext = "Genel Deneme";
     if (lastTest != null && lastTest.isBranchTest) {
-      // Branş denemesi ise dersin adını bul (örn: Matematik)
       final lessonName = lastTest.scores.keys.isNotEmpty ? lastTest.scores.keys.first : 'Tek Ders';
-      examContext = "BRANŞ DENEMESİ ($lessonName) - (DİKKAT: Bu sadece tek bir dersin sonucudur)";
+      examContext = "Branş Denemesi ($lessonName)";
+    }
+
+    // Zayıf konu detayları
+    final weakTopicInfo = analysis?.getWeakestTopicWithDetails();
+    final weakTopic = weakTopicInfo != null
+        ? '${weakTopicInfo['topic']} (${weakTopicInfo['subject']})'
+        : 'Belirlenmedi';
+
+    // Ders bazlı performans özeti
+    String subjectBreakdown = '';
+    if (lastTest != null && lastTest.scores.isNotEmpty) {
+      final subjectNets = lastTest.scores.entries.map((e) {
+        final dogru = e.value['dogru'] ?? 0;
+        final yanlis = e.value['yanlis'] ?? 0;
+        final net = dogru - (yanlis * lastTest.penaltyCoefficient);
+        return '${e.key}: ${net.toStringAsFixed(1)} net';
+      }).join(', ');
+      subjectBreakdown = subjectNets;
     }
 
     return '''
-[ROLE]
-Sen tecrübeli bir sınav koçusun. Önündeki deneme karnesine bakıp öğrenciyle kritik yapıyorsun. Amacın sadece rakamları okumak değil, rakamların arkasındaki hikayeyi görmek.
+Sen $firstName'in $examName deneme koçusun. Türk eğitim sistemini (TYT/AYT/LGS/KPSS) biliyorsun.
 
-[DATA DASHBOARD]
-Kullanıcı: $firstName ($examName)
-Sınav Türü: $examContext
-Son Net: $lastNet
-Trend: $trend (son denemeye göre)
-Yıldız Olduğu Ders: $bestSubject
-Alarm Veren Ders: $worstSubject
-Geçmiş Sohbet: ${conversationHistory.isEmpty ? '...' : conversationHistory}
-Son Mesaj: "$lastUserMessage"
+VERİLER: Son Net: $lastNet | Ort: $avgNet ($testCount deneme) | Trend: $trend $trendDetail | Güçlü: $bestSubject | Zayıf: $worstSubject | Zayıf Konu: $weakTopic
+${subjectBreakdown.isNotEmpty ? 'Ders Dağılımı: $subjectBreakdown' : ''}
+${conversationHistory.isNotEmpty ? 'Geçmiş: $conversationHistory' : ''}
 
-[INSTRUCTIONS]
-1. BAĞLAM FARKINDALIĞI (ÇOK ÖNEMLİ): Eğer "Sınav Türü" BRANŞ DENEMESİ ise; sakın "Genel netin düşmüş" veya "Puanın azalmış" gibi yorumlar yapma. Çünkü bu sadece tek bir ders. O dersin kendi içindeki başarısını yorumla.
-2. ROBOT OLMA: "Matematik netin X" diye sayma. Yorum kat.
-3. TEK ODAK: Her şeyi düzeltmeye çalışma. En önemli 1 soruna odaklan.
-4. SAMİMİYET: Yapıcı ve motive edici ol.
-5. UZUNLUK: Maksimum 4 cümle. Liste yapma.
+$firstName: "$lastUserMessage"
 
-Cevap:
+KURALLAR:
+- Gereksiz sorular YASAK, elinde veri var direkt analiz yap
+- "Daha çok çalış" gibi boş laflar YASAK, somut öneriler ver
+- Verilere referans ver, spesifik konu ve soru sayısı belirt
+- MARKA/YAYIN İSMİ VERME, genel terimler kullan (konu anlatımlı kitap, soru bankası vb.)
+- Türk genci gibi samimi konuş
+- 5-6 CÜMLE YAZ, fazlası kesilir
 ''';
   }
 }
