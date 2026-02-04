@@ -7,6 +7,7 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:taktik/core/safety/ai_content_safety.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
+import 'dart:async';
 
 // RUH HALİ SEÇENEKLERİ
 enum Mood { focused, neutral, tired, stressed, badResult, goodResult, workshop }
@@ -394,7 +395,11 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
                                 }
                                 final message = history[index];
                                 final bool isLastRealMessage = index == history.length - 1;
-                                return _MessageBubble(message: message, animate: isLastRealMessage);
+                                return _MessageBubble(
+                                  message: message,
+                                  animate: isLastRealMessage,
+                                  scrollController: isLastRealMessage && !message.isUser ? _scrollController : null,
+                                );
                               },
                             ),
                     ),
@@ -834,14 +839,117 @@ class _BriefingButton extends StatelessWidget {
   }
 }
 
-class _MessageBubble extends StatelessWidget {
+class _MessageBubble extends StatefulWidget {
   final ChatMessage message;
   final bool animate;
-  const _MessageBubble({required this.message, this.animate = false});
+  final ScrollController? scrollController;
+  const _MessageBubble({required this.message, this.animate = false, this.scrollController});
+
+  @override
+  State<_MessageBubble> createState() => _MessageBubbleState();
+}
+
+class _MessageBubbleState extends State<_MessageBubble> {
+  String _displayedText = '';
+  Timer? _typewriterTimer;
+  bool _isTyping = false;
+
+  // Typewriter hızı (ms per karakter) - Hayalet gibi hızlı akış
+  static const int _baseCharDelay = 1; // Temel hız (çok hızlı)
+  static const int _wordDelay = 0; // Kelime sonrası (anında)
+  static const int _punctuationDelay = 8; // Noktalama sonrası (minimal)
+  static const int _newlineDelay = 12; // Yeni satır sonrası
+
+  @override
+  void initState() {
+    super.initState();
+    // AI mesajları için typewriter efekti, kullanıcı mesajları direkt gösterilir
+    if (!widget.message.isUser && widget.animate) {
+      _startTypewriterEffect();
+    } else {
+      _displayedText = widget.message.text;
+    }
+  }
+
+  @override
+  void dispose() {
+    _typewriterTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startTypewriterEffect() {
+    final fullText = widget.message.text;
+    if (fullText.isEmpty) {
+      _displayedText = fullText;
+      return;
+    }
+
+    setState(() {
+      _isTyping = true;
+      _displayedText = '';
+    });
+
+    int charIndex = 0;
+
+    void typeNextChar() {
+      if (!mounted || charIndex >= fullText.length) {
+        if (mounted) {
+          setState(() => _isTyping = false);
+          // Yazım bitince son scroll
+          _scrollToBottomSmooth();
+        }
+        return;
+      }
+
+      final char = fullText[charIndex];
+      setState(() {
+        _displayedText = fullText.substring(0, charIndex + 1);
+      });
+
+      charIndex++;
+
+      // Her 20 karakterde bir scroll yap (otomatik takip)
+      if (charIndex % 20 == 0 && widget.scrollController != null) {
+        _scrollToBottomSmooth();
+      }
+
+      // Doğal yazma hissi için değişken gecikme
+      int delay = _baseCharDelay;
+      if (char == ' ') {
+        delay = _wordDelay;
+      } else if ('.!?'.contains(char)) {
+        delay = _punctuationDelay;
+      } else if (',;:'.contains(char)) {
+        delay = _punctuationDelay ~/ 2;
+      } else if (char == '\n') {
+        delay = _newlineDelay;
+      }
+
+      _typewriterTimer = Timer(Duration(milliseconds: delay), typeNextChar);
+    }
+
+    // İlk karakteri biraz geciktirerek başlat (daha doğal)
+    _typewriterTimer = Timer(const Duration(milliseconds: 50), typeNextChar);
+  }
+
+  void _scrollToBottomSmooth() {
+    final controller = widget.scrollController;
+    if (controller == null || !controller.hasClients) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (controller.hasClients) {
+        controller.animateTo(
+          controller.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 100),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isUser = message.isUser;
+    final isUser = widget.message.isUser;
     final colorScheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -853,7 +961,7 @@ class _MessageBubble extends StatelessWidget {
 
     final content = GestureDetector(
       onLongPress: () async {
-        await Clipboard.setData(ClipboardData(text: message.text));
+        await Clipboard.setData(ClipboardData(text: widget.message.text));
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -911,14 +1019,28 @@ class _MessageBubble extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Text(
-                    message.text,
-                    style: TextStyle(
-                      color: fg,
-                      fontSize: 15.5,
-                      height: 1.5,
-                      fontWeight: FontWeight.w400,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          _displayedText,
+                          style: TextStyle(
+                            color: fg,
+                            fontSize: 15.5,
+                            height: 1.5,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                      // Yanıp sönen cursor efekti (yazım sırasında)
+                      if (_isTyping && !isUser)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 2),
+                          child: _BlinkingCursor(color: fg),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -928,7 +1050,7 @@ class _MessageBubble extends StatelessWidget {
       ),
     );
 
-    if (!animate) return content;
+    if (!widget.animate) return content;
     return Animate(
       effects: const [
         FadeEffect(duration: Duration(milliseconds: 200), curve: Curves.easeIn),
@@ -939,6 +1061,51 @@ class _MessageBubble extends StatelessWidget {
         ),
       ],
       child: content,
+    );
+  }
+}
+
+// Yanıp sönen cursor widget'ı - ChatGPT tarzı
+class _BlinkingCursor extends StatefulWidget {
+  final Color color;
+  const _BlinkingCursor({required this.color});
+
+  @override
+  State<_BlinkingCursor> createState() => _BlinkingCursorState();
+}
+
+class _BlinkingCursorState extends State<_BlinkingCursor> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 530),
+      vsync: this,
+    )..repeat(reverse: true);
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _animation,
+      child: Container(
+        width: 2,
+        height: 18,
+        decoration: BoxDecoration(
+          color: widget.color.withOpacity(0.8),
+          borderRadius: BorderRadius.circular(1),
+        ),
+      ),
     );
   }
 }
