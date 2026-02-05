@@ -31,15 +31,15 @@
           "children": [
             {
               "label": "Toplam ve Fark",
-              "description": "lim(f±g) = limf ± limg"
+              "description": "$\\lim(f \\pm g) = \\lim f \\pm \\lim g$"
             },
             {
               "label": "Çarpım Kuralı",
-              "description": "lim(f·g) = limf · limg"
+              "description": "$\\lim(f \\cdot g) = \\lim f \\cdot \\lim g$"
             },
             {
               "label": "Bölüm Kuralı",
-              "description": "lim(f/g) = limf / limg, limg≠0"
+              "description": "$\\lim(f/g) = \\frac{\\lim f}{\\lim g}$, $\\lim g \\neq 0$"
             }
           ]
         },
@@ -49,7 +49,7 @@
           "children": [
             {
               "label": "Süreklilik Şartları",
-              "description": "f(a) tanımlı, lim f(x) var ve f(a)'ya eşit"
+              "description": "$f(a)$ tanımlı, $\\lim_{x \\to a} f(x)$ var ve $f(a)$'ya eşit"
             },
             {
               "label": "Sürekli Fonksiyonlar",
@@ -63,11 +63,11 @@
           "children": [
             {
               "label": "0/0 Belirsizliği",
-              "description": "Sadeleştirme veya L'Hospital kuralı"
+              "description": "Sadeleştirme veya L'Hospital kuralı ile çözülür: $\\frac{0}{0}$"
             },
             {
               "label": "∞/∞ Belirsizliği",
-              "description": "En yüksek dereceli terimlerle sadeleştirme"
+              "description": "En yüksek dereceli terimlerle sadeleştirme: $\\frac{\\infty}{\\infty}$"
             }
           ]
         }
@@ -221,7 +221,7 @@
             },
             {
               "label": "Kromozom Sayısı",
-              "description": "Mitoz: 2n→2n, Mayoz: 2n→n"
+              "description": "Mitoz: $2n \\to 2n$, Mayoz: $2n \\to n$"
             }
           ]
         }
@@ -276,11 +276,11 @@
           "children": [
             {
               "label": "pH Hesabı",
-              "description": "pH = -log[H+], asidik: pH<7, bazik: pH>7"
+              "description": "$\\text{pH} = -\\log[\\text{H}^+]$, asidik: pH<7, bazik: pH>7"
             },
             {
               "label": "pOH Hesabı",
-              "description": "pOH = -log[OH-], pH + pOH = 14"
+              "description": "$\\text{pOH} = -\\log[\\text{OH}^-]$, pH + pOH = 14"
             },
             {
               "label": "İndikatörler",
@@ -335,7 +335,7 @@
         },
         {
           "label": "II. Yasa (F=ma)",
-          "description": "Bir cisme etki eden net kuvvet, kütle ve ivme çarpımına eşittir",
+          "description": "Bir cisme etki eden net kuvvet, kütle ve ivme çarpımına eşittir: $F = m \\cdot a$",
           "children": [
             {
               "label": "Net Kuvvet",
@@ -379,11 +379,11 @@
             },
             {
               "label": "Serbest Düşme",
-              "description": "Sadece yerçekimi etkisindeki hareket (g=10 m/s²)"
+              "description": "Sadece yerçekimi etkisindeki hareket ($g=10$ m/s$^2$)"
             },
             {
               "label": "Ağırlık",
-              "description": "G = m·g, yerçekiminin cisme uyguladığı kuvvet"
+              "description": "$G = m \\cdot g$, yerçekiminin cisme uyguladığı kuvvet"
             }
           ]
         }

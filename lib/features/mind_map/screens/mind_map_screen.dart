@@ -13,6 +13,8 @@ import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/core/utils/exam_utils.dart';
 import 'package:taktik/features/mind_map/screens/saved_mind_maps_screen.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
+import 'package:taktik/shared/widgets/markdown_with_math.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 // -----------------------------------------------------------------------------
 // MODELS
@@ -133,6 +135,35 @@ final preMadeMapsProvider = FutureProvider<List<PreMadeMindMap>>((ref) async {
     return [];
   }
 });
+
+// -----------------------------------------------------------------------------
+// HELPER FUNCTIONS
+// -----------------------------------------------------------------------------
+
+/// LaTeX ifadelerini basit metne çevirir (önizleme için)
+String _stripLatex(String text) {
+  // Display math: $$...$$
+  text = text.replaceAll(RegExp(r'\$\$([^\$]+)\$\$'), r'\1');
+  // Inline math: $...$
+  text = text.replaceAll(RegExp(r'\$([^\$]+)\$'), r'\1');
+
+  // LaTeX komutlarını temizle
+  text = text.replaceAll(r'\lim', 'lim');
+  text = text.replaceAll(r'\infty', '∞');
+  text = text.replaceAll(r'\neq', '≠');
+  text = text.replaceAll(RegExp(r'\\frac\{([^}]+)\}\{([^}]+)\}'), r'\1/\2');
+  text = text.replaceAll(RegExp(r'\\sqrt\[([^\]]+)\]\{([^}]+)\}'), r'ⁿ√\2');
+  text = text.replaceAll(RegExp(r'\\sqrt\{([^}]+)\}'), r'√\1');
+  text = text.replaceAll(r'\cdot', '·');
+  text = text.replaceAll(r'\times', '×');
+  text = text.replaceAll(r'\pm', '±');
+  text = text.replaceAll(r'\to', '→');
+  text = text.replaceAll(RegExp(r'\\_'), '_');
+  text = text.replaceAll(RegExp(r'\\'), '');
+  text = text.replaceAll(RegExp(r'[{}]'), '');
+
+  return text.trim();
+}
 
 // -----------------------------------------------------------------------------
 // PAINTERS (Çizim Motoru)
@@ -474,6 +505,13 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
       Konu: "$topic". Sınav Seviyesi: ${user?.selectedExam ?? 'Genel'}.
       Bu konu için detaylı bir zihin haritası JSON çıktısı oluştur.
       
+      ÖNEMLİ: Matematiksel ifadeleri mutlaka LaTeX formatında yaz:
+      - Inline formüller için: \$formül\$ (Örn: \$x^2 + 5x = 0\$)
+      - Display formüller için: \$\$formül\$\$ (Örn: \$\$\\frac{a}{b}\$\$)
+      - Yunan harfleri: \$\\alpha, \\beta, \\pi\$ gibi
+      - Üst simge: \$x^2\$, Alt simge: \$x_n\$
+      - Kesir: \$\\frac{a}{b}\$
+      
       Format:
       {
         "label": "$topic",
@@ -613,18 +651,22 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              node.label,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: node.color,
+            MarkdownWithMath(
+              data: node.label,
+              styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
+                p: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: node.color,
+                ),
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              node.description.isEmpty ? "Ek açıklama yok." : node.description,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+            MarkdownWithMath(
+              data: node.description.isEmpty ? "Ek açıklama yok." : node.description,
+              styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
+                p: theme.textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -1236,7 +1278,7 @@ class _NodeWidget extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: Text(
-          node.label,
+          _stripLatex(node.label),
           textAlign: TextAlign.center,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
@@ -1308,7 +1350,7 @@ class _PreMadeMapCard extends StatelessWidget {
           ),
           alignment: Alignment.center,
           child: Text(
-            node.label,
+            _stripLatex(node.label),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
