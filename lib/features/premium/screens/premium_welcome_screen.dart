@@ -116,7 +116,7 @@ class _PremiumWelcomeScreenState extends ConsumerState<PremiumWelcomeScreen> {
 
                   // Fayda Odaklı İkna Edici Metin
                   Text(
-                    "Bugün kendine bir iyilik yaptın. Haftalık Plan ile zamanını, Soru Çözücü ile enerjini, Taktik Tavşan ile mentalini koruma altına aldın. Etüt Odası'nda geçireceğin her dakika, seni o büyük güne daha güçlü hazırlayacak. Hoş geldin, kazanmaya başlıyoruz.",
+                    "Kazanmaya hoş geldin! Bugün attığın bu adımla kontrol artık sende. Haftalık Plan seni hedeflerine kilitlerken, Soru Çözücü ile takıldığın her an yanıtlar cebinde. İster yolda ister teneffüste ol; Etüt Odası ve Zihin Haritası ile en zor konuları bile keyifle halledeceksin. Taktik Tavşan stratejini belirledi bile, şimdi başlama zamanı!",
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.95),
                       fontSize: 17,

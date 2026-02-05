@@ -180,13 +180,54 @@ exports.unregisterFcmToken = onCall({region: 'us-central1'}, async (request) => 
 
 // ---- YARDIMCI FONKSİYONLAR ----
 
-// Tarihe göre sırayla bildirim seç (DB gerektirmez)
-// Her gün + her slot farklı bildirim gönderir
+// Kategorilere ayrılmış bildirimler - dengeli dağılım için
+const MESSAGE_CATEGORIES = {
+  soru_cozucu: [0, 1, 2, 3, 4],      // 5 mesaj - /ai-hub
+  etut_odasi: [5, 6, 7, 8],          // 4 mesaj - /ai-hub
+  haftalik_plan: [9, 10, 11, 12],    // 4 mesaj - /ai-hub
+  deneme_ekle: [13, 14, 15, 16],     // 4 mesaj - /home/add-test
+  istatistik: [17, 18, 19, 20, 21],  // 5 mesaj - /home/stats, /stats/overview
+  arsiv: [22, 23],                   // 2 mesaj - /library
+  soru_kutusu: [24, 25],             // 2 mesaj - /question-box
+  pomodoro: [26, 27]                 // 2 mesaj - /home/pomodoro
+};
+
+// Kategori döngü sırası - her slotId için farklı başlangıç
+// 8 kategori var, günde 3 slot = her ~2.67 günde bir döngü
+const CATEGORY_ORDER = [
+  'soru_cozucu',    // 0
+  'etut_odasi',     // 1
+  'haftalik_plan',  // 2
+  'deneme_ekle',    // 3
+  'istatistik',     // 4
+  'arsiv',          // 5
+  'soru_kutusu',    // 6
+  'pomodoro',       // 7
+];
+
+// Tarihe ve slot'a göre dengeli bildirim seç
+// Her slot farklı kategoriden, aynı gün içinde tekrar yok
 function getRotatingItem(array, slotId = 0) {
   const today = new Date();
   const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
-  const index = (dayOfYear * 3 + slotId) % array.length;
-  return array[index];
+
+  // Her slot için farklı kategori offset'i (aynı gün farklı kategoriler)
+  // slotId: 0=sabah, 1=öğlen, 2=akşam
+  const categoryCount = CATEGORY_ORDER.length;
+
+  // Gün bazlı ana kategori indeksi + slot offset'i
+  // Bu sayede aynı gün içinde 3 farklı kategori seçilir
+  const baseCategoryIndex = dayOfYear % categoryCount;
+  const categoryIndex = (baseCategoryIndex + slotId * 3) % categoryCount; // 3 atlayarak farklı kategoriler
+
+  const categoryName = CATEGORY_ORDER[categoryIndex];
+  const categoryIndices = MESSAGE_CATEGORIES[categoryName];
+
+  // Kategori içinde de döngüsel seçim (her gün farklı mesaj)
+  const messageIndexInCategory = Math.floor(dayOfYear / categoryCount) % categoryIndices.length;
+  const finalIndex = categoryIndices[messageIndexInCategory];
+
+  return array[finalIndex];
 }
 
 async function sendTopicNotification(topic = 'general', slotId = 0) {
