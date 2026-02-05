@@ -1405,9 +1405,9 @@ class _PreMadeMapCard extends StatelessWidget {
   List<Widget> _buildPreviewNodeWidgets(MindMapNode node, double scale) {
     List<Widget> widgets = [];
 
-    // --- ÖNEMLİ: Boyutlar (Aynen korundu) ---
-    double baseW = node.type == NodeType.root ? 160 : 120;
-    double baseH = node.type == NodeType.root ? 80 : 60;
+    // --- ÖNEMLİ: Boyutlar (Ana ekranla aynı) ---
+    double baseW = node.type == NodeType.root ? 140 : 110;
+    double baseH = node.type == NodeType.root ? 70 : 55;
 
     double w = baseW * scale;
     double h = baseH * scale;
@@ -1421,39 +1421,50 @@ class _PreMadeMapCard extends StatelessWidget {
 
     widgets.add(
       Positioned(
-        left: scaledX - (w / 2),
-        top: scaledY - (h / 2),
-        child: Container(
-          width: w,
-          height: h,
-          padding: EdgeInsets.symmetric(horizontal: 4 * scale),
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(node.type == NodeType.root ? 40 * scale : 12 * scale),
-            border: Border.all(
-              color: node.color,
-              width: (node.type == NodeType.root ? 4 : 2) * scale,
+        left: scaledX,
+        top: scaledY,
+        child: FractionalTranslation(
+          translation: const Offset(-0.5, -0.5),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: w,
+              maxWidth: w * 2.5,
+              minHeight: h,
+              maxHeight: h * 3,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: node.color.withValues(alpha: 0.4),
-                blurRadius: 12 * scale,
-                spreadRadius: 1 * scale,
-                offset: Offset(0, 4 * scale),
-              )
-            ],
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            _stripLatex(node.label),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: colorScheme.onSurface,
-              fontSize: (node.type == NodeType.root ? 16 : 12) * scale,
-              fontWeight: node.type == NodeType.root ? FontWeight.w800 : FontWeight.w600,
-              height: 1.1,
+            child: IntrinsicWidth(
+              child: IntrinsicHeight(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 6 * scale),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(node.type == NodeType.root ? 35 * scale : 12 * scale),
+                    border: Border.all(
+                      color: node.color,
+                      width: (node.type == NodeType.root ? 3 : 1.5) * scale,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: node.color.withValues(alpha: 0.4),
+                        blurRadius: 16 * scale,
+                        spreadRadius: 0,
+                      )
+                    ],
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    _stripLatex(node.label),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.visible,
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontSize: (node.type == NodeType.root ? 13 : 10.5) * scale,
+                      fontWeight: node.type == NodeType.root ? FontWeight.bold : FontWeight.w600,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -1702,9 +1713,9 @@ class _ScaledConnectionPainter extends CustomPainter {
 
   void _drawRecursive(Canvas canvas, MindMapNode node, Paint paint) {
     for (var child in node.children) {
-      // Çizgileri biraz daha kalınlaştırarak görünürlüğü artırıyoruz
-      paint.color = child.color.withValues(alpha: 0.5); // Alpha artırıldı
-      paint.strokeWidth = (node.type == NodeType.root ? 4.0 : 2.0) * scale; // Kalınlık artırıldı
+      // Gerçek ekranla aynı değerler
+      paint.color = child.color.withValues(alpha: 0.6);
+      paint.strokeWidth = (node.type == NodeType.root ? 3.0 : 1.5) * scale;
 
       final p1 = Offset(
         (node.position.dx - 2000) * scale + offsetX,
