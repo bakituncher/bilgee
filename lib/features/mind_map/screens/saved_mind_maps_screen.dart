@@ -15,7 +15,12 @@ class SavedMindMapsScreen extends ConsumerStatefulWidget {
 }
 
 class _SavedMindMapsScreenState extends ConsumerState<SavedMindMapsScreen> {
+  // Global pozisyon listesi (Sadece referans için tutulur, yeni algoritmada çakışma kontrolü gerekmez)
   final List<Offset> _allNodePositions = [];
+
+  // Layout sabitleri (Ana ekranla aynı olmalı)
+  static const Offset _center = Offset(3000, 3000);
+  static const double _level1Distance = 350.0;
 
   @override
   Widget build(BuildContext context) {
@@ -238,10 +243,10 @@ class _SavedMindMapsScreenState extends ConsumerState<SavedMindMapsScreen> {
   }
 
   void _loadAndShowMindMap(
-    BuildContext context,
-    WidgetRef ref,
-    Map<String, dynamic> mindMapData,
-  ) {
+      BuildContext context,
+      WidgetRef ref,
+      Map<String, dynamic> mindMapData,
+      ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -252,7 +257,7 @@ class _SavedMindMapsScreenState extends ConsumerState<SavedMindMapsScreen> {
       // JSON'dan MindMapNode oluştur
       final rootNode = MindMapNode.fromJson(data, NodeType.root);
 
-      // Layout hesapla
+      // YENİ LAYOUT ALGORİTMASI İLE HESAPLA
       _calculateLayout(rootNode);
 
       // Bu kullanıcı tarafından kaydedilmiş bir harita, tekrar kaydedilebilir
@@ -283,139 +288,136 @@ class _SavedMindMapsScreenState extends ConsumerState<SavedMindMapsScreen> {
     return json.hashCode.toString();
   }
 
+  // ---------------------------------------------------------------------------
+  // YENİ LAYOUT ALGORİTMASI (MindMapScreen ile Birebir Aynı)
+  // ---------------------------------------------------------------------------
+
+  /// Bir düğümün altındaki toplam "yaprak" sayısını (genişliğini) hesaplar.
+  int _calculateNodeWeight(MindMapNode node) {
+    if (node.children.isEmpty) return 1;
+    int weight = 0;
+    for (var child in node.children) {
+      weight += _calculateNodeWeight(child);
+    }
+    return weight;
+  }
+
+  /// Ana Layout Fonksiyonu
   void _calculateLayout(MindMapNode root) {
+    // Pozisyon listesini temizle
     _allNodePositions.clear();
 
-    const center = Offset(3000, 3000);
-    const level1Distance = 350.0;
-    const level2Distance = 250.0;
-
-    root.position = center;
-    root.color = const Color(0xFF6366F1);
+    // Kökü merkeze koy
+    root.position = _center;
+    root.color = const Color(0xFF6366F1); // Indigo
     _allNodePositions.add(root.position);
 
-    final mainBranches = root.children;
-    final angleStep = (2 * math.pi) / (mainBranches.isEmpty ? 1 : mainBranches.length);
-    final startAngle = -math.pi / 2;
+    if (root.children.isEmpty) return;
 
+    final mainBranches = root.children;
+
+    // Renk paleti
     final colors = [
-      const Color(0xFF3B82F6),
-      const Color(0xFFEF4444),
-      const Color(0xFF10B981),
-      const Color(0xFFA855F7),
-      const Color(0xFFF59E0B),
-      const Color(0xFF14B8A6),
-      const Color(0xFFEC4899),
-      const Color(0xFF6366F1),
+      const Color(0xFF3B82F6), // Blue
+      const Color(0xFFEF4444), // Red
+      const Color(0xFF10B981), // Green
+      const Color(0xFFA855F7), // Purple
+      const Color(0xFFF59E0B), // Amber
+      const Color(0xFF14B8A6), // Teal
+      const Color(0xFFEC4899), // Pink
+      const Color(0xFF6366F1), // Indigo
     ];
 
+    // 1. Toplam ağırlığı bul
+    int totalWeight = 0;
+    for (var child in mainBranches) {
+      totalWeight += _calculateNodeWeight(child);
+    }
+
+    // Başlangıç açısı (Yukarıdan başlasın: -90 derece)
+    double currentAngle = -math.pi / 2;
+
     for (int i = 0; i < mainBranches.length; i++) {
-      final angle = startAngle + (i * angleStep);
       final node = mainBranches[i];
-
-      node.position = Offset(
-        center.dx + level1Distance * math.cos(angle),
-        center.dy + level1Distance * math.sin(angle),
-      );
       node.color = colors[i % colors.length];
-      _allNodePositions.add(node.position);
 
-      _layoutChildren(node, angle, level2Distance);
-    }
-  }
+      // Düğümün ağırlığına göre pastadan pay (sweep angle) ver
+      int weight = _calculateNodeWeight(node);
+      // Toplam pasta 360 derece (2 * pi)
+      double sweepAngle = (weight / totalWeight) * 2 * math.pi;
 
-  void _layoutChildren(MindMapNode parent, double parentAngle, double distance) {
-    if (parent.children.isEmpty) return;
-
-    final childCount = parent.children.length;
-
-    double wedgeSize;
-    if (childCount == 1) {
-      wedgeSize = math.pi / 6;
-    } else if (childCount == 2) {
-      wedgeSize = math.pi / 2.5;
-    } else if (childCount == 3) {
-      wedgeSize = math.pi / 1.8;
-    } else if (childCount == 4) {
-      wedgeSize = math.pi / 1.5;
-    } else if (childCount <= 6) {
-      wedgeSize = math.pi * 1.2;
-    } else {
-      wedgeSize = math.pi * 1.5;
-    }
-
-    final startAngle = parentAngle - (wedgeSize / 2);
-    final angleStep = wedgeSize / (childCount > 1 ? childCount - 1 : 1);
-
-    for (int i = 0; i < childCount; i++) {
-      final angle = childCount == 1 ? parentAngle : startAngle + (i * angleStep);
-      final child = parent.children[i];
-
-      Offset newPosition = Offset(
-        parent.position.dx + distance * math.cos(angle),
-        parent.position.dy + distance * math.sin(angle),
+      // Bu dalı, kendisine ayrılan açının tam ortasından geçirerek yerleştir
+      _layoutRecursive(
+          node,
+          currentAngle,
+          sweepAngle,
+          _level1Distance // İlk seviye mesafesi
       );
 
-      const maxNodeWidth = 275.0;
-      const maxNodeHeight = 165.0;
-      const safetyMargin = 40.0;
-      final minDistance = math.sqrt(maxNodeWidth * maxNodeWidth + maxNodeHeight * maxNodeHeight) / 2 + safetyMargin;
-
-      int maxAttempts = 25;
-      int attempt = 0;
-
-      while (attempt < maxAttempts) {
-        bool hasCollision = _checkCollision(newPosition, minDistance);
-
-        if (!hasCollision) {
-          break;
-        }
-
-        attempt++;
-
-        double adjustedAngle;
-        double adjustedDistance;
-
-        if (attempt % 4 == 0) {
-          adjustedAngle = angle;
-          adjustedDistance = distance + (attempt * 30);
-        } else if (attempt % 3 == 0) {
-          adjustedAngle = angle + (0.2 * attempt);
-          adjustedDistance = distance + (attempt * 25);
-        } else if (attempt % 2 == 0) {
-          adjustedAngle = angle + (0.18 * attempt);
-          adjustedDistance = distance + (attempt * 15);
-        } else {
-          adjustedAngle = angle - (0.18 * attempt);
-          adjustedDistance = distance + (attempt * 15);
-        }
-
-        newPosition = Offset(
-          parent.position.dx + adjustedDistance * math.cos(adjustedAngle),
-          parent.position.dy + adjustedDistance * math.sin(adjustedAngle),
-        );
-      }
-
-      child.position = newPosition;
-      child.color = parent.color;
-      _allNodePositions.add(newPosition);
-
-      final nextDistance = math.max(distance * 0.8, 180.0);
-      _layoutChildren(child, angle, nextDistance);
+      // Bir sonraki dal için açıyı kaydır
+      currentAngle += sweepAngle;
     }
   }
 
-  bool _checkCollision(Offset position, double minDistance) {
-    for (var existingPos in _allNodePositions) {
-      final dx = position.dx - existingPos.dx;
-      final dy = position.dy - existingPos.dy;
-      final dist = math.sqrt(dx * dx + dy * dy);
+  /// Özyinelemeli (Recursive) Yerleştirme
+  void _layoutRecursive(
+      MindMapNode node,
+      double startAngle,
+      double sweep,
+      double distanceCtx
+      ) {
+    // 1. Düğümü kendisine ayrılan açının (sweep) merkezine yerleştir
+    double midAngle = startAngle + (sweep / 2);
 
-      if (dist < minDistance) {
-        return true;
+    // Konumu MERKEZE göre hesapla (Ray Layout)
+    node.position = Offset(
+        _center.dx + distanceCtx * math.cos(midAngle),
+        _center.dy + distanceCtx * math.sin(midAngle)
+    );
+    _allNodePositions.add(node.position);
+
+    if (node.children.isEmpty) return;
+
+    // 2. Çocukları yerleştirmek için hazırlık
+    int childTotalWeight = 0;
+    for (var child in node.children) {
+      childTotalWeight += _calculateNodeWeight(child);
+    }
+
+    // 3. Mesafeyi (Radius) Hesapla - Çakışmayı Önleyen Kısım
+    // Kart yüksekliği ~100px. Yay uzunluğu = r * açı. => r = 100 / açı.
+    double minArcLengthPerChild = 140.0; // Kartın dikeyde kapladığı minimum alan + boşluk
+    double calculatedDistance = distanceCtx + 220.0; // Standart artış
+
+    // Eğer açı çok küçükse (kalabalık dal) mesafeyi artır
+    if (childTotalWeight > 0) {
+      // Ortalama çocuk başına düşen açı
+      double avgAnglePerChild = sweep / node.children.length;
+
+      // Sıfıra bölünmeyi önle
+      if (avgAnglePerChild > 0.01) {
+        double requiredDistance = minArcLengthPerChild / avgAnglePerChild;
+
+        // Çok aşırı uzamaması için bir limit koy ama gerekirse uzat
+        if (requiredDistance > calculatedDistance) {
+          // Örneğin max 2000px ekstra uzasın
+          calculatedDistance = math.min(requiredDistance, distanceCtx + 1200);
+        }
       }
     }
-    return false;
+
+    double currentChildAngle = startAngle;
+
+    for (var child in node.children) {
+      child.color = node.color; // Rengi miras al
+
+      int weight = _calculateNodeWeight(child);
+      // Ebeveynin açısını, çocuğun ağırlığına göre paylaştır
+      double childSweep = (weight / childTotalWeight) * sweep;
+
+      _layoutRecursive(child, currentChildAngle, childSweep, calculatedDistance);
+
+      currentChildAngle += childSweep;
+    }
   }
 }
-
