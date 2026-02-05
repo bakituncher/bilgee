@@ -60,12 +60,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
           buttonText: "Harika",
         ),
         TutorialStep(
-          highlightKey: _coachKey,
-          title: "Mentörün Taktik Tavşan",
-          text: "Motivasyon, strateji, analiz ve destek... Sınav yolculuğunda her alanda yanında olacak yapay zeka koçun!",
-          buttonText: "Devam",
-        ),
-        TutorialStep(
           highlightKey: _studyRoomKey,
           title: "Kişisel Etüt Odan",
           text: "Eksik olduğun konulara özel konu özetleri ve test soruları burada. Zayıf noktalarını güçlü yanlara çevir!",
@@ -75,6 +69,12 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
           highlightKey: _mindMapKey,
           title: "Zihin Haritaları",
           text: "Karmaşık konuları görsel haritalarla öğren. Bilgiyi organize et, hatırlamayı kolaylaştır!",
+          buttonText: "Devam",
+        ),
+        TutorialStep(
+          highlightKey: _coachKey,
+          title: "Mentörün Taktik Tavşan",
+          text: "Motivasyon, strateji, analiz ve destek... Sınav yolculuğunda her alanda yanında olacak koçun!",
           buttonText: "Keşfet",
         ),
       ];
@@ -330,105 +330,116 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
 
             // --- 2. BENTO GRID ---
             // Satır 1
-            Row(
-              children: [
-                Expanded(
-                  child: KeyedSubtree(
-                    key: _weeklyPlanKey,
-                    child: _BentoCard(
-                      title: 'Haftalık\nPlan',
-                      description: 'Senin verilerin ile \nsana özel',
-                      icon: Icons.calendar_month_rounded,
-                      color: const Color(0xFF10B981),
-                      isPremium: isPremium,
-                      height: 180,
-                      onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/strategic-planning', offerData: {
-                        'title': 'Haftalık Stratejist',
-                        'subtitle': 'Sana özel ders programı.',
-                        'iconName': 'calendar_month',
-                        'color': const Color(0xFF10B981),
-                        'marketingTitle': 'Programın Hazır!',
-                        'marketingSubtitle': 'Eksik konularına ve müsait zamanına göre sana en uygun haftalık ders çalışma programını saniyeler içinde oluştur.',
-                        'redirectRoute': '/ai-hub/strategic-planning',
-                      }),
+            // IntrinsicHeight ile kartların boyunu eşitliyoruz
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: KeyedSubtree(
+                      key: _weeklyPlanKey,
+                      child: _BentoCard(
+                        title: 'Haftalık\nPlan',
+                        description: 'Senin verilerin ile\nsana özel program',
+                        icon: Icons.calendar_month_rounded,
+                        color: const Color(0xFF10B981),
+                        isPremium: isPremium,
+                        height: 180,
+                        onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/strategic-planning', offerData: {
+                          'title': 'Haftalık Stratejist',
+                          'subtitle': 'Sana özel ders programı.',
+                          'iconName': 'calendar_month',
+                          'color': const Color(0xFF10B981),
+                          'marketingTitle': 'Programın Hazır!',
+                          'marketingSubtitle': 'Eksik konularına ve müsait zamanına göre sana en uygun haftalık ders çalışma programını saniyeler içinde oluştur.',
+                          'redirectRoute': '/ai-hub/strategic-planning',
+                        }),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: gap),
-                Expanded(
-                  // --- DÜZELTME BURADA YAPILDI ---
-                  child: KeyedSubtree(
-                    key: _solverKey, // Bu Key eksikti!
-                    child: _BentoCard(
-                      title: 'Soru\nÇözücü',
-                      description: 'Sorunu çek, anında\nçözümünü al.',
-                      icon: Icons.camera_enhance_rounded,
-                      color: const Color(0xFFF59E0B),
-                      isPremium: true,
-                      height: 180,
-                      onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/question-solver', offerData: {
-                        'title': 'Soru Çözücü',
-                        'subtitle': 'Anında çözüm cebinde.',
-                        'iconName': 'camera_enhance',
-                        'color': Colors.orangeAccent,
-                        'marketingTitle': 'Soruda Takılma!',
-                        'marketingSubtitle': 'Yapamadığın sorunun fotoğrafını çek, Taktik Tavşan adım adım çözümünü anlatsın.',
-                        'redirectRoute': '/ai-hub/question-solver',
-                      }),
+                  const SizedBox(width: gap),
+                  Expanded(
+                    child: KeyedSubtree(
+                      key: _solverKey,
+                      child: _BentoCard(
+                        title: 'Soru\nÇözücü',
+                        description: 'Sorunu çek, anında\nçözümünü öğren',
+                        icon: Icons.camera_enhance_rounded,
+                        color: const Color(0xFFF59E0B),
+                        isPremium: true,
+                        height: 180,
+                        onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/question-solver', offerData: {
+                          'title': 'Soru Çözücü',
+                          'subtitle': 'Anında çözüm cebinde.',
+                          'iconName': 'camera_enhance',
+                          'color': Colors.orangeAccent,
+                          'marketingTitle': 'Soruda Takılma!',
+                          'marketingSubtitle': 'Yapamadığın sorunun fotoğrafını çek, Taktik Tavşan adım adım çözümünü anlatsın.',
+                          'redirectRoute': '/ai-hub/question-solver',
+                        }),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
 
             const SizedBox(height: gap),
 
             // Satır 2 - Etüt Odası ve Zihin Haritası
-            Row(
-              children: [
-                Expanded(
-                  child: KeyedSubtree(
-                    key: _studyRoomKey,
-                    child: _BentoCard(
-                      title: 'Etüt\nOdası',
-                      description: 'Eksik konularına özel\nçalışma setleri üretir.',
-                      icon: Icons.menu_book_rounded,
-                      color: const Color(0xFF8B5CF6),
-                      isPremium: isPremium,
-                      height: 180,
-                      onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/weakness-workshop', offerData: {
-                        'title': 'Etüt Odası',
-                        'subtitle': 'Kişiye özel çalışma materyalleri.',
-                        'iconName': 'menu_book',
-                        'color': const Color(0xFF8B5CF6),
-                        'marketingTitle': 'Eksiklerini Kapat!',
-                        'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
-                        'redirectRoute': '/ai-hub/weakness-workshop',
-                      }),
+            // IntrinsicHeight ile kartların boyunu eşitliyoruz
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: KeyedSubtree(
+                      key: _studyRoomKey,
+                      child: _BentoCard(
+                        title: 'Etüt\nOdası',
+                        description: 'Eksik konularına\nözel içerik üret',
+                        icon: Icons.menu_book_rounded,
+                        color: const Color(0xFF8B5CF6),
+                        isPremium: isPremium,
+                        height: 180,
+                        onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/weakness-workshop', offerData: {
+                          'title': 'Etüt Odası',
+                          'subtitle': 'Kişiye özel çalışma materyalleri.',
+                          'iconName': 'menu_book',
+                          'color': const Color(0xFF8B5CF6),
+                          'marketingTitle': 'Eksiklerini Kapat!',
+                          'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
+                          'redirectRoute': '/ai-hub/weakness-workshop',
+                        }),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: gap),
-                Expanded(
-                  child: _BentoCard(
-                    title: 'Zihin\nHaritası',
-                    description: 'Konuları görselleştir,\ndaha iyi anla ve hatırla.',
-                    icon: Icons.account_tree_rounded,
-                    color: const Color(0xFF6366F1),
-                    isPremium: true, // Herkes erişebilir
-                    height: 180,
-                    onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/mind-map', offerData: {
-                      'title': 'Zihin Haritası',
-                      'subtitle': 'Konuları görselleştir ve daha iyi anla.',
-                      'iconName': 'account_tree',
-                      'color': const Color(0xFF6366F1),
-                      'marketingTitle': 'Düşüncelerini Haritala!',
-                      'marketingSubtitle': 'Karmaşık konuları görsel zihin haritalarına dönüştür. Daha iyi anla, daha kolay hatırla.',
-                      'redirectRoute': '/ai-hub/mind-map',
-                    }),
+                  const SizedBox(width: gap),
+                  Expanded(
+                    // EKLENDİ: Zihin Haritası için KeyedSubtree eklendi
+                    child: KeyedSubtree(
+                      key: _mindMapKey,
+                      child: _BentoCard(
+                        title: 'Zihin\nHaritası',
+                        description: 'Konuları görsel\nharitalarla öğren',
+                        icon: Icons.account_tree_rounded,
+                        color: const Color(0xFF6366F1),
+                        isPremium: true,
+                        height: 180,
+                        onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/mind-map', offerData: {
+                          'title': 'Zihin Haritası',
+                          'subtitle': 'Konuları görselleştir ve daha iyi anla.',
+                          'iconName': 'account_tree',
+                          'color': const Color(0xFF6366F1),
+                          'marketingTitle': 'Düşüncelerini Haritala!',
+                          'marketingSubtitle': 'Karmaşık konuları görsel zihin haritalarına dönüştür. Daha iyi anla, daha kolay hatırla.',
+                          'redirectRoute': '/ai-hub/mind-map',
+                        }),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
 
             const SizedBox(height: 32),
@@ -576,10 +587,12 @@ class _PremiumTourDialogState extends State<_PremiumTourDialog> {
                           step.title,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.w800,
-                            letterSpacing: 0.5,
+                            letterSpacing: 0.3,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -744,103 +757,107 @@ class _BentoCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        constraints: BoxConstraints(minHeight: height),
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: theme.brightness == Brightness.light
-                ? const Color(0xFFE5E7EB)
-                : Colors.white.withOpacity(0.05),
-            width: 1.5,
+      child: SizedBox(
+        height: height,
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: theme.brightness == Brightness.light
+                  ? const Color(0xFFE5E7EB)
+                  : Colors.white.withOpacity(0.05),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0F172A).withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: color.withOpacity(0.1),
+                blurRadius: 0,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF0F172A).withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: color.withOpacity(0.1),
-              blurRadius: 0,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topRight,
-                      end: Alignment.bottomLeft,
-                      colors: [
-                        color.withOpacity(0.05),
-                        Colors.transparent,
-                      ],
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topRight,
+                        end: Alignment.bottomLeft,
+                        colors: [
+                          color.withOpacity(0.05),
+                          Colors.transparent,
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: color.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(14),
+                Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Icon(icon, color: color, size: 24),
                           ),
-                          child: Icon(icon, color: color, size: 24),
-                        ),
-                        if (!isPremium)
-                          Icon(Icons.lock_rounded, size: 18, color: theme.colorScheme.onSurface.withOpacity(0.2)),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            height: 1.1,
-                            color: theme.colorScheme.onSurface,
-                            letterSpacing: -0.3,
+                          if (!isPremium)
+                            Icon(Icons.lock_rounded, size: 18, color: theme.colorScheme.onSurface.withOpacity(0.2)),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              height: 1.1,
+                              color: theme.colorScheme.onSurface,
+                              letterSpacing: -0.3,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          description,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            height: 1.3,
-                            color: theme.colorScheme.onSurface.withOpacity(0.65),
-                            fontWeight: FontWeight.w500,
+                          const SizedBox(height: 8),
+                          Text(
+                            description,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              height: 1.3,
+                              color: theme.colorScheme.onSurface.withOpacity(0.65),
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 3,
-                          overflow: TextOverflow.fade,
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -939,64 +956,6 @@ class _HeroCoachCard extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// Analiz butonları için yardımcı widget
-class _AnalysisButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _AnalysisButton({
-    required this.icon,
-    required this.label,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF312E81).withOpacity(0.4) : Colors.white.withOpacity(0.7),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isDark ? Colors.indigoAccent.withOpacity(0.3) : const Color(0xFF4338CA).withOpacity(0.2),
-              width: 1,
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 24,
-                color: isDark ? Colors.indigoAccent : const Color(0xFF4338CA),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white70 : const Color(0xFF312E81),
-                  height: 1.2,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
