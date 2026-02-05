@@ -376,47 +376,52 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
 
             const SizedBox(height: gap),
 
-            // Satır 2 - Etüt Odası (tam genişlik)
-            KeyedSubtree(
-              key: _studyRoomKey,
-              child: _BentoCard(
-                title: 'Etüt Odası',
-                description: 'Eksik konularına özel çalışma setleri üretir.',
-                icon: Icons.menu_book_rounded,
-                color: const Color(0xFF8B5CF6),
-                isPremium: isPremium,
-                height: 160,
-                onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/weakness-workshop', offerData: {
-                  'title': 'Etüt Odası',
-                  'subtitle': 'Kişiye özel çalışma materyalleri.',
-                  'iconName': 'menu_book',
-                  'color': const Color(0xFF8B5CF6),
-                  'marketingTitle': 'Eksiklerini Kapat!',
-                  'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
-                  'redirectRoute': '/ai-hub/weakness-workshop',
-                }),
-              ),
-            ),
-
-            const SizedBox(height: gap),
-
-            // Satır 3 - Zihin Haritası (tam genişlik)
-            _BentoCard(
-              title: 'Zihin Haritası',
-              description: 'Konuları görselleştir, daha iyi anla ve hatırla.',
-              icon: Icons.account_tree_rounded,
-              color: const Color(0xFF6366F1),
-              isPremium: isPremium,
-              height: 160,
-              onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/mind-map', offerData: {
-                'title': 'Zihin Haritası',
-                'subtitle': 'Konuları görselleştir ve daha iyi anla.',
-                'iconName': 'account_tree',
-                'color': const Color(0xFF6366F1),
-                'marketingTitle': 'Düşüncelerini Haritala!',
-                'marketingSubtitle': 'Karmaşık konuları görsel zihin haritalarına dönüştür. Daha iyi anla, daha kolay hatırla.',
-                'redirectRoute': '/ai-hub/mind-map',
-              }),
+            // Satır 2 - Etüt Odası ve Zihin Haritası
+            Row(
+              children: [
+                Expanded(
+                  child: KeyedSubtree(
+                    key: _studyRoomKey,
+                    child: _BentoCard(
+                      title: 'Etüt\nOdası',
+                      description: 'Eksik konularına özel\nçalışma setleri üretir.',
+                      icon: Icons.menu_book_rounded,
+                      color: const Color(0xFF8B5CF6),
+                      isPremium: isPremium,
+                      height: 180,
+                      onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/weakness-workshop', offerData: {
+                        'title': 'Etüt Odası',
+                        'subtitle': 'Kişiye özel çalışma materyalleri.',
+                        'iconName': 'menu_book',
+                        'color': const Color(0xFF8B5CF6),
+                        'marketingTitle': 'Eksiklerini Kapat!',
+                        'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
+                        'redirectRoute': '/ai-hub/weakness-workshop',
+                      }),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: gap),
+                Expanded(
+                  child: _BentoCard(
+                    title: 'Zihin\nHaritası',
+                    description: 'Konuları görselleştir,\ndaha iyi anla ve hatırla.',
+                    icon: Icons.account_tree_rounded,
+                    color: const Color(0xFF6366F1),
+                    isPremium: isPremium,
+                    height: 180,
+                    onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/mind-map', offerData: {
+                      'title': 'Zihin Haritası',
+                      'subtitle': 'Konuları görselleştir ve daha iyi anla.',
+                      'iconName': 'account_tree',
+                      'color': const Color(0xFF6366F1),
+                      'marketingTitle': 'Düşüncelerini Haritala!',
+                      'marketingSubtitle': 'Karmaşık konuları görsel zihin haritalarına dönüştür. Daha iyi anla, daha kolay hatırla.',
+                      'redirectRoute': '/ai-hub/mind-map',
+                    }),
+                  ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 32),
