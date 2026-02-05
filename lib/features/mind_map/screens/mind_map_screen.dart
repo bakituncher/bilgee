@@ -1413,7 +1413,7 @@ class _PreMadeMapCard extends StatelessWidget {
     double h = baseH * scale;
 
     const canvasCenter = 2000.0;
-    const previewCenterX = 180.0;
+    const previewCenterX = 160.0;
     const previewCenterY = 90.0;
 
     final scaledX = (node.position.dx - canvasCenter) * scale + previewCenterX;
@@ -1541,7 +1541,7 @@ class _PreMadeMapCard extends StatelessWidget {
                           painter: _ScaledConnectionPainter(
                             rootNode: previewNode,
                             scale: previewScale,
-                            offsetX: 180,
+                            offsetX: 160,
                             offsetY: 90,
                           ),
                           size: const Size(360, previewHeight),
