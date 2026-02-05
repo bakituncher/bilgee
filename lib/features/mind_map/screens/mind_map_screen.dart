@@ -13,8 +13,9 @@ import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/core/utils/exam_utils.dart';
 import 'package:taktik/features/mind_map/screens/saved_mind_maps_screen.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
-import 'package:taktik/shared/widgets/markdown_with_math.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+  import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
+import 'package:markdown/markdown.dart' as md;
 
 // -----------------------------------------------------------------------------
 // MODELS
@@ -140,7 +141,7 @@ final preMadeMapsProvider = FutureProvider<List<PreMadeMindMap>>((ref) async {
 // HELPER FUNCTIONS
 // -----------------------------------------------------------------------------
 
-/// LaTeX ifadelerini basit metne çevirir (önizleme için)
+/// LaTeX ifadelerini basit metne çevirir (önizleme veya math render edilemeyen durumlar için)
 String _stripLatex(String text) {
   // Display math: $$...$$
   text = text.replaceAll(RegExp(r'\$\$([^\$]+)\$\$'), r'\1');
@@ -427,6 +428,20 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   String _cleanJson(String text) {
     text = text.replaceAll('```json', '').replaceAll('```', '').trim();
     if (text.startsWith('json')) text = text.substring(4).trim();
+
+    // LaTeX komutlarındaki backslash'leri düzelt
+    // AI bazen \log, \frac gibi komutları tek backslash ile üretir
+    // JSON'da bunların çift backslash olması gerekir: \\log, \\frac
+
+    // Önce zaten doğru olan çift backslash'leri korumak için placeholder kullan
+    text = text.replaceAll('\\\\', '<<<ESCAPED_BACKSLASH>>>');
+
+    // Şimdi kalan tek backslash'leri çift yap
+    text = text.replaceAll('\\', '\\\\');
+
+    // Placeholder'ları geri getir
+    text = text.replaceAll('<<<ESCAPED_BACKSLASH>>>', '\\\\');
+
     return text;
   }
 
@@ -651,22 +666,47 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            MarkdownWithMath(
+            MarkdownBody(
               data: node.label,
-              styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
+              selectable: true,
+              styleSheet: MarkdownStyleSheet(
                 p: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: node.color,
                 ),
               ),
+              builders: {
+                'latex': LatexElementBuilder(
+                  textStyle: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: node.color,
+                  ),
+                ),
+              },
+              extensionSet: md.ExtensionSet(
+                [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
+                [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, LatexInlineSyntax()],
+              ),
             ),
             const SizedBox(height: 8),
-            MarkdownWithMath(
+            MarkdownBody(
               data: node.description.isEmpty ? "Ek açıklama yok." : node.description,
-              styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
+              selectable: true,
+              styleSheet: MarkdownStyleSheet(
                 p: theme.textTheme.bodyLarge?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
+              ),
+              builders: {
+                'latex': LatexElementBuilder(
+                  textStyle: theme.textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              },
+              extensionSet: md.ExtensionSet(
+                [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
+                [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, LatexInlineSyntax()],
               ),
             ),
             const SizedBox(height: 16),
@@ -985,100 +1025,100 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
           ],
         ),
         body: Column(
-        children: [
-          // Ana içerik
-          Expanded(
-            child: Stack(
-              children: [
-                if (rootNode != null)
-                  InteractiveViewer(
-                    transformationController: _transformationController,
-                    boundaryMargin: const EdgeInsets.all(2000),
-                    minScale: 0.1,
-                    maxScale: 3.0,
-                    constrained: false,
-                    child: SizedBox(
-                      width: _canvasSize.width,
-                      height: _canvasSize.height,
-                      child: Stack(
-                        children: [
-                          Positioned.fill(child: CustomPaint(painter: GridPainter(isDark: isDark))),
-                          Positioned.fill(
-                            child: CustomPaint(
-                              painter: ConnectionPainter(rootNode: rootNode, scale: 1.0),
+          children: [
+            // Ana içerik
+            Expanded(
+              child: Stack(
+                children: [
+                  if (rootNode != null)
+                    InteractiveViewer(
+                      transformationController: _transformationController,
+                      boundaryMargin: const EdgeInsets.all(2000),
+                      minScale: 0.1,
+                      maxScale: 3.0,
+                      constrained: false,
+                      child: SizedBox(
+                        width: _canvasSize.width,
+                        height: _canvasSize.height,
+                        child: Stack(
+                          children: [
+                            Positioned.fill(child: CustomPaint(painter: GridPainter(isDark: isDark))),
+                            Positioned.fill(
+                              child: CustomPaint(
+                                painter: ConnectionPainter(rootNode: rootNode, scale: 1.0),
+                              ),
                             ),
-                          ),
-                          ..._buildNodeWidgets(rootNode),
-                        ],
+                            ..._buildNodeWidgets(rootNode),
+                          ],
+                        ),
                       ),
-                    ),
-                  )
-                else
-                  _buildEmptyState(),
+                    )
+                  else
+                    _buildEmptyState(),
 
-                if (isGenerating)
-                  Container(
-                    color: colorScheme.surface.withValues(alpha: 0.8),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircularProgressIndicator(color: colorScheme.primary),
-                          const SizedBox(height: 16),
-                          Text(
-                            "Zihin haritası oluşturuluyor...",
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: colorScheme.onSurface,
+                  if (isGenerating)
+                    Container(
+                      color: colorScheme.surface.withValues(alpha: 0.8),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(color: colorScheme.primary),
+                            const SizedBox(height: 16),
+                            Text(
+                              "Zihin haritası oluşturuluyor...",
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: colorScheme.onSurface,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: (rootNode != null && !isGenerating)
-          ? Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          border: Border(
-            top: BorderSide(
-              color: colorScheme.outline.withValues(alpha: 0.2),
-              width: 1,
-            ),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, -2),
+                ],
+              ),
             ),
           ],
         ),
-        child: SafeArea(
-          child: SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: FilledButton.icon(
-              onPressed: _saveMindMap,
-              icon: const Icon(Icons.save_rounded),
-              label: const Text(
-                'Zihin Haritasını Kaydet',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+        bottomNavigationBar: (rootNode != null && !isGenerating)
+            ? Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            border: Border(
+              top: BorderSide(
+                color: colorScheme.outline.withValues(alpha: 0.2),
+                width: 1,
               ),
-              style: FilledButton.styleFrom(
-                backgroundColor: colorScheme.primary,
-                foregroundColor: colorScheme.onPrimary,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: FilledButton.icon(
+                onPressed: _saveMindMap,
+                icon: const Icon(Icons.save_rounded),
+                label: const Text(
+                  'Zihin Haritasını Kaydet',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                ),
               ),
             ),
           ),
-        ),
-      )
-          : null,
+        )
+            : null,
       ), // Scaffold kapanışı
     ); // PopScope kapanışı
   }
@@ -1258,7 +1298,7 @@ class _NodeWidget extends StatelessWidget {
       child: Container(
         width: width,
         height: height,
-        padding: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
           color: isDark
               ? colorScheme.surfaceContainerHighest
@@ -1277,15 +1317,32 @@ class _NodeWidget extends StatelessWidget {
           ],
         ),
         alignment: Alignment.center,
-        child: Text(
-          _stripLatex(node.label),
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: isDark ? colorScheme.onSurface : colorScheme.onSurface,
-            fontSize: isRoot ? 14 : 11,
-            fontWeight: isRoot ? FontWeight.bold : FontWeight.w600,
+        child: MarkdownBody(
+          data: node.label,
+          selectable: false,
+          styleSheet: MarkdownStyleSheet(
+            p: TextStyle(
+              color: isDark ? colorScheme.onSurface : colorScheme.onSurface,
+              fontSize: isRoot ? 13 : 10.5,
+              fontWeight: isRoot ? FontWeight.bold : FontWeight.w600,
+            ),
+            textAlign: WrapAlignment.center,
+            h1Align: WrapAlignment.center,
+            blockSpacing: 0,
+            pPadding: EdgeInsets.zero,
+          ),
+          builders: {
+            'latex': LatexElementBuilder(
+              textStyle: TextStyle(
+                fontSize: isRoot ? 13 : 10.5,
+                color: isDark ? colorScheme.onSurface : colorScheme.onSurface,
+                fontWeight: isRoot ? FontWeight.bold : FontWeight.w600,
+              ),
+            ),
+          },
+          extensionSet: md.ExtensionSet(
+            [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
+            [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, LatexInlineSyntax()],
           ),
         ),
       )
@@ -1598,6 +1655,50 @@ class _ScaledConnectionPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ScaledConnectionPainter oldDelegate) => false;
+}
+
+// -----------------------------------------------------------------------------
+// LaTeX Syntax Sınıfları (Question Solver'daki gibi)
+// -----------------------------------------------------------------------------
+
+class LatexInlineSyntax extends md.InlineSyntax {
+  LatexInlineSyntax() : super(r'(\$\$[\s\S]*?\$\$)|(\$[^$]*\$)');
+
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    final match0 = match.group(0)!;
+    final isDisplay = match0.startsWith(r'$$');
+    final raw = isDisplay
+        ? match0.substring(2, match0.length - 2)
+        : match0.substring(1, match0.length - 1);
+    final el = md.Element.text('latex', raw);
+    el.attributes['mathStyle'] = isDisplay ? 'display' : 'text';
+    parser.addNode(el);
+    return true;
+  }
+}
+
+class LatexElementBuilder extends MarkdownElementBuilder {
+  final TextStyle? textStyle;
+  LatexElementBuilder({this.textStyle});
+
+  @override
+  Widget visitElementAfter(md.Element element, TextStyle? preferredStyle) {
+    final bool isDisplay = element.attributes['mathStyle'] == 'display';
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: isDisplay ? Alignment.center : Alignment.centerLeft,
+      child: Math.tex(
+        element.textContent,
+        textStyle: textStyle ?? preferredStyle,
+        mathStyle: isDisplay ? MathStyle.display : MathStyle.text,
+        onErrorFallback: (err) => Text(
+          element.textContent,
+          style: (textStyle ?? preferredStyle)?.copyWith(color: Colors.red),
+        ),
+      ),
+    );
+  }
 }
 
 // -----------------------------------------------------------------------------
