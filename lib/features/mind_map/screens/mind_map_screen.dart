@@ -899,36 +899,50 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     final isDark = theme.brightness == Brightness.dark;
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text("Zihin Haritası"),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        actions: [
-          if (rootNode == null)
-            IconButton(
-              icon: const Icon(Icons.folder_outlined),
-              tooltip: 'Kaydedilenler',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SavedMindMapsScreen(),
-                  ),
-                );
-              },
-            ),
-          if (rootNode != null)
-            IconButton(
-              icon: const Icon(Icons.center_focus_strong),
-              tooltip: 'Ortala',
-              onPressed: _centerCanvas,
-            ),
-        ],
-      ),
-      body: Column(
+    return PopScope(
+      canPop: rootNode == null, // Harita yoksa normal geri gidebilir
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && rootNode != null) {
+          // Harita varsa ve geri gidemediyse, haritayı temizle
+          ref.read(mindMapNodeProvider.notifier).state = null;
+          // Scroll'u otomatik başlat
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted && !_userIsInteracting) {
+              _startAutoScroll();
+            }
+          });
+        }
+      },
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          title: const Text("Zihin Haritası"),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          actions: [
+            if (rootNode == null)
+              IconButton(
+                icon: const Icon(Icons.folder_outlined),
+                tooltip: 'Kaydedilenler',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SavedMindMapsScreen(),
+                    ),
+                  );
+                },
+              ),
+            if (rootNode != null)
+              IconButton(
+                icon: const Icon(Icons.center_focus_strong),
+                tooltip: 'Ortala',
+                onPressed: _centerCanvas,
+              ),
+          ],
+        ),
+        body: Column(
         children: [
           // Ana içerik
           Expanded(
@@ -1023,7 +1037,8 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
         ),
       )
           : null,
-    );
+      ), // Scaffold kapanışı
+    ); // PopScope kapanışı
   }
 
   Widget _buildEmptyState() {
@@ -1125,9 +1140,9 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                   child: FilledButton.icon(
                     onPressed: _showTopicSelectionSheet,
                     icon: const Icon(Icons.school_rounded),
-                    label: Text(
-                      _selectedTopic ?? 'Yeni Zihin Haritası Oluştur',
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    label: const Text(
+                      'Yeni Zihin Haritası Oluştur',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                     ),
                     style: FilledButton.styleFrom(
                       backgroundColor: colorScheme.primary,
