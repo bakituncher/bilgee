@@ -428,25 +428,38 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     return filtered;
   }
 
-  // JSON Temizleme
+// JSON Temizleme (Düzeltilmiş Versiyon)
   String _cleanJson(String text) {
-    text = text.replaceAll('```json', '').replaceAll('```', '').trim();
+    // 1. Markdown bloklarını temizle
+    text = text.replaceAll(RegExp(r'^```json\s*', multiLine: true), '')
+        .replaceAll(RegExp(r'\s*```$', multiLine: true), '')
+        .trim();
+
+    // Bazı durumlarda sadece "json" kelimesiyle başlıyorsa temizle
     if (text.startsWith('json')) text = text.substring(4).trim();
 
-    // LaTeX komutlarındaki backslash'leri düzelt
-    // AI bazen \log, \frac gibi komutları tek backslash ile üretir
-    // JSON'da bunların çift backslash olması gerekir: \\log, \\frac
+    // 2. KRİTİK DÜZELTME: LaTeX Backslash Yönetimi
+    // Sorun: AI cevabında hem normal JSON kaçışı (\") hem de LaTeX (\frac) olabilir.
+    // Eski kod körü körüne her şeyi çiftliyordu. Şimdi sırayla gideceğiz.
 
-    // Önce zaten doğru olan çift backslash'leri korumak için placeholder kullan
+    // A. Önce JSON içinde yasal olan kaçışlı tırnakları ( \" ) korumaya al.
+    // Bunu yapmazsak aşağıdaki adımlarda \" -> \\" olur ve parser patlar.
+    text = text.replaceAll('\\"', '<<<ESCAPED_QUOTE>>>');
+
+    // B. Zaten düzgün olan çift backslashleri ( \\ ) korumaya al.
     text = text.replaceAll('\\\\', '<<<ESCAPED_BACKSLASH>>>');
 
-    // Şimdi kalan tek backslash'leri çift yap
+    // C. Şimdi kalan TEK backslashleri (LaTeX komutları örn: \frac -> \\frac) çiftle.
+    // Bu sadece JSON stringi içinde LaTeX komutu varsa çalışır.
     text = text.replaceAll('\\', '\\\\');
 
-    // Placeholder'ları geri getir
+    // D. Korumaya aldığımız tokenları gerçek değerlerine geri döndür.
+    // Çift backslashleri geri koy
     text = text.replaceAll('<<<ESCAPED_BACKSLASH>>>', '\\\\');
+    // Kaçışlı tırnakları geri koy (Burası hatayı çözen kısımdır)
+    text = text.replaceAll('<<<ESCAPED_QUOTE>>>', '\\"');
 
-    return text;
+    return text.trim();
   }
 
   // Zihin haritasının hash'ini hesapla
