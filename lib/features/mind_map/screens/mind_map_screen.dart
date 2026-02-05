@@ -103,8 +103,11 @@ class PreMadeMindMap {
   }
 }
 
-// Hazır haritaları yükleyen provider
-final preMadeMapsProvider = FutureProvider.autoDispose<List<PreMadeMindMap>>((ref) async {
+// Hazır haritaları yükleyen provider - keepAlive ile cache'leniyor
+final preMadeMapsProvider = FutureProvider<List<PreMadeMindMap>>((ref) async {
+  // Provider'ı canlı tut, dispose olmasın
+  ref.keepAlive();
+
   final user = ref.watch(userProfileProvider).value;
   if (user?.selectedExam == null) return [];
 
