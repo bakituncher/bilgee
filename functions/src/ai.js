@@ -148,11 +148,11 @@ exports.generateGemini = onCall(
     }
 
     // MODEL SEÇİMİ
-    // Soru çözücü, Etüt Odası ve Zihin Haritası: gemini-3-flash-preview (Güçlü model)
-    // Diğer tüm chat/planlama işleri: gemini-2.5-flash-lite
+    // Soru çözücü ve Etüt Odası: gemini-3-flash-preview (Güçlü model)
+    // Zihin Haritası ve diğer tüm chat/planlama işleri: gemini-2.5-flash-lite
     const requestedModel = typeof request.data?.model === "string" ? String(request.data.model).trim() : null;
 
-    const modelId = (requestType === 'question_solver' || requestType === 'workshop' || requestType === 'mind_map')
+    const modelId = (requestType === 'question_solver' || requestType === 'workshop')
       ? "gemini-3-flash-preview"
       : "gemini-2.5-flash-lite";
 
