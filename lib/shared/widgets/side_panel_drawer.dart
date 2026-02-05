@@ -67,7 +67,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                 children: [
                   // Header - Kullanıcı Profili
                   InkWell(
-                    onTap: () { Navigator.of(context).pop(); context.go('/profile'); },
+                    onTap: () { Navigator.of(context).pop(); context.push('/profile'); },
                     child: Container(
                       margin: const EdgeInsets.fromLTRB(10, 10, 10, 8),
                       padding: const EdgeInsets.all(12),
@@ -169,9 +169,9 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                       onTap: () {
                         Navigator.of(context).pop();
                         if (isPremium) {
-                          context.go('/premium-welcome');
+                          context.push('/premium-welcome');
                         } else {
-                          context.go('/premium');
+                          context.push('/premium');
                         }
                       },
                       child: Container(
@@ -444,7 +444,12 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
               context.go('/stats-premium-offer');
             }
           } else {
-            context.go(route);
+            // Ana Panel için go kullan (kök sayfaya dön), diğerleri için push (üzerine ekle)
+            if (route == '/home') {
+              context.go(route);
+            } else {
+              context.push(route);
+            }
           }
         },
         child: AnimatedContainer(
