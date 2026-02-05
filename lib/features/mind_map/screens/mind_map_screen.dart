@@ -1,5 +1,6 @@
 // lib/features/mind_map/screens/mind_map_screen.dart
 import 'dart:math' as math;
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -220,6 +221,9 @@ class MindMapScreen extends ConsumerStatefulWidget {
 
 class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProviderStateMixin {
   final TransformationController _transformationController = TransformationController();
+  final ScrollController _cardsScrollController = ScrollController();
+  Timer? _autoScrollTimer;
+  bool _userIsInteracting = false;
 
   Map<String, List<String>> _topicsBySubject = {};
   String? _selectedSubject;
@@ -240,11 +244,54 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _centerCanvas();
       _loadTopics();
+      // Otomatik kaydırmayı biraz daha geç başlat
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          _startAutoScroll();
+        }
+      });
+    });
+  }
+
+  void _startAutoScroll() {
+    _autoScrollTimer?.cancel();
+
+    if (!mounted) return;
+
+    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 20), (timer) {
+      if (!mounted || !_cardsScrollController.hasClients) {
+        timer.cancel();
+        return;
+      }
+
+      // Kullanıcı etkileşim halindeyse hiçbir şey yapma
+      if (_userIsInteracting) {
+        return;
+      }
+
+      final position = _cardsScrollController.position;
+      final maxScroll = position.maxScrollExtent;
+      final currentScroll = position.pixels;
+
+      if (maxScroll <= 0) return;
+
+      if (currentScroll >= maxScroll) {
+        // Sonuna geldik, başa dön
+        _cardsScrollController.jumpTo(0);
+      } else {
+        // Daha hızlı ilerle
+        final nextPosition = currentScroll + 0.8;
+        if (nextPosition <= maxScroll) {
+          _cardsScrollController.jumpTo(nextPosition);
+        }
+      }
     });
   }
 
   @override
   void dispose() {
+    _autoScrollTimer?.cancel();
+    _cardsScrollController.dispose();
     _transformationController.dispose();
     super.dispose();
   }
@@ -753,50 +800,59 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
           return const SizedBox.shrink();
         }
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              child: Row(
-                children: [
-                  Icon(Icons.star_outline_rounded, size: 20, color: colorScheme.primary),
-                  const SizedBox(width: 8),
-                  Text(
-                    "Veya Hazır Haritaları Keşfet",
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+        return Container(
+          height: 240,
+          margin: const EdgeInsets.only(bottom: 8),
+          child: GestureDetector(
+            onPanDown: (_) {
+              // Kullanıcı dokundu
+              _userIsInteracting = true;
+              _autoScrollTimer?.cancel();
+            },
+            onPanEnd: (_) {
+              // Kullanıcı bıraktı
+              _userIsInteracting = false;
+              // 2 saniye sonra tekrar başlat
+              Future.delayed(const Duration(seconds: 2), () {
+                if (mounted && !_userIsInteracting) {
+                  _startAutoScroll();
+                }
+              });
+            },
+            onPanCancel: () {
+              // Kullanıcı iptal etti
+              _userIsInteracting = false;
+              Future.delayed(const Duration(seconds: 2), () {
+                if (mounted && !_userIsInteracting) {
+                  _startAutoScroll();
+                }
+              });
+            },
+            child: ListView.builder(
+              controller: _cardsScrollController,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              physics: const BouncingScrollPhysics(),
+              itemCount: maps.length,
+              itemBuilder: (context, index) {
+                final map = maps[index];
+                return _PreMadeMapCard(
+                  map: map,
+                  theme: theme,
+                  colorScheme: colorScheme,
+                  onTap: () {
+                    _autoScrollTimer?.cancel();
+                    _userIsInteracting = true;
+                    setState(() {
+                      _selectedTopic = map.topic;
+                      _selectedSubject = map.subject;
+                    });
+                    _loadPreMadeMap(map);
+                  },
+                );
+              },
             ),
-            Container(
-              height: 240,
-              margin: const EdgeInsets.only(bottom: 24),
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: maps.length,
-                itemBuilder: (context, index) {
-                  final map = maps[index];
-                  return _PreMadeMapCard(
-                    map: map,
-                    theme: theme,
-                    colorScheme: colorScheme,
-                    onTap: () {
-                      setState(() {
-                        _selectedTopic = map.topic;
-                        _selectedSubject = map.subject;
-                      });
-                      _loadPreMadeMap(map);
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
+          ),
         );
       },
       loading: () => const Center(child: Padding(
@@ -998,7 +1054,56 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
             ),
             const SizedBox(height: 32),
 
-            // 2. Konu Seçme Butonu
+            // 2. Hazır Haritalar Listesi (Önce bu gösterilecek)
+            _buildPreMadeMapsHorizontalList(theme, colorScheme),
+
+            // Modern Ayırıcı
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 48.0, vertical: 24),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            colorScheme.outline.withValues(alpha: 0.3),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text(
+                      'veya',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            colorScheme.outline.withValues(alpha: 0.3),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // 3. Konu Seçme Butonu (Sonra bu gösterilecek)
             if (_topicsBySubject.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -1024,10 +1129,6 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
             else
               CircularProgressIndicator(color: colorScheme.primary),
 
-            const SizedBox(height: 48), // Buton ve liste arası boşluk
-
-            // 3. Hazır Haritalar Listesi (Butonun altında)
-            _buildPreMadeMapsHorizontalList(theme, colorScheme),
 
             const SizedBox(height: 32), // Alt boşluk
           ],
