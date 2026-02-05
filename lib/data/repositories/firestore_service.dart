@@ -370,6 +370,7 @@ class FirestoreService {
     final userDocRef = usersCollection.doc(userId);
     final mindMapCollectionRef = userDocRef.collection('savedMindMaps');
 
+    // Her zaman yeni kayıt oluştur
     final docRef = mindMapCollectionRef.doc();
     await docRef.set({
       'userId': userId,

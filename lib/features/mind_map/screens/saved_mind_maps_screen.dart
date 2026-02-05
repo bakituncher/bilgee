@@ -5,6 +5,7 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/mind_map/screens/mind_map_screen.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
+import 'dart:convert';
 
 class SavedMindMapsScreen extends ConsumerWidget {
   const SavedMindMapsScreen({super.key});
@@ -247,6 +248,10 @@ class SavedMindMapsScreen extends ConsumerWidget {
       // Layout hesapla
       _calculateLayout(rootNode);
 
+      // Hash hesapla ve provider'a kaydet
+      final hash = _calculateMapHash(rootNode);
+      ref.read(savedMapHashProvider.notifier).state = hash;
+
       // Provider'a set et
       ref.read(mindMapNodeProvider.notifier).state = rootNode;
 
@@ -260,6 +265,11 @@ class SavedMindMapsScreen extends ConsumerWidget {
         ),
       );
     }
+  }
+
+  String _calculateMapHash(MindMapNode node) {
+    final json = jsonEncode(node.toJson());
+    return json.hashCode.toString();
   }
 
   void _calculateLayout(MindMapNode root) {

@@ -81,6 +81,7 @@ class MindMapNode {
 
 final mindMapNodeProvider = StateProvider.autoDispose<MindMapNode?>((ref) => null);
 final isGeneratingProvider = StateProvider.autoDispose<bool>((ref) => false);
+final savedMapHashProvider = StateProvider.autoDispose<String?>((ref) => null);
 
 // Hazır zihin haritaları için model
 class PreMadeMindMap {
@@ -445,6 +446,12 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     return text;
   }
 
+  // Zihin haritasının hash'ini hesapla
+  String _calculateMapHash(MindMapNode node) {
+    final json = jsonEncode(node.toJson());
+    return json.hashCode.toString();
+  }
+
   void _calculateLayout(MindMapNode root) {
     root.position = _center;
     root.color = const Color(0xFF6366F1); // Indigo
@@ -566,6 +573,9 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
       ref.read(mindMapNodeProvider.notifier).state = rootNode;
       _centerCanvas();
 
+      // Yeni harita oluşturulduğunda kayıt durumunu sıfırla
+      ref.read(savedMapHashProvider.notifier).state = null;
+
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -589,8 +599,10 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
 
     try {
       final firestoreService = ref.read(firestoreServiceProvider);
-
       final mindMapJson = rootNode.toJson();
+
+      // Hash'i hesapla
+      final currentHash = _calculateMapHash(rootNode);
 
       await firestoreService.saveMindMap(
         userId: user.id,
@@ -598,6 +610,9 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
         subject: _selectedSubject ?? 'Genel',
         mindMapData: mindMapJson,
       );
+
+      // Kayıt başarılı, hash'i provider'a kaydet
+      ref.read(savedMapHashProvider.notifier).state = currentHash;
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -963,6 +978,9 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
       _calculateLayout(rootNode);
       ref.read(mindMapNodeProvider.notifier).state = rootNode;
       _centerCanvas();
+
+      // Hazır harita yüklendiğinde kayıt durumunu sıfırla
+      ref.read(savedMapHashProvider.notifier).state = null;
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -977,9 +995,13 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   Widget build(BuildContext context) {
     final rootNode = ref.watch(mindMapNodeProvider);
     final isGenerating = ref.watch(isGeneratingProvider);
+    final savedHash = ref.watch(savedMapHashProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final colorScheme = theme.colorScheme;
+
+    // Mevcut haritanın hash'i
+    final currentHash = rootNode != null ? _calculateMapHash(rootNode) : null;
 
     return PopScope(
       canPop: rootNode == null, // Harita yoksa normal geri gidebilir
@@ -1080,7 +1102,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
             ),
           ],
         ),
-        bottomNavigationBar: (rootNode != null && !isGenerating)
+        bottomNavigationBar: (rootNode != null && !isGenerating && currentHash != savedHash)
             ? Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
