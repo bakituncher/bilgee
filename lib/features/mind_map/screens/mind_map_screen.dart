@@ -1256,10 +1256,10 @@ class _PreMadeMapCard extends StatelessWidget {
     double w = (node.type == NodeType.root ? 140 : 110) * scale;
     double h = (node.type == NodeType.root ? 70 : 55) * scale;
 
-    // Canvas merkezi 2000,2000 - bunu 160,80'e dönüştürmek için offset gerekiyor
+    // Canvas merkezi 2000,2000 - bunu 160,70'e dönüştürmek için offset gerekiyor (140 yükseklik / 2)
     const canvasCenter = 2000.0;
     const previewCenterX = 160.0;
-    const previewCenterY = 80.0;
+    const previewCenterY = 70.0;
 
     // Node pozisyonunu scale'le ve offset'le
     final scaledX = (node.position.dx - canvasCenter) * scale + previewCenterX;
