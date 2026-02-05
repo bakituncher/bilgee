@@ -7,11 +7,18 @@ import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'dart:convert';
 
-class SavedMindMapsScreen extends ConsumerWidget {
+class SavedMindMapsScreen extends ConsumerStatefulWidget {
   const SavedMindMapsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SavedMindMapsScreen> createState() => _SavedMindMapsScreenState();
+}
+
+class _SavedMindMapsScreenState extends ConsumerState<SavedMindMapsScreen> {
+  final List<Offset> _allNodePositions = [];
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(userProfileProvider).value;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -277,27 +284,33 @@ class SavedMindMapsScreen extends ConsumerWidget {
   }
 
   void _calculateLayout(MindMapNode root) {
-    const center = Offset(2000, 2000);
-    const level1Distance = 250.0;
-    const level2Distance = 200.0;
+    _allNodePositions.clear();
+
+    const center = Offset(3000, 3000);
+    const level1Distance = 350.0;
+    const level2Distance = 250.0;
 
     root.position = center;
-    root.color = Colors.amber;
+    root.color = const Color(0xFF6366F1);
+    _allNodePositions.add(root.position);
 
     final mainBranches = root.children;
-    final angleStep = (2 * 3.14159265359) / (mainBranches.isEmpty ? 1 : mainBranches.length);
+    final angleStep = (2 * math.pi) / (mainBranches.isEmpty ? 1 : mainBranches.length);
+    final startAngle = -math.pi / 2;
 
     final colors = [
-      Colors.blueAccent,
-      Colors.redAccent,
-      Colors.greenAccent,
-      Colors.purpleAccent,
-      Colors.orangeAccent,
-      Colors.tealAccent
+      const Color(0xFF3B82F6),
+      const Color(0xFFEF4444),
+      const Color(0xFF10B981),
+      const Color(0xFFA855F7),
+      const Color(0xFFF59E0B),
+      const Color(0xFF14B8A6),
+      const Color(0xFFEC4899),
+      const Color(0xFF6366F1),
     ];
 
     for (int i = 0; i < mainBranches.length; i++) {
-      final angle = i * angleStep;
+      final angle = startAngle + (i * angleStep);
       final node = mainBranches[i];
 
       node.position = Offset(
@@ -305,6 +318,7 @@ class SavedMindMapsScreen extends ConsumerWidget {
         center.dy + level1Distance * math.sin(angle),
       );
       node.color = colors[i % colors.length];
+      _allNodePositions.add(node.position);
 
       _layoutChildren(node, angle, level2Distance);
     }
@@ -314,7 +328,22 @@ class SavedMindMapsScreen extends ConsumerWidget {
     if (parent.children.isEmpty) return;
 
     final childCount = parent.children.length;
-    const wedgeSize = 3.14159265359 / 2.0;
+
+    double wedgeSize;
+    if (childCount == 1) {
+      wedgeSize = math.pi / 6;
+    } else if (childCount == 2) {
+      wedgeSize = math.pi / 2.5;
+    } else if (childCount == 3) {
+      wedgeSize = math.pi / 1.8;
+    } else if (childCount == 4) {
+      wedgeSize = math.pi / 1.5;
+    } else if (childCount <= 6) {
+      wedgeSize = math.pi * 1.2;
+    } else {
+      wedgeSize = math.pi * 1.5;
+    }
+
     final startAngle = parentAngle - (wedgeSize / 2);
     final angleStep = wedgeSize / (childCount > 1 ? childCount - 1 : 1);
 
@@ -322,12 +351,71 @@ class SavedMindMapsScreen extends ConsumerWidget {
       final angle = childCount == 1 ? parentAngle : startAngle + (i * angleStep);
       final child = parent.children[i];
 
-      child.position = Offset(
+      Offset newPosition = Offset(
         parent.position.dx + distance * math.cos(angle),
         parent.position.dy + distance * math.sin(angle),
       );
+
+      const maxNodeWidth = 275.0;
+      const maxNodeHeight = 165.0;
+      const safetyMargin = 40.0;
+      final minDistance = math.sqrt(maxNodeWidth * maxNodeWidth + maxNodeHeight * maxNodeHeight) / 2 + safetyMargin;
+
+      int maxAttempts = 25;
+      int attempt = 0;
+
+      while (attempt < maxAttempts) {
+        bool hasCollision = _checkCollision(newPosition, minDistance);
+
+        if (!hasCollision) {
+          break;
+        }
+
+        attempt++;
+
+        double adjustedAngle;
+        double adjustedDistance;
+
+        if (attempt % 4 == 0) {
+          adjustedAngle = angle;
+          adjustedDistance = distance + (attempt * 30);
+        } else if (attempt % 3 == 0) {
+          adjustedAngle = angle + (0.2 * attempt);
+          adjustedDistance = distance + (attempt * 25);
+        } else if (attempt % 2 == 0) {
+          adjustedAngle = angle + (0.18 * attempt);
+          adjustedDistance = distance + (attempt * 15);
+        } else {
+          adjustedAngle = angle - (0.18 * attempt);
+          adjustedDistance = distance + (attempt * 15);
+        }
+
+        newPosition = Offset(
+          parent.position.dx + adjustedDistance * math.cos(adjustedAngle),
+          parent.position.dy + adjustedDistance * math.sin(adjustedAngle),
+        );
+      }
+
+      child.position = newPosition;
       child.color = parent.color;
+      _allNodePositions.add(newPosition);
+
+      final nextDistance = math.max(distance * 0.8, 180.0);
+      _layoutChildren(child, angle, nextDistance);
     }
+  }
+
+  bool _checkCollision(Offset position, double minDistance) {
+    for (var existingPos in _allNodePositions) {
+      final dx = position.dx - existingPos.dx;
+      final dy = position.dy - existingPos.dy;
+      final dist = math.sqrt(dx * dx + dy * dy);
+
+      if (dist < minDistance) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 

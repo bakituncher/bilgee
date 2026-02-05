@@ -268,11 +268,11 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   String? _selectedTopic;
   String _searchQuery = '';
 
-  static const double _level1Distance = 250.0;
-  static const double _level2Distance = 200.0;
+  static const double _level1Distance = 350.0;
+  static const double _level2Distance = 250.0;
 
-  static const Size _canvasSize = Size(4000, 4000);
-  static const Offset _center = Offset(2000, 2000);
+  static const Size _canvasSize = Size(6000, 6000);
+  static const Offset _center = Offset(3000, 3000);
 
   @override
   void initState() {
@@ -453,12 +453,18 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     return json.hashCode.toString();
   }
 
+  // Global pozisyon listesi - tüm ağaçtaki düğümlerin pozisyonları
+  final List<Offset> _allNodePositions = [];
+
   void _calculateLayout(MindMapNode root) {
+    // Pozisyon listesini temizle
+    _allNodePositions.clear();
+
     root.position = _center;
     root.color = const Color(0xFF6366F1); // Indigo
+    _allNodePositions.add(root.position);
 
     final mainBranches = root.children;
-    final angleStep = (2 * math.pi) / (mainBranches.isEmpty ? 1 : mainBranches.length);
 
     // Ana dallar için canlı renkler
     final colors = [
@@ -472,8 +478,14 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
       const Color(0xFF6366F1), // Indigo
     ];
 
+    // Ana dalları eşit açılarla dağıt
+    final angleStep = (2 * math.pi) / (mainBranches.isEmpty ? 1 : mainBranches.length);
+
+    // İlk dalı yukarıdan başlat (-pi/2 = yukarı)
+    final startAngle = -math.pi / 2;
+
     for (int i = 0; i < mainBranches.length; i++) {
-      final angle = i * angleStep;
+      final angle = startAngle + (i * angleStep);
       final node = mainBranches[i];
 
       node.position = Offset(
@@ -482,7 +494,9 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
       );
       // Her ana dala farklı renk ata
       node.color = colors[i % colors.length];
+      _allNodePositions.add(node.position);
 
+      // Alt seviyeleri yerleştir
       _layoutChildren(node, angle, _level2Distance);
     }
   }
@@ -491,26 +505,113 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     if (parent.children.isEmpty) return;
 
     final childCount = parent.children.length;
-    // Açıyı biraz daraltarak dalların iç içe girmesini engelleyelim (pi/2 yerine pi/2.5 veya dinamik)
-    final wedgeSize = math.pi / 2.5;
+
+    // Çocuk sayısına göre dinamik açı hesapla
+    // Daha fazla çocuk varsa daha geniş açı kullan
+    double wedgeSize;
+    if (childCount == 1) {
+      wedgeSize = math.pi / 6;  // 30 derece - tek çocuk için dar
+    } else if (childCount == 2) {
+      wedgeSize = math.pi / 2.5;  // 72 derece
+    } else if (childCount == 3) {
+      wedgeSize = math.pi / 1.8;  // 100 derece
+    } else if (childCount == 4) {
+      wedgeSize = math.pi / 1.5;  // 120 derece
+    } else if (childCount <= 6) {
+      wedgeSize = math.pi * 1.2;  // 216 derece
+    } else {
+      wedgeSize = math.pi * 1.5;  // 270 derece - çok çocuk için çok geniş
+    }
+
     final startAngle = parentAngle - (wedgeSize / 2);
     final angleStep = wedgeSize / (childCount > 1 ? childCount - 1 : 1);
 
+    // Tüm çocukları yerleştir
     for (int i = 0; i < childCount; i++) {
       final angle = childCount == 1 ? parentAngle : startAngle + (i * angleStep);
       final child = parent.children[i];
 
-      child.position = Offset(
+      // İlk pozisyon hesaplaması
+      Offset newPosition = Offset(
         parent.position.dx + distance * math.cos(angle),
         parent.position.dy + distance * math.sin(angle),
       );
-      child.color = parent.color;
 
-      // --- EKLENMESİ GEREKEN KISIM BURASI ---
-      // Özyineleme (Recursion): Çocuğun da kendi çocuklarını yerleştirmesini sağla.
-      // Mesafeyi (distance) her seviyede biraz azaltıyoruz (0.8 ile çarparak) ki ağaç daha dengeli görünsün.
-      _layoutChildren(child, angle, distance * 0.85);
+      // Node boyutlarına göre minimum mesafe hesapla
+      // Root: 140x70, Diğerleri: 110x55 ama maksimum 2.5x genişleyebilir
+      // En kötü durumu hesaba kat: 110 * 2.5 = 275
+      // İki node'un yarı çapları + güvenlik marjı
+      const maxNodeWidth = 275.0;
+      const maxNodeHeight = 165.0; // 55 * 3
+      const safetyMargin = 40.0;
+
+      // Diagonal mesafe (köşegen) kullanarak minimum mesafeyi hesapla
+      final minDistance = math.sqrt(maxNodeWidth * maxNodeWidth + maxNodeHeight * maxNodeHeight) / 2 + safetyMargin;
+
+      int maxAttempts = 25; // Daha fazla deneme
+      int attempt = 0;
+
+      while (attempt < maxAttempts) {
+        bool hasCollision = _checkCollision(newPosition, minDistance);
+
+        if (!hasCollision) {
+          break;
+        }
+
+        // Çakışma varsa pozisyonu ayarla
+        attempt++;
+
+        // Farklı stratejiler dene
+        double adjustedAngle;
+        double adjustedDistance;
+
+        if (attempt % 4 == 0) {
+          // Her 4. denemede mesafeyi çok fazla artır
+          adjustedAngle = angle;
+          adjustedDistance = distance + (attempt * 30);
+        } else if (attempt % 3 == 0) {
+          // Her 3. denemede hem açıyı hem mesafeyi değiştir
+          adjustedAngle = angle + (0.2 * attempt);
+          adjustedDistance = distance + (attempt * 25);
+        } else if (attempt % 2 == 0) {
+          // Çift denemelerde açıyı pozitif yönde değiştir
+          adjustedAngle = angle + (0.18 * attempt);
+          adjustedDistance = distance + (attempt * 15);
+        } else {
+          // Tek denemelerde açıyı negatif yönde değiştir
+          adjustedAngle = angle - (0.18 * attempt);
+          adjustedDistance = distance + (attempt * 15);
+        }
+
+        newPosition = Offset(
+          parent.position.dx + adjustedDistance * math.cos(adjustedAngle),
+          parent.position.dy + adjustedDistance * math.sin(adjustedAngle),
+        );
+      }
+
+      child.position = newPosition;
+      child.color = parent.color;
+      _allNodePositions.add(newPosition);
+
+      // Özyinelemeli olarak çocuğun çocuklarını yerleştir
+      // Mesafeyi her seviyede azalt ama minimum bir değerin altına düşürme
+      final nextDistance = math.max(distance * 0.8, 180.0);
+      _layoutChildren(child, angle, nextDistance);
     }
+  }
+
+  // Çakışma kontrolü yardımcı fonksiyonu
+  bool _checkCollision(Offset position, double minDistance) {
+    for (var existingPos in _allNodePositions) {
+      final dx = position.dx - existingPos.dx;
+      final dy = position.dy - existingPos.dy;
+      final dist = math.sqrt(dx * dx + dy * dy);
+
+      if (dist < minDistance) {
+        return true;
+      }
+    }
+    return false;
   }
 
   Future<void> _generateMindMap() async {
@@ -1468,7 +1569,7 @@ class _PreMadeMapCard extends StatelessWidget {
     double w = baseW * scale;
     double h = baseH * scale;
 
-    const canvasCenter = 2000.0;
+    const canvasCenter = 3000.0; // 6000x6000 canvas merkezi
     const previewCenterX = 160.0;
     const previewCenterY = 90.0;
 
@@ -1687,13 +1788,18 @@ class _PreMadeMapCard extends StatelessWidget {
   }
 
   void _calculateRealLayout(MindMapNode root) {
+    // Önizleme için lokal pozisyon listesi
+    final List<Offset> allPositions = [];
+
     // GERÇEK layout - ana ekrandaki ile aynı
-    const center = Offset(2000, 2000); // 4000x4000 canvas merkezi
+    const center = Offset(3000, 3000); // 6000x6000 canvas merkezi
     root.position = center;
     root.color = const Color(0xFF6366F1);
+    allPositions.add(root.position);
 
     final mainBranches = root.children;
     final angleStep = (2 * math.pi) / (mainBranches.isEmpty ? 1 : mainBranches.length);
+    final startAngle = -math.pi / 2;
 
     final colors = [
       const Color(0xFF3B82F6),
@@ -1706,10 +1812,10 @@ class _PreMadeMapCard extends StatelessWidget {
       const Color(0xFF6366F1),
     ];
 
-    const level1Distance = 250.0;
+    const level1Distance = 350.0;
 
     for (int i = 0; i < mainBranches.length; i++) {
-      final angle = i * angleStep;
+      final angle = startAngle + (i * angleStep);
       final node = mainBranches[i];
 
       node.position = Offset(
@@ -1717,16 +1823,32 @@ class _PreMadeMapCard extends StatelessWidget {
         center.dy + level1Distance * math.sin(angle),
       );
       node.color = colors[i % colors.length];
+      allPositions.add(node.position);
 
-      _layoutRealChildren(node, angle, 200.0);
+      _layoutRealChildren(node, angle, 250.0, allPositions);
     }
   }
 
-  void _layoutRealChildren(MindMapNode parent, double parentAngle, double distance) {
+  void _layoutRealChildren(MindMapNode parent, double parentAngle, double distance, List<Offset> allPositions) {
     if (parent.children.isEmpty) return;
 
     final childCount = parent.children.length;
-    final wedgeSize = math.pi / 2.0;
+
+    double wedgeSize;
+    if (childCount == 1) {
+      wedgeSize = math.pi / 6;
+    } else if (childCount == 2) {
+      wedgeSize = math.pi / 2.5;
+    } else if (childCount == 3) {
+      wedgeSize = math.pi / 1.8;
+    } else if (childCount == 4) {
+      wedgeSize = math.pi / 1.5;
+    } else if (childCount <= 6) {
+      wedgeSize = math.pi * 1.2;
+    } else {
+      wedgeSize = math.pi * 1.5;
+    }
+
     final startAngle = parentAngle - (wedgeSize / 2);
     final angleStep = wedgeSize / (childCount > 1 ? childCount - 1 : 1);
 
@@ -1734,11 +1856,68 @@ class _PreMadeMapCard extends StatelessWidget {
       final angle = childCount == 1 ? parentAngle : startAngle + (i * angleStep);
       final child = parent.children[i];
 
-      child.position = Offset(
+      Offset newPosition = Offset(
         parent.position.dx + distance * math.cos(angle),
         parent.position.dy + distance * math.sin(angle),
       );
+
+      const maxNodeWidth = 275.0;
+      const maxNodeHeight = 165.0;
+      const safetyMargin = 40.0;
+      final minDistance = math.sqrt(maxNodeWidth * maxNodeWidth + maxNodeHeight * maxNodeHeight) / 2 + safetyMargin;
+
+      int maxAttempts = 25;
+      int attempt = 0;
+
+      while (attempt < maxAttempts) {
+        bool hasCollision = false;
+
+        for (var existingPos in allPositions) {
+          final dx = newPosition.dx - existingPos.dx;
+          final dy = newPosition.dy - existingPos.dy;
+          final dist = math.sqrt(dx * dx + dy * dy);
+
+          if (dist < minDistance) {
+            hasCollision = true;
+            break;
+          }
+        }
+
+        if (!hasCollision) {
+          break;
+        }
+
+        attempt++;
+
+        double adjustedAngle;
+        double adjustedDistance;
+
+        if (attempt % 4 == 0) {
+          adjustedAngle = angle;
+          adjustedDistance = distance + (attempt * 30);
+        } else if (attempt % 3 == 0) {
+          adjustedAngle = angle + (0.2 * attempt);
+          adjustedDistance = distance + (attempt * 25);
+        } else if (attempt % 2 == 0) {
+          adjustedAngle = angle + (0.18 * attempt);
+          adjustedDistance = distance + (attempt * 15);
+        } else {
+          adjustedAngle = angle - (0.18 * attempt);
+          adjustedDistance = distance + (attempt * 15);
+        }
+
+        newPosition = Offset(
+          parent.position.dx + adjustedDistance * math.cos(adjustedAngle),
+          parent.position.dy + adjustedDistance * math.sin(adjustedAngle),
+        );
+      }
+
+      child.position = newPosition;
       child.color = parent.color;
+      allPositions.add(newPosition);
+
+      final nextDistance = math.max(distance * 0.8, 180.0);
+      _layoutRealChildren(child, angle, nextDistance, allPositions);
     }
   }
 }
@@ -1774,12 +1953,12 @@ class _ScaledConnectionPainter extends CustomPainter {
       paint.strokeWidth = (node.type == NodeType.root ? 3.0 : 1.5) * scale;
 
       final p1 = Offset(
-        (node.position.dx - 2000) * scale + offsetX,
-        (node.position.dy - 2000) * scale + offsetY,
+        (node.position.dx - 3000) * scale + offsetX,
+        (node.position.dy - 3000) * scale + offsetY,
       );
       final p2 = Offset(
-        (child.position.dx - 2000) * scale + offsetX,
-        (child.position.dy - 2000) * scale + offsetY,
+        (child.position.dx - 3000) * scale + offsetX,
+        (child.position.dy - 3000) * scale + offsetY,
       );
 
       final path = Path();
