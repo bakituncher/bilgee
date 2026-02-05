@@ -854,71 +854,91 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        contentPadding: const EdgeInsets.all(24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        contentPadding: const EdgeInsets.all(32),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF6366F1).withValues(alpha: 0.15),
+                    const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+                  ],
+                ),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.account_tree_rounded,
-                size: 48,
-                color: Color(0xFF6366F1),
+                size: 56,
+                color: const Color(0xFF6366F1),
               ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Zihin Haritası Premium Özellik',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Yeni zihin haritası oluşturmak için Taktik Pro\'ya yükseltme yapman gerekiyor.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
+            Text(
+              'Sınırsız Zihin Haritası',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+                letterSpacing: -0.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Daha fazla zihin haritası oluştur, öğrenmeyi görselleştir.\nTaktik Pro ile limitsiz öğren!',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: TextButton(
                     onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: BorderSide(color: colorScheme.outline),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text('İptal'),
+                    child: Text(
+                      'Daha Sonra',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
+                  flex: 2,
                   child: FilledButton(
                     onPressed: () {
                       Navigator.pop(context);
                       context.push('/premium');
                     },
                     style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: const Color(0xFF6366F1),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Pro\'ya Geç',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    child: const Text('Premium Al'),
                   ),
                 ),
               ],
