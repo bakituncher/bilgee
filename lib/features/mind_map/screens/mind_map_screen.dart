@@ -224,6 +224,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   final ScrollController _cardsScrollController = ScrollController();
   Timer? _autoScrollTimer;
   bool _userIsInteracting = false;
+  bool _scrollingForward = true; // true = sağa, false = sola
 
   Map<String, List<String>> _topicsBySubject = {};
   String? _selectedSubject;
@@ -275,16 +276,24 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
 
       if (maxScroll <= 0) return;
 
-      if (currentScroll >= maxScroll) {
-        // Sonuna geldik, başa dön
-        _cardsScrollController.jumpTo(0);
-      } else {
-        // Daha hızlı ilerle
-        final nextPosition = currentScroll + 0.8;
-        if (nextPosition <= maxScroll) {
-          _cardsScrollController.jumpTo(nextPosition);
-        }
+      // Sona geldiysek yönü değiştir
+      if (_scrollingForward && currentScroll >= maxScroll) {
+        _scrollingForward = false;
       }
+      // Başa geldiysek yönü değiştir
+      else if (!_scrollingForward && currentScroll <= 0) {
+        _scrollingForward = true;
+      }
+
+      // Yön bazında hareket et
+      double nextPosition;
+      if (_scrollingForward) {
+        nextPosition = (currentScroll + 0.8).clamp(0.0, maxScroll);
+      } else {
+        nextPosition = (currentScroll - 0.8).clamp(0.0, maxScroll);
+      }
+
+      _cardsScrollController.jumpTo(nextPosition);
     });
   }
 
