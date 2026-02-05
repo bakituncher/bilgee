@@ -448,14 +448,14 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
 
   void _handleNavigation(BuildContext context, bool isPremium, {required String route, required Map<String, dynamic> offerData}) {
     if (route == '/ai-hub/question-solver' || route == '/ai-hub/mind-map') {
-      context.go(route);
+      context.push(route); // ✅ context.go yerine context.push - geri tuşu çalışır
       return;
     }
 
     if (isPremium) {
-      context.go(route);
+      context.push(route); // ✅ Diğer premium ekranlar için de push kullan
     } else {
-      context.go('/ai-hub/offer', extra: offerData);
+      context.push('/ai-hub/offer', extra: offerData); // ✅ Teklif ekranı için de push
     }
   }
 }

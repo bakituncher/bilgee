@@ -16,6 +16,7 @@ import 'package:taktik/features/home/widgets/motivation_quotes_card.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
+import 'package:taktik/shared/notifications/notification_service.dart';
 
 final celebratedDatesProvider = StateProvider<Set<String>>((ref) => <String>{});
 final expiredPlanDialogShownProvider = StateProvider<bool>((ref) => false);
@@ -79,7 +80,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       // build metodu içinde yapıldığında sürekli tetiklenip üst üste bindiriyordu.
       _checkAndShowExpiredPlanNudge();
       _checkAndShowPremiumForAdults();
+
+      // YENİ: Bildirim iznini burada istiyoruz (kullanıcı ana ekranı gördükten sonra)
+      _requestNotificationPermission();
     });
+  }
+
+  /// Kullanıcı deneyimi için bildirim iznini Dashboard açıldığında istiyoruz
+  Future<void> _requestNotificationPermission() async {
+    // Kullanıcının sayfayı görmesi ve uygulamaya ısınması için kısa bir gecikme
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+
+    // NotificationService'deki yeni metodu çağırıyoruz
+    await NotificationService.instance.requestNotificationPermissions();
   }
 
   // GÜNCELLEME: İsim değişikliği ve mantık düzeltmesi.
