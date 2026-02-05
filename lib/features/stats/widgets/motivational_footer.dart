@@ -100,6 +100,9 @@ class MotivationalFooter extends StatelessWidget {
   }
 
   ({String title, String subtitle}) _getFooterMessage() {
+    // Branş denemelerini hariç tutarak ana deneme sayısını hesapla
+    final mainTestCount = tests.where((test) => !test.isBranchTest).length;
+
     if (streak >= 7) {
       return (
         title: 'Durmak yok! 🔥',
@@ -112,13 +115,13 @@ class MotivationalFooter extends StatelessWidget {
         subtitle: 'Çalışma temponu mükemmel. Böyle devam et!'
       );
     }
-    if (tests.length >= 20) {
+    if (mainTestCount >= 20) {
       return (
         title: 'İnanılmaz çalışkansın! 📚',
-        subtitle: '${tests.length} deneme çözdün. Başarı yakın!'
+        subtitle: '$mainTestCount deneme çözdün. Başarı yakın!'
       );
     }
-    if (tests.length >= 10) {
+    if (mainTestCount >= 10) {
       return (
         title: 'Güzel bir ilerleme! 🎯',
         subtitle: 'Çalışmalarına devam et, başarı seni bekliyor!'
@@ -137,19 +140,23 @@ class MotivationalFooter extends StatelessWidget {
   }
 
   IconData _getFooterIcon() {
+    final mainTestCount = tests.where((test) => !test.isBranchTest).length;
+
     if (streak >= 7) return Icons.local_fire_department_rounded;
     if (streak >= 3) return Icons.bolt_rounded;
-    if (tests.length >= 20) return Icons.emoji_events_rounded;
-    if (tests.length >= 10) return Icons.trending_up_rounded;
+    if (mainTestCount >= 20) return Icons.emoji_events_rounded;
+    if (mainTestCount >= 10) return Icons.trending_up_rounded;
     if (tests.isEmpty) return Icons.rocket_launch_rounded;
     return Icons.star_rounded;
   }
 
   Color _getFooterColor() {
+    final mainTestCount = tests.where((test) => !test.isBranchTest).length;
+
     if (streak >= 7) return Colors.deepOrange;
     if (streak >= 3) return const Color(0xFFF97316);
-    if (tests.length >= 20) return const Color(0xFF8B5CF6);
-    if (tests.length >= 10) return const Color(0xFF10B981);
+    if (mainTestCount >= 20) return const Color(0xFF8B5CF6);
+    if (mainTestCount >= 10) return const Color(0xFF10B981);
     if (tests.isEmpty) return const Color(0xFF3B82F6);
     return const Color(0xFFF59E0B);
   }
