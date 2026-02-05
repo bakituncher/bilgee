@@ -1627,7 +1627,7 @@ class _PreMadeMapCard extends StatelessWidget {
   final ColorScheme colorScheme;
   final VoidCallback onTap;
 
-  const _PreMadeMapCard({
+  _PreMadeMapCard({
     required this.map,
     required this.theme,
     required this.colorScheme,
@@ -1862,137 +1862,139 @@ class _PreMadeMapCard extends StatelessWidget {
     ).animate().fadeIn(duration: 300.ms).slideX(begin: 0.1, duration: 400.ms, curve: Curves.easeOutQuad);
   }
 
+  // Önizleme için lokal pozisyon listesi
+  final List<Offset> _previewNodePositions = [];
+
+  /// Bir düğümün altındaki toplam "yaprak" sayısını (genişliğini) hesaplar.
+  int _calculateNodeWeightForPreview(MindMapNode node) {
+    if (node.children.isEmpty) return 1;
+    int weight = 0;
+    for (var child in node.children) {
+      weight += _calculateNodeWeightForPreview(child);
+    }
+    return weight;
+  }
+
   void _calculateRealLayout(MindMapNode root) {
-    // Önizleme için lokal pozisyon listesi
-    final List<Offset> allPositions = [];
+    // Pozisyon listesini temizle
+    _previewNodePositions.clear();
 
-    // GERÇEK layout - ana ekrandaki ile aynı
+    // GERÇEK layout - ana ekrandaki ile TAM AYNI (YENİ ALGORİTMA)
     const center = Offset(3000, 3000); // 6000x6000 canvas merkezi
-    root.position = center;
-    root.color = const Color(0xFF6366F1);
-    allPositions.add(root.position);
-
-    final mainBranches = root.children;
-    final angleStep = (2 * math.pi) / (mainBranches.isEmpty ? 1 : mainBranches.length);
-    final startAngle = -math.pi / 2;
-
-    final colors = [
-      const Color(0xFF3B82F6),
-      const Color(0xFFEF4444),
-      const Color(0xFF10B981),
-      const Color(0xFFA855F7),
-      const Color(0xFFF59E0B),
-      const Color(0xFF14B8A6),
-      const Color(0xFFEC4899),
-      const Color(0xFF6366F1),
-    ];
-
     const level1Distance = 350.0;
 
+    // Kökü merkeze koy
+    root.position = center;
+    root.color = const Color(0xFF6366F1);
+    _previewNodePositions.add(root.position);
+
+    if (root.children.isEmpty) return;
+
+    final mainBranches = root.children;
+
+    // Renk paleti
+    final colors = [
+      const Color(0xFF3B82F6), // Blue
+      const Color(0xFFEF4444), // Red
+      const Color(0xFF10B981), // Green
+      const Color(0xFFA855F7), // Purple
+      const Color(0xFFF59E0B), // Amber
+      const Color(0xFF14B8A6), // Teal
+      const Color(0xFFEC4899), // Pink
+      const Color(0xFF6366F1), // Indigo
+    ];
+
+    // 1. Toplam ağırlığı bul
+    int totalWeight = 0;
+    for (var child in mainBranches) {
+      totalWeight += _calculateNodeWeightForPreview(child);
+    }
+
+    // Başlangıç açısı (Yukarıdan başlasın: -90 derece)
+    double currentAngle = -math.pi / 2;
+
     for (int i = 0; i < mainBranches.length; i++) {
-      final angle = startAngle + (i * angleStep);
       final node = mainBranches[i];
-
-      node.position = Offset(
-        center.dx + level1Distance * math.cos(angle),
-        center.dy + level1Distance * math.sin(angle),
-      );
       node.color = colors[i % colors.length];
-      allPositions.add(node.position);
 
-      _layoutRealChildren(node, angle, 250.0, allPositions);
+      // Düğümün ağırlığına göre pastadan pay (sweep angle) ver
+      int weight = _calculateNodeWeightForPreview(node);
+      // Toplam pasta 360 derece (2 * pi)
+      double sweepAngle = (weight / totalWeight) * 2 * math.pi;
+
+      // Bu dalı, kendisine ayrılan açının tam ortasından geçirerek yerleştir
+      _layoutRecursiveForPreview(
+          node,
+          currentAngle,
+          sweepAngle,
+          level1Distance, // İlk seviye mesafesi
+          center
+      );
+
+      // Bir sonraki dal için açıyı kaydır
+      currentAngle += sweepAngle;
     }
   }
 
-  void _layoutRealChildren(MindMapNode parent, double parentAngle, double distance, List<Offset> allPositions) {
-    if (parent.children.isEmpty) return;
+  /// Özyinelemeli (Recursive) Yerleştirme - Önizleme için
+  void _layoutRecursiveForPreview(
+      MindMapNode node,
+      double startAngle,
+      double sweep,
+      double distanceCtx,
+      Offset center
+      ) {
+    // 1. Düğümü kendisine ayrılan açının (sweep) merkezine yerleştir
+    double midAngle = startAngle + (sweep / 2);
 
-    final childCount = parent.children.length;
+    // Konumu MERKEZE göre hesapla (Ray Layout)
+    node.position = Offset(
+        center.dx + distanceCtx * math.cos(midAngle),
+        center.dy + distanceCtx * math.sin(midAngle)
+    );
+    _previewNodePositions.add(node.position);
 
-    double wedgeSize;
-    if (childCount == 1) {
-      wedgeSize = math.pi / 6;
-    } else if (childCount == 2) {
-      wedgeSize = math.pi / 2.5;
-    } else if (childCount == 3) {
-      wedgeSize = math.pi / 1.8;
-    } else if (childCount == 4) {
-      wedgeSize = math.pi / 1.5;
-    } else if (childCount <= 6) {
-      wedgeSize = math.pi * 1.2;
-    } else {
-      wedgeSize = math.pi * 1.5;
+    if (node.children.isEmpty) return;
+
+    // 2. Çocukları yerleştirmek için hazırlık
+    int childTotalWeight = 0;
+    for (var child in node.children) {
+      childTotalWeight += _calculateNodeWeightForPreview(child);
     }
 
-    final startAngle = parentAngle - (wedgeSize / 2);
-    final angleStep = wedgeSize / (childCount > 1 ? childCount - 1 : 1);
+    // 3. Mesafeyi (Radius) Hesapla - Çakışmayı Önleyen Kısım
+    double minArcLengthPerChild = 140.0; // Kartın dikeyde kapladığı minimum alan + boşluk
+    double calculatedDistance = distanceCtx + 220.0; // Standart artış
 
-    for (int i = 0; i < childCount; i++) {
-      final angle = childCount == 1 ? parentAngle : startAngle + (i * angleStep);
-      final child = parent.children[i];
+    // Eğer açı çok küçükse (kalabalık dal) mesafeyi artır
+    if (childTotalWeight > 0) {
+      // Ortalama çocuk başına düşen açı
+      double avgAnglePerChild = sweep / node.children.length;
 
-      Offset newPosition = Offset(
-        parent.position.dx + distance * math.cos(angle),
-        parent.position.dy + distance * math.sin(angle),
-      );
+      // Sıfıra bölünmeyi önle
+      if (avgAnglePerChild > 0.01) {
+        double requiredDistance = minArcLengthPerChild / avgAnglePerChild;
 
-      const maxNodeWidth = 275.0;
-      const maxNodeHeight = 165.0;
-      const safetyMargin = 40.0;
-      final minDistance = math.sqrt(maxNodeWidth * maxNodeWidth + maxNodeHeight * maxNodeHeight) / 2 + safetyMargin;
-
-      int maxAttempts = 25;
-      int attempt = 0;
-
-      while (attempt < maxAttempts) {
-        bool hasCollision = false;
-
-        for (var existingPos in allPositions) {
-          final dx = newPosition.dx - existingPos.dx;
-          final dy = newPosition.dy - existingPos.dy;
-          final dist = math.sqrt(dx * dx + dy * dy);
-
-          if (dist < minDistance) {
-            hasCollision = true;
-            break;
-          }
+        // Çok aşırı uzamaması için bir limit koy ama gerekirse uzat
+        if (requiredDistance > calculatedDistance) {
+          // Örneğin max 2000px ekstra uzasın
+          calculatedDistance = math.min(requiredDistance, distanceCtx + 1200);
         }
-
-        if (!hasCollision) {
-          break;
-        }
-
-        attempt++;
-
-        double adjustedAngle;
-        double adjustedDistance;
-
-        if (attempt % 4 == 0) {
-          adjustedAngle = angle;
-          adjustedDistance = distance + (attempt * 30);
-        } else if (attempt % 3 == 0) {
-          adjustedAngle = angle + (0.2 * attempt);
-          adjustedDistance = distance + (attempt * 25);
-        } else if (attempt % 2 == 0) {
-          adjustedAngle = angle + (0.18 * attempt);
-          adjustedDistance = distance + (attempt * 15);
-        } else {
-          adjustedAngle = angle - (0.18 * attempt);
-          adjustedDistance = distance + (attempt * 15);
-        }
-
-        newPosition = Offset(
-          parent.position.dx + adjustedDistance * math.cos(adjustedAngle),
-          parent.position.dy + adjustedDistance * math.sin(adjustedAngle),
-        );
       }
+    }
 
-      child.position = newPosition;
-      child.color = parent.color;
-      allPositions.add(newPosition);
+    double currentChildAngle = startAngle;
 
-      final nextDistance = math.max(distance * 0.8, 180.0);
-      _layoutRealChildren(child, angle, nextDistance, allPositions);
+    for (var child in node.children) {
+      child.color = node.color; // Rengi miras al
+
+      int weight = _calculateNodeWeightForPreview(child);
+      // Ebeveynin açısını, çocuğun ağırlığına göre paylaştır
+      double childSweep = (weight / childTotalWeight) * sweep;
+
+      _layoutRecursiveForPreview(child, currentChildAngle, childSweep, calculatedDistance, center);
+
+      currentChildAngle += childSweep;
     }
   }
 }
