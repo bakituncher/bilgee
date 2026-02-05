@@ -60,12 +60,6 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
           buttonText: "Harika",
         ),
         TutorialStep(
-          highlightKey: _coachKey,
-          title: "Mentörün Taktik Tavşan",
-          text: "Motivasyon, strateji, analiz ve destek... Sınav yolculuğunda her alanda yanında olacak yapay zeka koçun!",
-          buttonText: "Devam",
-        ),
-        TutorialStep(
           highlightKey: _studyRoomKey,
           title: "Kişisel Etüt Odan",
           text: "Eksik olduğun konulara özel konu özetleri ve test soruları burada. Zayıf noktalarını güçlü yanlara çevir!",
@@ -75,6 +69,12 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
           highlightKey: _mindMapKey,
           title: "Zihin Haritaları",
           text: "Karmaşık konuları görsel haritalarla öğren. Bilgiyi organize et, hatırlamayı kolaylaştır!",
+          buttonText: "Devam",
+        ),
+        TutorialStep(
+          highlightKey: _coachKey,
+          title: "Mentörün Taktik Tavşan",
+          text: "Motivasyon, strateji, analiz ve destek... Sınav yolculuğunda her alanda yanında olacak yapay zeka koçun!",
           buttonText: "Keşfet",
         ),
       ];
@@ -410,22 +410,25 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                 ),
                 const SizedBox(width: gap),
                 Expanded(
-                  child: _BentoCard(
-                    title: 'Zihin\nHaritası',
-                    description: 'Konuları görselleştir,\ndaha iyi anla ve hatırla.',
-                    icon: Icons.account_tree_rounded,
-                    color: const Color(0xFF6366F1),
-                    isPremium: true, // Herkes erişebilir
-                    height: 180,
-                    onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/mind-map', offerData: {
-                      'title': 'Zihin Haritası',
-                      'subtitle': 'Konuları görselleştir ve daha iyi anla.',
-                      'iconName': 'account_tree',
-                      'color': const Color(0xFF6366F1),
-                      'marketingTitle': 'Düşüncelerini Haritala!',
-                      'marketingSubtitle': 'Karmaşık konuları görsel zihin haritalarına dönüştür. Daha iyi anla, daha kolay hatırla.',
-                      'redirectRoute': '/ai-hub/mind-map',
-                    }),
+                  child: KeyedSubtree(
+                    key: _mindMapKey,
+                    child: _BentoCard(
+                      title: 'Zihin\nHaritası',
+                      description: 'Konuları görselleştir,\ndaha iyi anla ve hatırla.',
+                      icon: Icons.account_tree_rounded,
+                      color: const Color(0xFF6366F1),
+                      isPremium: true, // Herkes erişebilir
+                      height: 180,
+                      onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/mind-map', offerData: {
+                        'title': 'Zihin Haritası',
+                        'subtitle': 'Konuları görselleştir ve daha iyi anla.',
+                        'iconName': 'account_tree',
+                        'color': const Color(0xFF6366F1),
+                        'marketingTitle': 'Düşüncelerini Haritala!',
+                        'marketingSubtitle': 'Karmaşık konuları görsel zihin haritalarına dönüştür. Daha iyi anla, daha kolay hatırla.',
+                        'redirectRoute': '/ai-hub/mind-map',
+                      }),
+                    ),
                   ),
                 ),
               ],
