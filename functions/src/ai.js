@@ -21,28 +21,28 @@ function sanitizeOutput(text) {
 }
 
 // Güvenlik ve kötüye kullanım önleme ayarları
-// Varsayılanlar maliyeti düşürecek şekilde daraltıldı; env ile aşılabilir.
 const GEMINI_PROMPT_MAX_CHARS = parseInt(process.env.GEMINI_PROMPT_MAX_CHARS || "120000", 10);
 const DEFAULT_JSON_TOKENS = parseInt(process.env.GEMINI_MAX_OUTPUT_TOKENS_JSON || "8192", 10);
 const DEFAULT_TEXT_TOKENS = parseInt(process.env.GEMINI_MAX_OUTPUT_TOKENS_TEXT || "2048", 10);
 const GEMINI_RATE_LIMIT_WINDOW_SEC = parseInt(process.env.GEMINI_RATE_LIMIT_WINDOW_SEC || "60", 10);
-const GEMINI_RATE_LIMIT_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_MAX || "12", 10); // 5 -> 12 (60 saniyede 12 istek, Gemini free tier: 15/min)
-const GEMINI_RATE_LIMIT_IP_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_IP_MAX || "30", 10); // 20 -> 30
+const GEMINI_RATE_LIMIT_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_MAX || "12", 10);
+const GEMINI_RATE_LIMIT_IP_MAX = parseInt(process.env.GEMINI_RATE_LIMIT_IP_MAX || "30", 10);
 
 // Premium kullanıcılar için ek rate limit ayarları (Cüzdan DoS koruması)
-const PREMIUM_RATE_LIMIT_PER_MINUTE = parseInt(process.env.PREMIUM_RATE_LIMIT_PER_MINUTE || "14", 10); // 10 -> 14 (Gemini: 15/min, buffer bırak)
-const PREMIUM_RATE_LIMIT_PER_HOUR = parseInt(process.env.PREMIUM_RATE_LIMIT_PER_HOUR || "500", 10); // 100 -> 500 (Gemini: 1500/day, saatlik ~60 beklenen)
+const PREMIUM_RATE_LIMIT_PER_MINUTE = parseInt(process.env.PREMIUM_RATE_LIMIT_PER_MINUTE || "14", 10);
+const PREMIUM_RATE_LIMIT_PER_HOUR = parseInt(process.env.PREMIUM_RATE_LIMIT_PER_HOUR || "500", 10);
 
 // Retry mekanizması için ayarlar
 const MAX_RETRY_ATTEMPTS = 3;
-const RETRY_DELAY_MS = 2000; // 2 saniye
+const RETRY_DELAY_MS = 2000;
 
-// YENİ: Kategori bazlı aylık limitler
+// Kategori bazlı aylık limitler
 const MONTHLY_LIMITS = {
-  workshop: 350,    // Etüt Odası
-  weekly_plan: 60,  // Haftalık Plan
-  chat: 2000,        // Sohbet / Motivasyon
-  question_solver: 1000 // Soru Çözücü
+  workshop: 350,      // Etüt Odası
+  weekly_plan: 60,    // Haftalık Plan
+  chat: 2000,         // Sohbet / Motivasyon
+  question_solver: 1000, // Soru Çözücü
+  mind_map: 100       // YENİ: Zihin Haritası (Sadece Premium)
 };
 
 // Exponential backoff ile retry helper
@@ -53,13 +53,12 @@ async function retryWithBackoff(fn, maxAttempts = MAX_RETRY_ATTEMPTS, baseDelay 
       return await fn();
     } catch (error) {
       lastError = error;
-      // 429 (rate limit) veya 503 (service unavailable) hataları için retry yap
       const status = error?.response?.status || error?.status;
       const is429 = status === 429 || (error.message && error.message.includes('429'));
       const is503 = status === 503 || (error.message && error.message.includes('503'));
 
       if ((is429 || is503) && attempt < maxAttempts) {
-        const delay = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff: 2s, 4s, 8s
+        const delay = baseDelay * Math.pow(2, attempt - 1);
         logger.warn(`Retry attempt ${attempt}/${maxAttempts} after ${delay}ms`, {
           error: error.message,
           status
@@ -92,12 +91,10 @@ exports.generateGemini = onCall(
     const prompt = request.data?.prompt;
     const expectJson = !!request.data?.expectJson;
 
-    // YENİ: İstemciden gelen işlem türünü al, varsayılan 'chat'
+    // İstemciden gelen işlem türünü al, varsayılan 'chat'
     const requestType = request.data?.requestType || 'chat';
 
     // Premium olmayan kullanıcılar için günlük soru çözme limiti kontrolü
-    // NOT: Sadece yeni soru çözümlerinde (question_solver) limit tüketilir
-    // Chat/takip soruları (anlamadığın yeri sor) limiti tüketmez
     if (!isPremium && requestType === 'question_solver') {
       const today = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Istanbul' }).substring(0, 10); // 'YYYY-MM-DD'
       const dailyUsageRef = db.collection("users").doc(request.auth.uid).collection("daily_usage").doc(today);
@@ -122,16 +119,17 @@ exports.generateGemini = onCall(
       }, { merge: true });
     }
 
-    // Premium kullanıcılar için özellik kontrolü
+    // Premium özellik kontrolü (Zihin Haritası buraya düşer)
     if (isPremium && (requestType !== 'question_solver' && requestType !== 'chat')) {
-      // Premium gerektiren diğer özellikler (workshop, weekly_plan)
-      // Bu özelliklere sadece premium kullanıcılar erişebilir
+      // Premium gerektiren diğer özellikler (workshop, weekly_plan, mind_map)
+      // Erişim izni var, devam et.
     } else if (!isPremium && (requestType !== 'question_solver' && requestType !== 'chat')) {
-      // Premium olmayan kullanıcılar sadece question_solver ve chat kullanabilir (günlük limitle)
+      // Premium olmayan kullanıcılar sadece question_solver (limitli) ve chat kullanabilir
+      // mind_map isteği gelirse buraya düşer ve reddedilir.
       throw new HttpsError("permission-denied", "Bu özellik yalnızca premium kullanıcılara açıktır.");
     }
 
-    // YENİ: Soru çözücü görseli (base64, data uri değil)
+    // Soru çözücü görseli
     const imageBase64 = typeof request.data?.imageBase64 === 'string' ? request.data.imageBase64.trim() : null;
     const imageMimeType = typeof request.data?.imageMimeType === 'string' ? request.data.imageMimeType.trim() : 'image/jpeg';
 
@@ -140,25 +138,23 @@ exports.generateGemini = onCall(
       throw new HttpsError("invalid-argument", "Geçersiz işlem türü.");
     }
 
-    // Sıcaklık aralığını güvenli tut; JSON isteklerinde daha deterministik
+    // Sıcaklık ayarı
     let temperature = 0.5;
     if (typeof request.data?.temperature === "number" && isFinite(request.data.temperature)) {
       temperature = Math.min(1.0, Math.max(0.1, request.data.temperature));
     }
     if (expectJson) {
-      // JSON çıktılarda halüsinasyonu azaltmak için üst sınırı düşür
       temperature = Math.min(temperature, 0.3);
     }
 
-    // MODEL SEÇİMİ GÜNCELLEMESİ
-    // Soru çözücü ve Etüt Odası: gemini-3-flash-preview (en son güçlü model)
-    // Diğer tüm chat/planlama işleri: gemini-2.5-flash (Lite yerine tam sürüm)
+    // MODEL SEÇİMİ
+    // Soru çözücü ve Etüt Odası: gemini-3-flash-preview (Güçlü model)
+    // Zihin Haritası ve diğer tüm chat/planlama işleri: gemini-2.5-flash-lite
     const requestedModel = typeof request.data?.model === "string" ? String(request.data.model).trim() : null;
 
-    // BURASI GÜNCELLENDİ: workshop için de güçlü model kullanılıyor
     const modelId = (requestType === 'question_solver' || requestType === 'workshop')
       ? "gemini-3-flash-preview"
-      : "gemini-2.5-flash";
+      : "gemini-2.5-flash-lite";
 
     if (requestedModel && requestedModel.toLowerCase() !== modelId) {
       logger.info("Model override enforced", { requestedModel, enforced: modelId, requestType });
@@ -168,13 +164,11 @@ exports.generateGemini = onCall(
       throw new HttpsError("invalid-argument", "Geçerli bir prompt gerekli");
     }
 
-    // Soru çözücüde görsel bekleniyorsa doğrula
+    // Soru çözücü görsel kontrolü
     if (requestType === 'question_solver') {
       if (!imageBase64) {
         throw new HttpsError("invalid-argument", "Soru çözücü için görsel gerekli.");
       }
-      // Çok kaba boyut koruması: base64 ~ 4/3 => 6MB base64 ~ 4.5MB binary
-      // (Callable + bellek için güvenli tarafta tutuyoruz)
       const maxBase64Chars = parseInt(process.env.QUESTION_SOLVER_IMAGE_MAX_BASE64_CHARS || "6000000", 10);
       if (imageBase64.length > maxBase64Chars) {
         throw new HttpsError("invalid-argument", "Görsel çok büyük. Lütfen daha net ama daha yakın/az kırpılmış bir fotoğraf deneyin.");
@@ -188,12 +182,10 @@ exports.generateGemini = onCall(
 
     const normalizedPrompt = prompt.replace(/\s+/g, " ").trim();
 
-    // Oran sınırlama: kullanıcı ve IP bazlı
+    // Rate limiting
     const uidKey = `gemini_uid_${request.auth.uid}`;
     const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
     const ipKey = `gemini_ip_${ip}`;
-
-    // Premium kullanıcılar için ek "Cüzdan DoS" koruması
     const premiumMinuteKey = `gemini_premium_minute_${request.auth.uid}`;
     const premiumHourKey = `gemini_premium_hour_${request.auth.uid}`;
 
@@ -201,9 +193,7 @@ exports.generateGemini = onCall(
       await Promise.all([
         enforceRateLimit(uidKey, GEMINI_RATE_LIMIT_WINDOW_SEC, GEMINI_RATE_LIMIT_MAX),
         enforceRateLimit(ipKey, GEMINI_RATE_LIMIT_WINDOW_SEC, GEMINI_RATE_LIMIT_IP_MAX),
-        // Premium kullanıcı için dakikalık limit (60 saniye, 10 istek)
         enforceRateLimit(premiumMinuteKey, 60, PREMIUM_RATE_LIMIT_PER_MINUTE),
-        // Premium kullanıcı için saatlik limit (3600 saniye, 100 istek)
         enforceRateLimit(premiumHourKey, 3600, PREMIUM_RATE_LIMIT_PER_HOUR),
       ]);
     } catch (rateLimitError) {
@@ -217,8 +207,7 @@ exports.generateGemini = onCall(
       );
     }
 
-    // --- YENİ AYLIK KOTA SİSTEMİ (Sadece Premium Kullanıcılar için) ---
-    // Premium olmayan kullanıcılar günlük limitle kısıtlandığı için aylık limit kontrolü yapmıyoruz
+    // --- AYLIK KOTA SİSTEMİ (Premium Özellikler İçin) ---
     if (isPremium) {
       const currentMonth = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Istanbul' }).substring(0, 7); // 'YYYY-MM'
       const usageRef = db.collection("users").doc(request.auth.uid).collection("monthly_usage").doc(currentMonth);
@@ -236,6 +225,7 @@ exports.generateGemini = onCall(
             case 'workshop': featureName = "Etüt Odası"; break;
             case 'weekly_plan': featureName = "Haftalık Plan"; break;
             case 'question_solver': featureName = "Soru Çözücü"; break;
+            case 'mind_map': featureName = "Zihin Haritası"; break; // YENİ
             default: featureName = "Sohbet"; break;
           }
           throw new HttpsError("resource-exhausted", `Bu ayki ${featureName} limitinize (${limit}) ulaştınız. Limitler her ayın başında yenilenir.`);
@@ -248,20 +238,21 @@ exports.generateGemini = onCall(
         }, { merge: true });
       });
     }
-    // ----------------------------------
 
     try {
-      // İsteğe bağlı maxOutputTokens (güvenli aralıkta kırpılır)
+      // Token limitleri
       const reqMaxTokensRaw = request.data?.maxOutputTokens;
       let effectiveMaxTokens = expectJson ? DEFAULT_JSON_TOKENS : DEFAULT_TEXT_TOKENS;
 
-      // ÖZEL TOKEN LİMİTLERİ (Yanıt kesilme sorunlarının çözümü)
+      // Özellik bazlı token limitleri
       if (requestType === 'weekly_plan') {
-        effectiveMaxTokens = 50000; // Haftalık planlar için yüksek limit
+        effectiveMaxTokens = 50000;
       } else if (requestType === 'workshop') {
-        effectiveMaxTokens = 10000; // 30k çok fazla, latency yaratıyor. 10k fazlasıyla yeterli.
+        effectiveMaxTokens = 10000;
+      } else if (requestType === 'mind_map') {
+        effectiveMaxTokens = 10000; // Zihin haritası için geniş limit
       } else if (requestType === 'chat') {
-        effectiveMaxTokens = 4096; // Sohbet/motivasyon için artırıldı (2048 yetersizdi, yarım kalıyordu)
+        effectiveMaxTokens = 4096;
       }
 
       if (typeof reqMaxTokensRaw === 'number' && isFinite(reqMaxTokensRaw)) {
@@ -285,7 +276,6 @@ exports.generateGemini = onCall(
           maxOutputTokens: effectiveMaxTokens,
           ...(expectJson ? { responseMimeType: "application/json" } : {}),
         },
-        // Güvenlik filtreleri: zararlı içerikleri engelle
         safetySettings: [
           { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
           { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
@@ -296,9 +286,7 @@ exports.generateGemini = onCall(
 
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${GEMINI_API_KEY.value()}`;
 
-      // Retry mekanizması ile Gemini API çağrısı
       const { resp, data } = await retryWithBackoff(async () => {
-        // Zaman aşımı kontrolü (280s):
         const ac = new AbortController();
         const t = setTimeout(() => ac.abort(), 280_000);
 
@@ -309,7 +297,6 @@ exports.generateGemini = onCall(
           signal: ac.signal,
         }).finally(() => clearTimeout(t));
 
-        // 429 hatası için özel işlem
         if (response.status === 429) {
           const errorBody = await response.text().catch(() => '');
           logger.warn("Gemini API rate limit (429)", {
@@ -335,7 +322,6 @@ exports.generateGemini = onCall(
         return { resp: response, data: responseData };
       });
 
-      // Güvenlik filtreleme kontrolü
       const finishReason = data?.candidates?.[0]?.finishReason;
       if (finishReason === 'SAFETY') {
         logger.warn("Gemini response blocked by safety filters", {
@@ -349,16 +335,12 @@ exports.generateGemini = onCall(
       }
 
       const rawCandidate = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-      // Output sanitizasyonu - hassas bilgileri maskele
       const candidate = sanitizeOutput(rawCandidate);
 
       const usage = data?.usageMetadata || {};
-      // Bazı sürümlerde usageMetadata alanları: promptTokenCount, candidatesTokenCount, totalTokenCount
       const tokensUsed = Number(usage.totalTokenCount || 0);
       logger.info("Gemini call ok", { modelId, tokensUsed, uid: request.auth.uid.substring(0, 6) + "***", requestType });
 
-      // İstatistik loglama (Maliyet takibi için)
       try {
         const day = dayKeyIstanbul();
         const usageStatsRef = db.collection("ai_usage").doc(`${request.auth.uid}_${day}`);
@@ -376,13 +358,11 @@ exports.generateGemini = onCall(
         }, { merge: true }).catch(() => {});
       } catch (e) {}
 
-      // Geriye dönük uyumlu alanlar: raw, tokensLimit, modelId
       return { raw: candidate, tokensLimit: effectiveMaxTokens, modelId, tokensUsed };
     } catch (e) {
       logger.error("Gemini çağrısı hata", { error: String(e), modelId });
       if (e instanceof HttpsError) throw e;
 
-      // 429 Rate Limit hatası için özel mesaj
       const is429 = (e && typeof e === 'object' && 'status' in e && e.status === 429) ||
                      (e && e.message && e.message.includes('429'));
       if (is429) {
@@ -392,7 +372,6 @@ exports.generateGemini = onCall(
         );
       }
 
-      // Abort durumunda kullanıcı dostu mesaj
       if ((e && typeof e === 'object' && 'name' in e && e.name === 'AbortError')) {
         throw new HttpsError("deadline-exceeded", "AI yanıtı çok uzun sürdü, lütfen tekrar deneyin.");
       }

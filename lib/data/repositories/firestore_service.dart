@@ -358,6 +358,72 @@ class FirestoreService {
         .map((snapshot) => snapshot.docs.map((doc) => WorkshopModel.fromSnapshot(doc)).toList());
   }
 
+  // ===== ZİHİN HARİTASI İŞLEMLERİ =====
+
+  /// Zihin haritasını kullanıcı koleksiyonuna kaydeder
+  Future<String> saveMindMap({
+    required String userId,
+    required String topic,
+    required String subject,
+    required Map<String, dynamic> mindMapData,
+  }) async {
+    final userDocRef = usersCollection.doc(userId);
+    final mindMapCollectionRef = userDocRef.collection('savedMindMaps');
+
+    final docRef = mindMapCollectionRef.doc();
+    await docRef.set({
+      'userId': userId,
+      'topic': topic,
+      'subject': subject,
+      'mindMapData': mindMapData,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    return docRef.id;
+  }
+
+  /// Kullanıcının kaydedilmiş zihin haritalarını stream olarak getirir
+  Stream<List<Map<String, dynamic>>> getSavedMindMaps(String userId) {
+    return usersCollection
+        .doc(userId)
+        .collection('savedMindMaps')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          return data;
+        }).toList());
+  }
+
+  /// Belirli bir zihin haritasını siler
+  Future<void> deleteMindMap(String userId, String mindMapId) async {
+    await usersCollection
+        .doc(userId)
+        .collection('savedMindMaps')
+        .doc(mindMapId)
+        .delete();
+  }
+
+  /// Zihin haritasını günceller
+  Future<void> updateMindMap({
+    required String userId,
+    required String mindMapId,
+    required Map<String, dynamic> mindMapData,
+  }) async {
+    await usersCollection
+        .doc(userId)
+        .collection('savedMindMaps')
+        .doc(mindMapId)
+        .update({
+          'mindMapData': mindMapData,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+  }
+
+  // ===== /ZİHİN HARİTASI İŞLEMLERİ =====
+
   /// Kullanıcının workshop serisini (streak) günceller.
   /// İş mantığı (Business Logic) burada döner, UI sadece çağırır.
   Future<int> updateUserWorkshopStreak(String userId, Timestamp? lastWorkshopDate, int currentStreak) async {

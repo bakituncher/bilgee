@@ -33,6 +33,7 @@ import 'package:taktik/features/quests/screens/quests_screen.dart';
 import 'package:taktik/features/profile/screens/avatar_selection_screen.dart'; // YENİ: Avatar ekranı import edildi
 import 'package:taktik/features/profile/screens/follow_list_screen.dart'; // YENİ: Takip listesi ekranı import edildi
 import 'package:taktik/features/profile/screens/ranks_screen.dart'; // YENİ: Ranks ekranı import edildi
+import 'package:taktik/features/mind_map/screens/mind_map_screen.dart'; // YENİ: Zihin haritası ekranı
 import 'transition_utils.dart';
 
 StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
@@ -204,6 +205,12 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
                   final prompt = state.extra;
                   return buildPageWithFadeTransition(context: context, state: state, child: MotivationChatScreen(initialPrompt: prompt));
                 },
+              ),
+              GoRoute(
+                path: AppRoutes.mindMap,
+                name: 'MindMap',
+                parentNavigatorKey: rootNavigatorKey,
+                pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const MindMapScreen()),
               ),
               GoRoute(
                 path: AppRoutes.coachPushed,

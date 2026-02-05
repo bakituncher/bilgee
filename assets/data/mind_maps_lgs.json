@@ -1,0 +1,394 @@
+{
+  "maps": [
+    {
+      "id": "lgs_1",
+      "topic": "Üslü Sayılar",
+      "subject": "Matematik",
+      "label": "Üslü Sayılar",
+      "description": "Üslü ifadelerin tanımı ve işlemleri",
+      "children": [
+        {
+          "label": "Üs Kavramı",
+          "description": "Bir sayının kendisiyle tekrarlı çarpımı",
+          "children": [
+            {
+              "label": "Pozitif Üs",
+              "description": "$a^n = a \\times a \\times ... \\times a$ (n kez)"
+            },
+            {
+              "label": "Negatif Üs",
+              "description": "$a^{-n} = \\frac{1}{a^n}$"
+            },
+            {
+              "label": "Sıfır Üssü",
+              "description": "$a^0 = 1$ ($a \\neq 0$)"
+            }
+          ]
+        },
+        {
+          "label": "Üslü Sayılarda İşlemler",
+          "description": "Üslü ifadelerin toplama, çarpma, bölme kuralları",
+          "children": [
+            {
+              "label": "Çarpma",
+              "description": "$a^m \\times a^n = a^{m+n}$"
+            },
+            {
+              "label": "Bölme",
+              "description": "$a^m \\div a^n = a^{m-n}$"
+            },
+            {
+              "label": "Üssün Üssü",
+              "description": "$(a^m)^n = a^{m \\times n}$"
+            }
+          ]
+        },
+        {
+          "label": "Özel Durumlar",
+          "description": "Üslü sayılarda dikkat edilmesi gerekenler",
+          "children": [
+            {
+              "label": "Çarpımın Üssü",
+              "description": "$(a \\times b)^n = a^n \\times b^n$"
+            },
+            {
+              "label": "Bölümün Üssü",
+              "description": "$(a \\div b)^n = a^n \\div b^n$"
+            },
+            {
+              "label": "Kesirli Üs",
+              "description": "$a^{m/n} = \\sqrt[n]{a^m}$"
+            }
+          ]
+        },
+        {
+          "label": "Problem Çözme",
+          "description": "Üslü sayılarla ilgili soru tipleri",
+          "children": [
+            {
+              "label": "Eşitleme",
+              "description": "Tabanları veya üsleri eşitleyerek çözme"
+            },
+            {
+              "label": "Sadeleştirme",
+              "description": "Karmaşık üslü ifadeleri basitleştirme"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lgs_2",
+      "topic": "Osmanlı Kültür ve Medeniyeti",
+      "subject": "T.C. İnkılap Tarihi ve Atatürkçülük",
+      "label": "Osmanlı Kültür ve Medeniyeti",
+      "description": "Osmanlı İmparatorluğu'nun sosyal ve kültürel yapısı",
+      "children": [
+        {
+          "label": "Eğitim Kurumları",
+          "description": "Osmanlı döneminde eğitim sistemi",
+          "children": [
+            {
+              "label": "Medreseler",
+              "description": "İslami ilimler öğretilen yüksek öğretim kurumları"
+            },
+            {
+              "label": "Enderun Mektebi",
+              "description": "Sarayda devşirme sistemiyle alınan çocukların eğitildiği okul"
+            },
+            {
+              "label": "Sıbyan Mektepleri",
+              "description": "İlköğretim seviyesinde Kur'an ve temel bilgiler öğretilen okullar"
+            }
+          ]
+        },
+        {
+          "label": "Mimari Eserler",
+          "description": "Osmanlı mimarisinin önemli yapıları",
+          "children": [
+            {
+              "label": "Camiler",
+              "description": "Süleymaniye, Sultanahmet gibi büyük camiler"
+            },
+            {
+              "label": "Külliyeler",
+              "description": "Cami, medrese, imaret, hastane gibi yapıların bir arada olduğu kompleksler"
+            },
+            {
+              "label": "Saraylar",
+              "description": "Topkapı Sarayı, Dolmabahçe Sarayı gibi yönetim merkezleri"
+            }
+          ]
+        },
+        {
+          "label": "Bilim ve Teknoloji",
+          "description": "Osmanlı'da bilimsel gelişmeler",
+          "children": [
+            {
+              "label": "Astronomi",
+              "description": "İstanbul Rasathanesi, takvim çalışmaları"
+            },
+            {
+              "label": "Tıp",
+              "description": "Darüşşifalar (hastaneler), cerrahiye dair kitaplar"
+            },
+            {
+              "label": "Coğrafya",
+              "description": "Piri Reis'in dünya haritası ve Kitab-ı Bahriye"
+            }
+          ]
+        },
+        {
+          "label": "Sanat ve Edebiyat",
+          "description": "Osmanlı kültüründe sanatsal üretimler",
+          "children": [
+            {
+              "label": "Divan Edebiyatı",
+              "description": "Saray ve çevresinde gelişen, Arapça-Farsça etkileri olan edebiyat"
+            },
+            {
+              "label": "Hat Sanatı",
+              "description": "Arap alfabesiyle güzel yazı yazma sanatı"
+            },
+            {
+              "label": "Minyatür",
+              "description": "El yazmalarında yer alan küçük resimleme sanatı"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lgs_3",
+      "topic": "Basınç",
+      "subject": "Fen Bilimleri",
+      "label": "Basınç",
+      "description": "Katı, sıvı ve gaz basıncı kavramları",
+      "children": [
+        {
+          "label": "Katı Basıncı",
+          "description": "Katı cisimlerin yüzeye uyguladığı basınç",
+          "children": [
+            {
+              "label": "Tanım",
+              "description": "P = F/S (Kuvvet/Yüzey Alanı)"
+            },
+            {
+              "label": "Yüzey Alanı Etkisi",
+              "description": "Yüzey alanı arttıkça basınç azalır"
+            },
+            {
+              "label": "Ağırlık Etkisi",
+              "description": "Kuvvet (ağırlık) arttıkça basınç artar"
+            }
+          ]
+        },
+        {
+          "label": "Sıvı Basıncı",
+          "description": "Sıvıların her yöne uyguladığı basınç",
+          "children": [
+            {
+              "label": "Pascal Prensibi",
+              "description": "Kapalı bir kapta sıvıya uygulanan basınç her yöne eşit iletilir"
+            },
+            {
+              "label": "Derinlik Etkisi",
+              "description": "P = d × g × h (yoğunluk × yerçekimi × derinlik)"
+            },
+            {
+              "label": "Kap Şekli",
+              "description": "Sıvı basıncı kap şeklinden bağımsızdır"
+            }
+          ]
+        },
+        {
+          "label": "Gaz Basıncı",
+          "description": "Gazların içinde bulundukları kaba uyguladığı basınç",
+          "children": [
+            {
+              "label": "Molekül Çarpışması",
+              "description": "Gaz moleküllerinin kap duvarına çarpmasıyla oluşur"
+            },
+            {
+              "label": "Sıcaklık Etkisi",
+              "description": "Sıcaklık arttıkça gaz basıncı artar"
+            },
+            {
+              "label": "Hacim Etkisi",
+              "description": "Hacim azaldıkça gaz basıncı artar"
+            }
+          ]
+        },
+        {
+          "label": "Atmosfer Basıncı",
+          "description": "Havanın Dünya yüzeyine uyguladığı basınç",
+          "children": [
+            {
+              "label": "Deniz Seviyesi",
+              "description": "1 atm = 76 cmHg = 101325 Pa"
+            },
+            {
+              "label": "Yükseklik Etkisi",
+              "description": "Yükseldikçe atmosfer basıncı azalır"
+            },
+            {
+              "label": "Günlük Hayat",
+              "description": "Hava durumu, uçak yolculukları, dağlarda kaynama noktası"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lgs_4",
+      "topic": "Cümlenin Ögeleri",
+      "subject": "Türkçe",
+      "label": "Cümlenin Ögeleri",
+      "description": "Türkçede cümleyi oluşturan temel ögeler",
+      "children": [
+        {
+          "label": "Yüklem",
+          "description": "Cümlenin en önemli ögesi, eylemin ya da oluşun bildirildiği kısım",
+          "children": [
+            {
+              "label": "İsim Yüklemi",
+              "description": "İsimlerle kurulan yüklem (Ahmet öğrenci.)"
+            },
+            {
+              "label": "Fiil Yüklemi",
+              "description": "Fiillerle kurulan yüklem (Çocuk koşuyor.)"
+            }
+          ]
+        },
+        {
+          "label": "Özne",
+          "description": "Yüklemdeki eylemi yapan, oluşu taşıyan varlık",
+          "children": [
+            {
+              "label": "Belirtili Özne",
+              "description": "Cümlede açıkça belirtilen özne (Kitap masada.)"
+            },
+            {
+              "label": "Gizli Özne",
+              "description": "Ek-fiilde saklı özne (Geldim. = Ben geldim.)"
+            }
+          ]
+        },
+        {
+          "label": "Nesne",
+          "description": "Yüklemdeki eylemin üzerinde yapıldığı varlık",
+          "children": [
+            {
+              "label": "Belirtili Nesne",
+              "description": "İsmin yalın veya belirtme halinde olması (Kitabı okudum.)"
+            },
+            {
+              "label": "Belirtisiz Nesne",
+              "description": "İsmin yalın halde olması (Kitap okudum.)"
+            }
+          ]
+        },
+        {
+          "label": "Tümleçler",
+          "description": "Cümleyi anlamca tamamlayan yardımcı ögeler",
+          "children": [
+            {
+              "label": "Zarf Tümleci",
+              "description": "Nerede, ne zaman, nasıl, niçin sorularına cevap verir"
+            },
+            {
+              "label": "Dolaylı Tümleç",
+              "description": "Yönelme halindeki isimler (Okula gitti.)"
+            },
+            {
+              "label": "Edat Tümleci",
+              "description": "Edat alan isimler (Okuldan geldi.)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lgs_5",
+      "topic": "İngilizce Tense Yapıları",
+      "subject": "İngilizce",
+      "label": "Tense Yapıları (Zamanlar)",
+      "description": "İngilizce'de temel zaman yapıları",
+      "children": [
+        {
+          "label": "Present Tenses",
+          "description": "Şimdiki zaman yapıları",
+          "children": [
+            {
+              "label": "Simple Present",
+              "description": "Alışkanlıklar, genel doğrular (I play / He plays)"
+            },
+            {
+              "label": "Present Continuous",
+              "description": "Şu anda yapılan eylem (I am playing)"
+            },
+            {
+              "label": "Present Perfect",
+              "description": "Geçmişte başlayıp etkisi devam eden eylem (I have played)"
+            }
+          ]
+        },
+        {
+          "label": "Past Tenses",
+          "description": "Geçmiş zaman yapıları",
+          "children": [
+            {
+              "label": "Simple Past",
+              "description": "Geçmişte biten eylem (I played)"
+            },
+            {
+              "label": "Past Continuous",
+              "description": "Geçmişte belirli bir anda yapılmakta olan eylem (I was playing)"
+            },
+            {
+              "label": "Past Perfect",
+              "description": "Geçmişte başka bir olaydan önce olan eylem (I had played)"
+            }
+          ]
+        },
+        {
+          "label": "Future Tenses",
+          "description": "Gelecek zaman yapıları",
+          "children": [
+            {
+              "label": "Will Future",
+              "description": "Gelecekte yapılacak eylem (I will play)"
+            },
+            {
+              "label": "Going to",
+              "description": "Planlanmış gelecek (I am going to play)"
+            },
+            {
+              "label": "Future Continuous",
+              "description": "Gelecekte belirli bir anda yapılıyor olacak eylem (I will be playing)"
+            }
+          ]
+        },
+        {
+          "label": "Zaman İfadeleri",
+          "description": "Her zaman yapısında kullanılan anahtar kelimeler",
+          "children": [
+            {
+              "label": "Present: always, usually, often",
+              "description": "Sıklık bildiren zarf ve zarflar"
+            },
+            {
+              "label": "Past: yesterday, ago, last",
+              "description": "Geçmiş zaman belirteçleri"
+            },
+            {
+              "label": "Future: tomorrow, next, soon",
+              "description": "Gelecek zaman belirteçleri"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+

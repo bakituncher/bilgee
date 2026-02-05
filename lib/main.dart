@@ -362,6 +362,15 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
       'marketingSubtitle': 'Eksik konularına ve müsait zamanına göre sana en uygun haftalık ders çalışma programını saniyeler içinde oluştur.',
       'redirectRoute': '/ai-hub/strategic-planning',
     },
+    '/ai-hub/mind-map': {
+      'title': 'Zihin Haritası',
+      'subtitle': 'Konuları görselleştir ve daha iyi anla.',
+      'iconName': 'account_tree',
+      'color': const Color(0xFF6366F1),
+      'marketingTitle': 'Düşüncelerini Haritala!',
+      'marketingSubtitle': 'Karmaşık konuları görsel zihin haritalarına dönüştür. Daha iyi anla, daha kolay hatırla.',
+      'redirectRoute': '/ai-hub/mind-map',
+    },
   };
 
   /// Mağazaya yönlendirme işlemi

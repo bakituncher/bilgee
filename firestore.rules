@@ -93,6 +93,10 @@ service cloud.firestore {
         allow read, write: if request.auth.uid == userId;
       }
 
+      match /savedMindMaps/{mindMapId} {
+        allow read, write: if request.auth.uid == userId;
+      }
+
       match /user_activity/{activityId} {
         allow read, create: if request.auth.uid == userId;
         allow update: if request.auth.uid == userId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['practiceVolume', 'focusMinutes', 'date', 'dateKey', 'updatedAt']);

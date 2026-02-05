@@ -1,0 +1,386 @@
+{
+  "maps": [
+    {
+      "id": "kpss_1",
+      "topic": "Türk İdare Tarihi",
+      "subject": "Tarih",
+      "label": "Türk İdare Tarihi",
+      "description": "Türk devletlerinde yönetim sistemi ve kurumlar",
+      "children": [
+        {
+          "label": "Hun Devleti",
+          "description": "İlk Türk devleti yönetim yapısı (MÖ 220 - MS 216)",
+          "children": [
+            {
+              "label": "Yönetim Şekli",
+              "description": "Merkezi otorite, Tegin sistemli monarşi"
+            },
+            {
+              "label": "Askeri Teşkilat",
+              "description": "Onlu sistem, süvari ağırlıklı ordu"
+            }
+          ]
+        },
+        {
+          "label": "Göktürk Devleti",
+          "description": "Türk adının ilk kez devlet adı olarak kullanıldığı dönem",
+          "children": [
+            {
+              "label": "İdari Yapı",
+              "description": "Kağan, Yabgu, Şad gibi unvanlar"
+            },
+            {
+              "label": "Orhun Yazıtları",
+              "description": "Türk yazılı tarihinin ilk örnekleri, devlet felsefesi"
+            }
+          ]
+        },
+        {
+          "label": "Büyük Selçuklu Devleti",
+          "description": "İslami dönem Türk devlet geleneği",
+          "children": [
+            {
+              "label": "Divân-ı Lugat-it Türk",
+              "description": "Kaşgarlı Mahmud'un Türkçe sözlüğü"
+            },
+            {
+              "label": "İdare Sistemi",
+              "description": "Vezirlik, Divan teşkilatı, İkta sistemi"
+            },
+            {
+              "label": "Nizamülmülk",
+              "description": "Siyasetname eseri, Nizamiye Medreseleri"
+            }
+          ]
+        },
+        {
+          "label": "Osmanlı İdare Teşkilatı",
+          "description": "600 yıllık devlet yönetimi",
+          "children": [
+            {
+              "label": "Merkezi Yönetim",
+              "description": "Padişah, Divan-ı Hümayun, Veziriazam"
+            },
+            {
+              "label": "Taşra Yönetimi",
+              "description": "Eyalet sistemi, Sancakbeyi, Kadı"
+            },
+            {
+              "label": "Askeri Teşkilat",
+              "description": "Kapıkulu ocakları, Yeniçeri, Tımar sistemi"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kpss_2",
+      "topic": "Anayasa Hukuku",
+      "subject": "Hukuk",
+      "label": "Anayasa Hukuku",
+      "description": "1982 Anayasası ve temel kavramlar",
+      "children": [
+        {
+          "label": "Temel Hak ve Özgürlükler",
+          "description": "Anayasanın II. Kısmında düzenlenen haklar",
+          "children": [
+            {
+              "label": "Kişinin Hakları",
+              "description": "Yaşam hakkı, kişi dokunulmazlığı, düşünce özgürlüğü"
+            },
+            {
+              "label": "Sosyal Haklar",
+              "description": "Çalışma hakkı, toplu sözleşme hakkı, grev hakkı"
+            },
+            {
+              "label": "Ekonomik Haklar",
+              "description": "Mülkiyet hakkı, çalışma ve sözleşme özgürlüğü"
+            }
+          ]
+        },
+        {
+          "label": "Devletin Temel Nitelikleri",
+          "description": "Anayasanın 2. maddesinde belirtilen nitelikler",
+          "children": [
+            {
+              "label": "Cumhuriyet",
+              "description": "Devlet başkanının seçimle geldiği yönetim şekli"
+            },
+            {
+              "label": "Demokratik",
+              "description": "Halkın yönetime katıldığı sistem"
+            },
+            {
+              "label": "Laik",
+              "description": "Din ve devlet işlerinin ayrı tutulması"
+            },
+            {
+              "label": "Sosyal Hukuk Devleti",
+              "description": "Sosyal adaleti sağlama görevi"
+            }
+          ]
+        },
+        {
+          "label": "Yasama Organı",
+          "description": "Türkiye Büyük Millet Meclisi (TBMM)",
+          "children": [
+            {
+              "label": "Yapısı",
+              "description": "600 milletvekilinden oluşan tek meclisli sistem"
+            },
+            {
+              "label": "Görevleri",
+              "description": "Kanun yapmak, bütçeyi kabul etmek, denetim"
+            },
+            {
+              "label": "Seçim Sistemi",
+              "description": "5 yılda bir genel oyla seçim, %7 barajı"
+            }
+          ]
+        },
+        {
+          "label": "Yürütme Organı",
+          "description": "Cumhurbaşkanı ve Kabine",
+          "children": [
+            {
+              "label": "Cumhurbaşkanı",
+              "description": "Devletin başı, 5 yıl görev süresi, en fazla 2 dönem"
+            },
+            {
+              "label": "Bakanlar",
+              "description": "Cumhurbaşkanınca atanır, görevden alınır"
+            },
+            {
+              "label": "Kararnameler",
+              "description": "Cumhurbaşkanlığı Kararnamesi çıkarma yetkisi"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kpss_3",
+      "topic": "Vatandaşlık Konuları",
+      "subject": "Vatandaşlık",
+      "label": "Vatandaşlık Bilgisi",
+      "description": "Demokratik değerler ve yurttaşlık hakları",
+      "children": [
+        {
+          "label": "Demokrasi",
+          "description": "Halkın egemenliğine dayanan yönetim şekli",
+          "children": [
+            {
+              "label": "Katılım",
+              "description": "Vatandaşların yönetime katılma hakkı ve sorumluluğu"
+            },
+            {
+              "label": "Seçim Hakkı",
+              "description": "18 yaşını dolduran her vatandaşın oy kullanma hakkı"
+            },
+            {
+              "label": "Temsil",
+              "description": "Halkın seçtiği temsilciler aracılığıyla yönetim"
+            }
+          ]
+        },
+        {
+          "label": "Hukuk Devleti",
+          "description": "Herkesin hukuka eşit tabi olduğu devlet anlayışı",
+          "children": [
+            {
+              "label": "Kanun Önünde Eşitlik",
+              "description": "Herkes hukuk karşısında eşittir"
+            },
+            {
+              "label": "Bağımsız Yargı",
+              "description": "Mahkemelerin tarafsız ve özgür karar vermesi"
+            },
+            {
+              "label": "Hak Arama Özgürlüğü",
+              "description": "Mahkemelere başvurma hakkı"
+            }
+          ]
+        },
+        {
+          "label": "İnsan Hakları",
+          "description": "Evrensel insan hakları ve özgürlükler",
+          "children": [
+            {
+              "label": "Doğal Haklar",
+              "description": "Yaşam, özgürlük, güvenlik gibi doğuştan gelen haklar"
+            },
+            {
+              "label": "Pozitif Haklar",
+              "description": "Anayasa ve yasalarla tanınan haklar"
+            },
+            {
+              "label": "Uluslararası Belgeler",
+              "description": "İnsan Hakları Evrensel Bildirgesi, Avrupa İnsan Hakları Sözleşmesi"
+            }
+          ]
+        },
+        {
+          "label": "Yurttaşlık Görevleri",
+          "description": "Vatandaşların devlete karşı sorumlulukları",
+          "children": [
+            {
+              "label": "Vergi Ödeme",
+              "description": "Mali güce göre vergi verme yükümlülüğü"
+            },
+            {
+              "label": "Askerlik",
+              "description": "Vatan savunması görev ve hakkı"
+            },
+            {
+              "label": "Kanunlara Uyma",
+              "description": "Toplumsal düzen için yasalara saygı"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kpss_4",
+      "topic": "Coğrafya - Türkiye'nin İklimi",
+      "subject": "Coğrafya",
+      "label": "Türkiye'nin İklim Özellikleri",
+      "description": "Türkiye'deki iklim tipleri ve özellikleri",
+      "children": [
+        {
+          "label": "Akdeniz İklimi",
+          "description": "Güney kıyı şeridinde görülür",
+          "children": [
+            {
+              "label": "Sıcaklık",
+              "description": "Yazlar sıcak-kurak, kışlar ılık-yağışlı"
+            },
+            {
+              "label": "Yağış",
+              "description": "Yıllık 600-1000 mm arası, kışın maksimum"
+            },
+            {
+              "label": "Doğal Bitki",
+              "description": "Maki, çalılık, zeytin, narenciye"
+            }
+          ]
+        },
+        {
+          "label": "Karadeniz İklimi",
+          "description": "Kuzey kıyı şeridinde görülür",
+          "children": [
+            {
+              "label": "Yağış",
+              "description": "Her mevsim yağış alır, yıllık 1000+ mm"
+            },
+            {
+              "label": "Sıcaklık",
+              "description": "Yazlar serin-nemli, kışlar ılık"
+            },
+            {
+              "label": "Doğal Bitki",
+              "description": "Geniş yapraklı ormanlar, çay, fındık"
+            }
+          ]
+        },
+        {
+          "label": "Karasal İklim",
+          "description": "İç Anadolu, Doğu Anadolu'da görülür",
+          "children": [
+            {
+              "label": "Sıcaklık",
+              "description": "Yaz-kış sıcaklık farkı fazla (40°C+)"
+            },
+            {
+              "label": "Yağış",
+              "description": "Yıllık 300-500 mm arası, yetersiz"
+            },
+            {
+              "label": "Bitki Örtüsü",
+              "description": "Bozkır, step, seyrek orman"
+            }
+          ]
+        },
+        {
+          "label": "Marmara Geçiş İklimi",
+          "description": "Karadeniz ve Akdeniz arasında geçiş iklimi",
+          "children": [
+            {
+              "label": "Özellik",
+              "description": "Hem deniz hem karasal iklim özellikleri gösterir"
+            },
+            {
+              "label": "Yağış Rejimi",
+              "description": "Sonbahar ve kış mevsimlerinde yağış maksimum"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kpss_5",
+      "topic": "Türk Dili - Fiilde Çatı",
+      "subject": "Türkçe",
+      "label": "Fiilde Çatı",
+      "description": "Fiilin özne ile ilişkisini gösteren yapı",
+      "children": [
+        {
+          "label": "Etken Çatı",
+          "description": "Eylemi yapan özne, başka bir nesneye yönelir veya kendi üzerinde kalır",
+          "children": [
+            {
+              "label": "Geçişli Fiil",
+              "description": "Eylemi nesneye yönelir (Kitabı okudum)"
+            },
+            {
+              "label": "Geçişsiz Fiil",
+              "description": "Eylemi özne üzerinde kalır (Koştum)"
+            }
+          ]
+        },
+        {
+          "label": "Edilgen Çatı",
+          "description": "Özne eylemi yapmaz, üzerine yapılır (-n, -l, -ıl ekleri)",
+          "children": [
+            {
+              "label": "Yapım",
+              "description": "Geçişli fiillere edilgen ekleri getirilerek oluşturulur"
+            },
+            {
+              "label": "Örnek",
+              "description": "Oku-n-du, sür-ül-dü, aç-ıl-dı"
+            }
+          ]
+        },
+        {
+          "label": "Dönüşlü Çatı",
+          "description": "Özne eylemi kendine yapar (-n, -ın ekleri)",
+          "children": [
+            {
+              "label": "Yapım",
+              "description": "Geçişli fiillere -n/-ın ekleri getirilir"
+            },
+            {
+              "label": "Örnek",
+              "description": "Giy-in-di, yıka-n-dı, taşı-n-dı"
+            }
+          ]
+        },
+        {
+          "label": "Ettirgen Çatı",
+          "description": "Özne eylemi başkasına yaptırır (-t, -tır, -dır ekleri)",
+          "children": [
+            {
+              "label": "Yapım",
+              "description": "Hem geçişli hem geçişsiz fiillere eklenir"
+            },
+            {
+              "label": "Örnek",
+              "description": "Oku-t-tu, ye-dir-di, gel-dir-di"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
