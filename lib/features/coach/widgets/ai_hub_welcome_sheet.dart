@@ -196,6 +196,22 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _FeatureItem(
+                        icon: Icons.account_tree_rounded,
+                        title: 'Zihin Haritası',
+                        color: const Color(0xFF6366F1),
+                        textColor: textPrimary,
+                        subtitleColor: textSecondary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(child: SizedBox()),
+                  ],
+                ),
               ],
             ),
           ),
@@ -229,7 +245,7 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    '7 gün ücretsiz dene, beğenmezsen iptal et',
+                    '3 gün ücretsiz dene, istediğin zaman iptal et',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,

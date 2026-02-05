@@ -15,6 +15,7 @@ final GlobalKey _weeklyPlanKey = GlobalKey();
 final GlobalKey _solverKey = GlobalKey();
 final GlobalKey _studyRoomKey = GlobalKey();
 final GlobalKey _coachKey = GlobalKey();
+final GlobalKey _mindMapKey = GlobalKey();
 
 class AiHubScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic>? extra;
@@ -42,33 +43,39 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
     if (widget.extra != null && widget.extra!['startPremiumTour'] == true) {
       final premiumSteps = [
         TutorialStep(
-          title: "Taktik Üssüne Hoş Geldin!",
-          text: "Taktik Pro özellikleri burada ve emrine amade. Şimdi sana bu araçların sınavını nasıl kazandıracağını tek tek göstereceğim.",
-          buttonText: "Başlayalım",
+          title: "Taktik Üssü Artık Seninle!",
+          text: "Tebrikler! Artık tüm yapay zeka araçlarına sınırsız erişimin var. Şimdi sana bu güçlü araçları nasıl kullanacağını göstereyim.",
+          buttonText: "Hadi Başlayalım",
         ),
         TutorialStep(
           highlightKey: _weeklyPlanKey,
-          title: "Kişisel Stratejistin",
-          text: "Sıradan programları unut. Taktik Tavşan, senin boş günlerine ve eksiklerine göre her hafta %100 sana özel, dinamik bir çalışma programı hazırlar.",
-          buttonText: "Harika",
+          title: "Haftalık Çalışma Planın",
+          text: "Her hafta sana özel, eksik konularına ve müsait zamanlarına göre hazırlanan akıllı bir ders programı. Artık neyi ne zaman çalışacağını düşünmek yok!",
+          buttonText: "Anladım",
         ),
         TutorialStep(
           highlightKey: _solverKey,
-          title: "Özel Ders Cebinde",
-          text: "Çözemediğin bir soru mu var? Sadece fotoğrafını çek. Taktik Tavşan sana cevabı vermekle kalmaz, öğretmenden dinlemiş gibi adım adım mantığını anlatır.",
-          buttonText: "Süper",
+          title: "Anında Soru Çözümü",
+          text: "Takıldığın sorunun fotoğrafını çek, saniyeler içinde adım adım çözümünü ve mantığını öğren. Özel ders artık cebinde!",
+          buttonText: "Harika",
         ),
         TutorialStep(
           highlightKey: _coachKey,
-          title: "Mentor & Analiz Merkezi",
-          text: "Taktik Tavşan hem mentalini güçlendirir, hem de deneme analizlerinle netlerini arttırmak için nokta atışı stratejiler sunar.",
+          title: "Mentörün Taktik Tavşan",
+          text: "Motivasyon, strateji, analiz ve destek... Sınav yolculuğunda her alanda yanında olacak yapay zeka koçun!",
           buttonText: "Devam",
         ),
         TutorialStep(
           highlightKey: _studyRoomKey,
-          title: "Akıllı Etüt Odası",
-          text: "Burası senin eksik kapatma merkezin. Taktik Tavşan senin zayıf olduğun konulardan sana özel konu özetleri ve testler üretir.",
-          buttonText: "Keşfetmeye Başla",
+          title: "Kişisel Etüt Odan",
+          text: "Eksik olduğun konulara özel konu özetleri ve test soruları burada. Zayıf noktalarını güçlü yanlara çevir!",
+          buttonText: "Devam",
+        ),
+        TutorialStep(
+          highlightKey: _mindMapKey,
+          title: "Zihin Haritaları",
+          text: "Karmaşık konuları görsel haritalarla öğren. Bilgiyi organize et, hatırlamayı kolaylaştır!",
+          buttonText: "Keşfet",
         ),
       ];
 
@@ -177,10 +184,10 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     ),
                     _ProFeatureRow(
                       theme: theme,
-                      icon: Icons.radar_rounded,
-                      color: const Color(0xFFF43F5E),
-                      title: "Net Arttırma Analizi",
-                      description: "Deneme sonuçlarını inceler ve netlerinin neden artmadığını tespit edip çözüm önerir.",
+                      icon: Icons.account_tree_rounded,
+                      color: const Color(0xFF6366F1),
+                      title: "Zihin Haritası",
+                      description: "Karmaşık konuları görsel zihin haritalarına dönüştür. Daha iyi anla, daha kolay hatırla.",
                     ),
                     _ProFeatureRow(
                       theme: theme,
@@ -403,22 +410,25 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                 ),
                 const SizedBox(width: gap),
                 Expanded(
-                  child: _BentoCard(
-                    title: 'Zihin\nHaritası',
-                    description: 'Konuları görselleştir,\ndaha iyi anla ve hatırla.',
-                    icon: Icons.account_tree_rounded,
-                    color: const Color(0xFF6366F1),
-                    isPremium: isPremium,
-                    height: 180,
-                    onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/mind-map', offerData: {
-                      'title': 'Zihin Haritası',
-                      'subtitle': 'Konuları görselleştir ve daha iyi anla.',
-                      'iconName': 'account_tree',
-                      'color': const Color(0xFF6366F1),
-                      'marketingTitle': 'Düşüncelerini Haritala!',
-                      'marketingSubtitle': 'Karmaşık konuları görsel zihin haritalarına dönüştür. Daha iyi anla, daha kolay hatırla.',
-                      'redirectRoute': '/ai-hub/mind-map',
-                    }),
+                  child: KeyedSubtree(
+                    key: _mindMapKey,
+                    child: _BentoCard(
+                      title: 'Zihin\nHaritası',
+                      description: 'Konuları görselleştir,\ndaha iyi anla ve hatırla.',
+                      icon: Icons.account_tree_rounded,
+                      color: const Color(0xFF6366F1),
+                      isPremium: isPremium,
+                      height: 180,
+                      onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/mind-map', offerData: {
+                        'title': 'Zihin Haritası',
+                        'subtitle': 'Konuları görselleştir ve daha iyi anla.',
+                        'iconName': 'account_tree',
+                        'color': const Color(0xFF6366F1),
+                        'marketingTitle': 'Düşüncelerini Haritala!',
+                        'marketingSubtitle': 'Karmaşık konuları görsel zihin haritalarına dönüştür. Daha iyi anla, daha kolay hatırla.',
+                        'redirectRoute': '/ai-hub/mind-map',
+                      }),
+                    ),
                   ),
                 ),
               ],
