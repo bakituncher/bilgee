@@ -82,22 +82,9 @@ class NotificationService {
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_channel!);
 
-    // Android 13+ bildirim izni – areNotificationsEnabled ile kontrol ve gerekirse iste
-    try {
-      final androidFln = _fln.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-      final enabled = await androidFln?.areNotificationsEnabled() ?? true;
-      if (!enabled && Platform.isAndroid) {
-        final status = await ph.Permission.notification.status;
-        if (!status.isGranted) {
-          await ph.Permission.notification.request();
-        }
-      }
-    } catch (_) {}
-
     // iOS foreground sunum ayarları
     await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(alert: false, badge: true, sound: false);
 
-    await _requestPermission();
 
     await _ensureAndRegisterToken();
     FirebaseMessaging.instance.onTokenRefresh.listen((t) {
@@ -124,6 +111,27 @@ class NotificationService {
     }
 
     _initialized = true;
+  }
+
+  /// Kullanıcı Dashboard ekranına girdiğinde izin istemek için kullanılır.
+  /// UX açısından daha doğru bir yaklaşımdır.
+  Future<void> requestNotificationPermissions() async {
+    // Android 13+ İzin Mantığı
+    try {
+      final androidFln = _fln.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final enabled = await androidFln?.areNotificationsEnabled() ?? true;
+      if (!enabled && Platform.isAndroid) {
+        // Permission handler ile izin iste
+        final status = await ph.Permission.notification.request();
+        if (kDebugMode) debugPrint('Android Bildirim İzni Durumu: $status');
+      }
+    } catch (_) {}
+
+    // iOS ve Firebase Genel İzin İsteği
+    await _requestPermission();
+
+    // İzin verildikten sonra token'ı tekrar garantiye al
+    await _ensureAndRegisterToken();
   }
 
   static Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
