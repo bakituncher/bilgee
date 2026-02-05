@@ -58,6 +58,11 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       'desc': "Sana özel hızlandırılmış programla hedefine %300 daha hızlı ulaş."
     },
     {
+      'icon': Icons.account_tree_rounded,
+      'title': "Zihin Haritaları",
+      'desc': "Görsel zihin haritalarıyla konuları daha kolay öğren ve hatırla."
+    },
+    {
       'icon': Icons.quiz_rounded,
       'title': "Sınırsız Test Çözümü",
       'desc': "Reels kaydırır gibi test çöz, kendini sına."
