@@ -491,7 +491,8 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     if (parent.children.isEmpty) return;
 
     final childCount = parent.children.length;
-    final wedgeSize = math.pi / 2.0;
+    // Açıyı biraz daraltarak dalların iç içe girmesini engelleyelim (pi/2 yerine pi/2.5 veya dinamik)
+    final wedgeSize = math.pi / 2.5;
     final startAngle = parentAngle - (wedgeSize / 2);
     final angleStep = wedgeSize / (childCount > 1 ? childCount - 1 : 1);
 
@@ -504,6 +505,11 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
         parent.position.dy + distance * math.sin(angle),
       );
       child.color = parent.color;
+
+      // --- EKLENMESİ GEREKEN KISIM BURASI ---
+      // Özyineleme (Recursion): Çocuğun da kendi çocuklarını yerleştirmesini sağla.
+      // Mesafeyi (distance) her seviyede biraz azaltıyoruz (0.8 ile çarparak) ki ağaç daha dengeli görünsün.
+      _layoutChildren(child, angle, distance * 0.85);
     }
   }
 
