@@ -18,7 +18,7 @@ class SavedMindMapsScreen extends ConsumerWidget {
 
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Kaydedilmiş Zihin Haritaları')),
+        appBar: AppBar(title: const Text('Zihin Haritalarım')),
         body: const Center(child: Text('Kullanıcı bulunamadı')),
       );
     }
@@ -26,7 +26,7 @@ class SavedMindMapsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Kaydedilmiş Zihin Haritaları'),
+        title: const Text('Zihin Haritalarım'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
