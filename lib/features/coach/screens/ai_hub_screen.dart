@@ -410,25 +410,22 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                 ),
                 const SizedBox(width: gap),
                 Expanded(
-                  child: KeyedSubtree(
-                    key: _mindMapKey,
-                    child: _BentoCard(
-                      title: 'Zihin\nHaritası',
-                      description: 'Konuları görselleştir,\ndaha iyi anla ve hatırla.',
-                      icon: Icons.account_tree_rounded,
-                      color: const Color(0xFF6366F1),
-                      isPremium: isPremium,
-                      height: 180,
-                      onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/mind-map', offerData: {
-                        'title': 'Zihin Haritası',
-                        'subtitle': 'Konuları görselleştir ve daha iyi anla.',
-                        'iconName': 'account_tree',
-                        'color': const Color(0xFF6366F1),
-                        'marketingTitle': 'Düşüncelerini Haritala!',
-                        'marketingSubtitle': 'Karmaşık konuları görsel zihin haritalarına dönüştür. Daha iyi anla, daha kolay hatırla.',
-                        'redirectRoute': '/ai-hub/mind-map',
-                      }),
-                    ),
+                  child: _BentoCard(
+                    title: 'Zihin\nHaritası',
+                    description: 'Konuları görselleştir,\ndaha iyi anla ve hatırla.',
+                    icon: Icons.account_tree_rounded,
+                    color: const Color(0xFF6366F1),
+                    isPremium: true, // Herkes erişebilir
+                    height: 180,
+                    onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/mind-map', offerData: {
+                      'title': 'Zihin Haritası',
+                      'subtitle': 'Konuları görselleştir ve daha iyi anla.',
+                      'iconName': 'account_tree',
+                      'color': const Color(0xFF6366F1),
+                      'marketingTitle': 'Düşüncelerini Haritala!',
+                      'marketingSubtitle': 'Karmaşık konuları görsel zihin haritalarına dönüştür. Daha iyi anla, daha kolay hatırla.',
+                      'redirectRoute': '/ai-hub/mind-map',
+                    }),
                   ),
                 ),
               ],
@@ -447,7 +444,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
   }
 
   void _handleNavigation(BuildContext context, bool isPremium, {required String route, required Map<String, dynamic> offerData}) {
-    if (route == '/ai-hub/question-solver') {
+    if (route == '/ai-hub/question-solver' || route == '/ai-hub/mind-map') {
       context.go(route);
       return;
     }

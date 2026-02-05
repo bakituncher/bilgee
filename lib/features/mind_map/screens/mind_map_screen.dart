@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 import 'dart:convert';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:taktik/data/models/exam_model.dart';
@@ -268,11 +270,10 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   String? _selectedTopic;
   String _searchQuery = '';
 
-  static const double _level1Distance = 250.0;
-  static const double _level2Distance = 200.0;
+  static const double _level1Distance = 350.0;
 
-  static const Size _canvasSize = Size(4000, 4000);
-  static const Offset _center = Offset(2000, 2000);
+  static const Size _canvasSize = Size(6000, 6000);
+  static const Offset _center = Offset(3000, 3000);
 
   @override
   void initState() {
@@ -426,25 +427,33 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     return filtered;
   }
 
-  // JSON Temizleme
+  // JSON Temizleme (Fix Applied)
   String _cleanJson(String text) {
-    text = text.replaceAll('```json', '').replaceAll('```', '').trim();
+    // 1. Markdown bloklarını temizle
+    text = text.replaceAll(RegExp(r'^```json\s*', multiLine: true), '')
+        .replaceAll(RegExp(r'\s*```$', multiLine: true), '')
+        .trim();
+
+    // Bazı durumlarda sadece "json" kelimesiyle başlıyorsa temizle
     if (text.startsWith('json')) text = text.substring(4).trim();
 
-    // LaTeX komutlarındaki backslash'leri düzelt
-    // AI bazen \log, \frac gibi komutları tek backslash ile üretir
-    // JSON'da bunların çift backslash olması gerekir: \\log, \\frac
+    // 2. KRİTİK DÜZELTME: LaTeX Backslash Yönetimi
+    // Sorun: AI cevabında hem normal JSON kaçışı (\") hem de LaTeX (\frac) olabilir.
 
-    // Önce zaten doğru olan çift backslash'leri korumak için placeholder kullan
+    // A. Önce JSON içinde yasal olan kaçışlı tırnakları ( \" ) korumaya al.
+    text = text.replaceAll('\\"', '<<<ESCAPED_QUOTE>>>');
+
+    // B. Zaten düzgün olan çift backslashleri ( \\ ) korumaya al.
     text = text.replaceAll('\\\\', '<<<ESCAPED_BACKSLASH>>>');
 
-    // Şimdi kalan tek backslash'leri çift yap
+    // C. Şimdi kalan TEK backslashleri (LaTeX komutları örn: \frac -> \\frac) çiftle.
     text = text.replaceAll('\\', '\\\\');
 
-    // Placeholder'ları geri getir
+    // D. Korumaya aldığımız tokenları gerçek değerlerine geri döndür.
     text = text.replaceAll('<<<ESCAPED_BACKSLASH>>>', '\\\\');
+    text = text.replaceAll('<<<ESCAPED_QUOTE>>>', '\\"');
 
-    return text;
+    return text.trim();
   }
 
   // Zihin haritasının hash'ini hesapla
@@ -453,14 +462,38 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     return json.hashCode.toString();
   }
 
+  // Global pozisyon listesi
+  final List<Offset> _allNodePositions = [];
+
+  // ---------------------------------------------------------------------------
+  // YENİ LAYOUT ALGORİTMASI (Üst üste binmeyi engeller)
+  // ---------------------------------------------------------------------------
+
+  /// Bir düğümün altındaki toplam "yaprak" sayısını (genişliğini) hesaplar.
+  int _calculateNodeWeight(MindMapNode node) {
+    if (node.children.isEmpty) return 1;
+    int weight = 0;
+    for (var child in node.children) {
+      weight += _calculateNodeWeight(child);
+    }
+    return weight;
+  }
+
+  /// Ana Layout Fonksiyonu
   void _calculateLayout(MindMapNode root) {
+    // Pozisyon listesini temizle
+    _allNodePositions.clear();
+
+    // Kökü merkeze koy
     root.position = _center;
     root.color = const Color(0xFF6366F1); // Indigo
+    _allNodePositions.add(root.position);
+
+    if (root.children.isEmpty) return;
 
     final mainBranches = root.children;
-    final angleStep = (2 * math.pi) / (mainBranches.isEmpty ? 1 : mainBranches.length);
 
-    // Ana dallar için canlı renkler
+    // Renk paleti
     final colors = [
       const Color(0xFF3B82F6), // Blue
       const Color(0xFFEF4444), // Red
@@ -472,38 +505,96 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
       const Color(0xFF6366F1), // Indigo
     ];
 
-    for (int i = 0; i < mainBranches.length; i++) {
-      final angle = i * angleStep;
-      final node = mainBranches[i];
+    // 1. Toplam ağırlığı bul
+    int totalWeight = 0;
+    for (var child in mainBranches) {
+      totalWeight += _calculateNodeWeight(child);
+    }
 
-      node.position = Offset(
-        _center.dx + _level1Distance * math.cos(angle),
-        _center.dy + _level1Distance * math.sin(angle),
-      );
-      // Her ana dala farklı renk ata
+    // Başlangıç açısı (Yukarıdan başlasın: -90 derece)
+    double currentAngle = -math.pi / 2;
+
+    for (int i = 0; i < mainBranches.length; i++) {
+      final node = mainBranches[i];
       node.color = colors[i % colors.length];
 
-      _layoutChildren(node, angle, _level2Distance);
+      // Düğümün ağırlığına göre pastadan pay (sweep angle) ver
+      int weight = _calculateNodeWeight(node);
+      // Toplam pasta 360 derece (2 * pi)
+      double sweepAngle = (weight / totalWeight) * 2 * math.pi;
+
+      // Bu dalı, kendisine ayrılan açının tam ortasından geçirerek yerleştir
+      _layoutRecursive(
+          node,
+          currentAngle,
+          sweepAngle,
+          _level1Distance // İlk seviye mesafesi
+      );
+
+      // Bir sonraki dal için açıyı kaydır
+      currentAngle += sweepAngle;
     }
   }
 
-  void _layoutChildren(MindMapNode parent, double parentAngle, double distance) {
-    if (parent.children.isEmpty) return;
+  /// Özyinelemeli (Recursive) Yerleştirme
+  void _layoutRecursive(
+      MindMapNode node,
+      double startAngle,
+      double sweep,
+      double distanceCtx
+      ) {
+    // 1. Düğümü kendisine ayrılan açının (sweep) merkezine yerleştir
+    double midAngle = startAngle + (sweep / 2);
 
-    final childCount = parent.children.length;
-    final wedgeSize = math.pi / 2.0;
-    final startAngle = parentAngle - (wedgeSize / 2);
-    final angleStep = wedgeSize / (childCount > 1 ? childCount - 1 : 1);
+    // Konumu MERKEZE göre hesapla (Ray Layout)
+    node.position = Offset(
+        _center.dx + distanceCtx * math.cos(midAngle),
+        _center.dy + distanceCtx * math.sin(midAngle)
+    );
+    _allNodePositions.add(node.position);
 
-    for (int i = 0; i < childCount; i++) {
-      final angle = childCount == 1 ? parentAngle : startAngle + (i * angleStep);
-      final child = parent.children[i];
+    if (node.children.isEmpty) return;
 
-      child.position = Offset(
-        parent.position.dx + distance * math.cos(angle),
-        parent.position.dy + distance * math.sin(angle),
-      );
-      child.color = parent.color;
+    // 2. Çocukları yerleştirmek için hazırlık
+    int childTotalWeight = 0;
+    for (var child in node.children) {
+      childTotalWeight += _calculateNodeWeight(child);
+    }
+
+    // 3. Mesafeyi (Radius) Hesapla - Çakışmayı Önleyen Kısım
+    // Kart yüksekliği ~100px. Yay uzunluğu = r * açı. => r = 100 / açı.
+    double minArcLengthPerChild = 140.0; // Kartın dikeyde kapladığı minimum alan + boşluk
+    double calculatedDistance = distanceCtx + 220.0; // Standart artış
+
+    // Eğer açı çok küçükse (kalabalık dal) mesafeyi artır
+    if (childTotalWeight > 0) {
+      // Ortalama çocuk başına düşen açı
+      double avgAnglePerChild = sweep / node.children.length;
+
+      // Sıfıra bölünmeyi önle
+      if (avgAnglePerChild > 0.01) {
+        double requiredDistance = minArcLengthPerChild / avgAnglePerChild;
+
+        // Çok aşırı uzamaması için bir limit koy ama gerekirse uzat
+        if (requiredDistance > calculatedDistance) {
+          // Örneğin max 2000px ekstra uzasın
+          calculatedDistance = math.min(requiredDistance, distanceCtx + 1200);
+        }
+      }
+    }
+
+    double currentChildAngle = startAngle;
+
+    for (var child in node.children) {
+      child.color = node.color; // Rengi miras al
+
+      int weight = _calculateNodeWeight(child);
+      // Ebeveynin açısını, çocuğun ağırlığına göre paylaştır
+      double childSweep = (weight / childTotalWeight) * sweep;
+
+      _layoutRecursive(child, currentChildAngle, childSweep, calculatedDistance);
+
+      currentChildAngle += childSweep;
     }
   }
 
@@ -755,7 +846,98 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     );
   }
 
+  void _showPremiumDialog() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.account_tree_rounded,
+                size: 48,
+                color: Color(0xFF6366F1),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Zihin Haritası Premium Özellik',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Yeni zihin haritası oluşturmak için Taktik Pro\'ya yükseltme yapman gerekiyor.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: BorderSide(color: colorScheme.outline),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('İptal'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      context.push('/premium');
+                    },
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      backgroundColor: const Color(0xFF6366F1),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Premium Al'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showTopicSelectionSheet() {
+    // Premium kontrolü
+    final isPremium = ref.read(premiumStatusProvider);
+
+    if (!isPremium) {
+      _showPremiumDialog();
+      return;
+    }
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -1445,7 +1627,7 @@ class _PreMadeMapCard extends StatelessWidget {
   final ColorScheme colorScheme;
   final VoidCallback onTap;
 
-  const _PreMadeMapCard({
+  _PreMadeMapCard({
     required this.map,
     required this.theme,
     required this.colorScheme,
@@ -1462,7 +1644,7 @@ class _PreMadeMapCard extends StatelessWidget {
     double w = baseW * scale;
     double h = baseH * scale;
 
-    const canvasCenter = 2000.0;
+    const canvasCenter = 3000.0; // 6000x6000 canvas merkezi
     const previewCenterX = 160.0;
     const previewCenterY = 90.0;
 
@@ -1680,59 +1862,139 @@ class _PreMadeMapCard extends StatelessWidget {
     ).animate().fadeIn(duration: 300.ms).slideX(begin: 0.1, duration: 400.ms, curve: Curves.easeOutQuad);
   }
 
+  // Önizleme için lokal pozisyon listesi
+  final List<Offset> _previewNodePositions = [];
+
+  /// Bir düğümün altındaki toplam "yaprak" sayısını (genişliğini) hesaplar.
+  int _calculateNodeWeightForPreview(MindMapNode node) {
+    if (node.children.isEmpty) return 1;
+    int weight = 0;
+    for (var child in node.children) {
+      weight += _calculateNodeWeightForPreview(child);
+    }
+    return weight;
+  }
+
   void _calculateRealLayout(MindMapNode root) {
-    // GERÇEK layout - ana ekrandaki ile aynı
-    const center = Offset(2000, 2000); // 4000x4000 canvas merkezi
+    // Pozisyon listesini temizle
+    _previewNodePositions.clear();
+
+    // GERÇEK layout - ana ekrandaki ile TAM AYNI (YENİ ALGORİTMA)
+    const center = Offset(3000, 3000); // 6000x6000 canvas merkezi
+    const level1Distance = 350.0;
+
+    // Kökü merkeze koy
     root.position = center;
     root.color = const Color(0xFF6366F1);
+    _previewNodePositions.add(root.position);
+
+    if (root.children.isEmpty) return;
 
     final mainBranches = root.children;
-    final angleStep = (2 * math.pi) / (mainBranches.isEmpty ? 1 : mainBranches.length);
 
+    // Renk paleti
     final colors = [
-      const Color(0xFF3B82F6),
-      const Color(0xFFEF4444),
-      const Color(0xFF10B981),
-      const Color(0xFFA855F7),
-      const Color(0xFFF59E0B),
-      const Color(0xFF14B8A6),
-      const Color(0xFFEC4899),
-      const Color(0xFF6366F1),
+      const Color(0xFF3B82F6), // Blue
+      const Color(0xFFEF4444), // Red
+      const Color(0xFF10B981), // Green
+      const Color(0xFFA855F7), // Purple
+      const Color(0xFFF59E0B), // Amber
+      const Color(0xFF14B8A6), // Teal
+      const Color(0xFFEC4899), // Pink
+      const Color(0xFF6366F1), // Indigo
     ];
 
-    const level1Distance = 250.0;
+    // 1. Toplam ağırlığı bul
+    int totalWeight = 0;
+    for (var child in mainBranches) {
+      totalWeight += _calculateNodeWeightForPreview(child);
+    }
+
+    // Başlangıç açısı (Yukarıdan başlasın: -90 derece)
+    double currentAngle = -math.pi / 2;
 
     for (int i = 0; i < mainBranches.length; i++) {
-      final angle = i * angleStep;
       final node = mainBranches[i];
-
-      node.position = Offset(
-        center.dx + level1Distance * math.cos(angle),
-        center.dy + level1Distance * math.sin(angle),
-      );
       node.color = colors[i % colors.length];
 
-      _layoutRealChildren(node, angle, 200.0);
+      // Düğümün ağırlığına göre pastadan pay (sweep angle) ver
+      int weight = _calculateNodeWeightForPreview(node);
+      // Toplam pasta 360 derece (2 * pi)
+      double sweepAngle = (weight / totalWeight) * 2 * math.pi;
+
+      // Bu dalı, kendisine ayrılan açının tam ortasından geçirerek yerleştir
+      _layoutRecursiveForPreview(
+          node,
+          currentAngle,
+          sweepAngle,
+          level1Distance, // İlk seviye mesafesi
+          center
+      );
+
+      // Bir sonraki dal için açıyı kaydır
+      currentAngle += sweepAngle;
     }
   }
 
-  void _layoutRealChildren(MindMapNode parent, double parentAngle, double distance) {
-    if (parent.children.isEmpty) return;
+  /// Özyinelemeli (Recursive) Yerleştirme - Önizleme için
+  void _layoutRecursiveForPreview(
+      MindMapNode node,
+      double startAngle,
+      double sweep,
+      double distanceCtx,
+      Offset center
+      ) {
+    // 1. Düğümü kendisine ayrılan açının (sweep) merkezine yerleştir
+    double midAngle = startAngle + (sweep / 2);
 
-    final childCount = parent.children.length;
-    final wedgeSize = math.pi / 2.0;
-    final startAngle = parentAngle - (wedgeSize / 2);
-    final angleStep = wedgeSize / (childCount > 1 ? childCount - 1 : 1);
+    // Konumu MERKEZE göre hesapla (Ray Layout)
+    node.position = Offset(
+        center.dx + distanceCtx * math.cos(midAngle),
+        center.dy + distanceCtx * math.sin(midAngle)
+    );
+    _previewNodePositions.add(node.position);
 
-    for (int i = 0; i < childCount; i++) {
-      final angle = childCount == 1 ? parentAngle : startAngle + (i * angleStep);
-      final child = parent.children[i];
+    if (node.children.isEmpty) return;
 
-      child.position = Offset(
-        parent.position.dx + distance * math.cos(angle),
-        parent.position.dy + distance * math.sin(angle),
-      );
-      child.color = parent.color;
+    // 2. Çocukları yerleştirmek için hazırlık
+    int childTotalWeight = 0;
+    for (var child in node.children) {
+      childTotalWeight += _calculateNodeWeightForPreview(child);
+    }
+
+    // 3. Mesafeyi (Radius) Hesapla - Çakışmayı Önleyen Kısım
+    double minArcLengthPerChild = 140.0; // Kartın dikeyde kapladığı minimum alan + boşluk
+    double calculatedDistance = distanceCtx + 220.0; // Standart artış
+
+    // Eğer açı çok küçükse (kalabalık dal) mesafeyi artır
+    if (childTotalWeight > 0) {
+      // Ortalama çocuk başına düşen açı
+      double avgAnglePerChild = sweep / node.children.length;
+
+      // Sıfıra bölünmeyi önle
+      if (avgAnglePerChild > 0.01) {
+        double requiredDistance = minArcLengthPerChild / avgAnglePerChild;
+
+        // Çok aşırı uzamaması için bir limit koy ama gerekirse uzat
+        if (requiredDistance > calculatedDistance) {
+          // Örneğin max 2000px ekstra uzasın
+          calculatedDistance = math.min(requiredDistance, distanceCtx + 1200);
+        }
+      }
+    }
+
+    double currentChildAngle = startAngle;
+
+    for (var child in node.children) {
+      child.color = node.color; // Rengi miras al
+
+      int weight = _calculateNodeWeightForPreview(child);
+      // Ebeveynin açısını, çocuğun ağırlığına göre paylaştır
+      double childSweep = (weight / childTotalWeight) * sweep;
+
+      _layoutRecursiveForPreview(child, currentChildAngle, childSweep, calculatedDistance, center);
+
+      currentChildAngle += childSweep;
     }
   }
 }
@@ -1768,12 +2030,12 @@ class _ScaledConnectionPainter extends CustomPainter {
       paint.strokeWidth = (node.type == NodeType.root ? 3.0 : 1.5) * scale;
 
       final p1 = Offset(
-        (node.position.dx - 2000) * scale + offsetX,
-        (node.position.dy - 2000) * scale + offsetY,
+        (node.position.dx - 3000) * scale + offsetX,
+        (node.position.dy - 3000) * scale + offsetY,
       );
       final p2 = Offset(
-        (child.position.dx - 2000) * scale + offsetX,
-        (child.position.dy - 2000) * scale + offsetY,
+        (child.position.dx - 3000) * scale + offsetX,
+        (child.position.dy - 3000) * scale + offsetY,
       );
 
       final path = Path();
