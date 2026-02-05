@@ -245,7 +245,7 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    '3 gün ücretsiz dene, istediğin zaman iptal et',
+                    '7 gün ücretsiz dene, istediğin zaman iptal et',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
