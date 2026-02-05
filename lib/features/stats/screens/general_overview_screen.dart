@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/stats/widgets/overview_content.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
@@ -18,11 +19,8 @@ class GeneralOverviewScreen extends ConsumerStatefulWidget {
 class _GeneralOverviewScreenState extends ConsumerState<GeneralOverviewScreen> {
 
   Future<void> _handleBack(BuildContext context) async {
-    if (Navigator.of(context).canPop()) {
-      Navigator.of(context).pop();
-    } else {
-      context.go('/home');
-    }
+    // Ana sayfaya (Dashboard) yönlendir
+    context.go(AppRoutes.home);
   }
 
   @override
@@ -31,10 +29,17 @@ class _GeneralOverviewScreenState extends ConsumerState<GeneralOverviewScreen> {
     final testsAsync = ref.watch(testsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark
-          ? const Color(0xFF0A0F1A)
-          : const Color(0xFFF8FAFC),
+    return PopScope(
+      canPop: false, // Sistemin otomatik kapatmasını engelle
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        // Geri tuşuna basılınca Ana Sayfaya (Dashboard) git
+        context.go(AppRoutes.home);
+      },
+      child: Scaffold(
+        backgroundColor: isDark
+            ? const Color(0xFF0A0F1A)
+            : const Color(0xFFF8FAFC),
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         elevation: 0,
@@ -149,6 +154,7 @@ class _GeneralOverviewScreenState extends ConsumerState<GeneralOverviewScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }
