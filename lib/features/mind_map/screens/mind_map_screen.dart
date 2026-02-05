@@ -749,8 +749,10 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const SavedMindMapsScreen(),
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) => const SavedMindMapsScreen(),
+                    transitionDuration: Duration.zero,
+                    reverseTransitionDuration: Duration.zero,
                   ),
                 );
               },
@@ -1262,8 +1264,10 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const SavedMindMapsScreen(),
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => const SavedMindMapsScreen(),
+                      transitionDuration: Duration.zero,
+                      reverseTransitionDuration: Duration.zero,
                     ),
                   );
                 },
