@@ -248,7 +248,11 @@ class SavedMindMapsScreen extends ConsumerWidget {
       // Layout hesapla
       _calculateLayout(rootNode);
 
+      // Bu kullanıcı tarafından kaydedilmiş bir harita, tekrar kaydedilebilir
+      ref.read(isPreMadeMapProvider.notifier).state = false;
+
       // Hash hesapla ve provider'a kaydet
+      // Bu harita Firestore'dan geldiği için zaten kaydedilmiş demektir
       final hash = _calculateMapHash(rootNode);
       ref.read(savedMapHashProvider.notifier).state = hash;
 

@@ -82,6 +82,7 @@ class MindMapNode {
 final mindMapNodeProvider = StateProvider.autoDispose<MindMapNode?>((ref) => null);
 final isGeneratingProvider = StateProvider.autoDispose<bool>((ref) => false);
 final savedMapHashProvider = StateProvider.autoDispose<String?>((ref) => null);
+final isPreMadeMapProvider = StateProvider.autoDispose<bool>((ref) => false); // Hazır harita mı?
 
 // Hazır zihin haritaları için model
 class PreMadeMindMap {
@@ -573,8 +574,31 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
       ref.read(mindMapNodeProvider.notifier).state = rootNode;
       _centerCanvas();
 
-      // Yeni harita oluşturulduğunda kayıt durumunu sıfırla
-      ref.read(savedMapHashProvider.notifier).state = null;
+      // Bu AI tarafından oluşturulmuş bir harita, kaydedilebilir
+      ref.read(isPreMadeMapProvider.notifier).state = false;
+
+      // Firestore'da aynı topic ve subject ile kayıt var mı kontrol et
+      if (user != null) {
+        final firestoreService = ref.read(firestoreServiceProvider);
+        final existingMaps = await firestoreService.getSavedMindMaps(user.id).first;
+
+        // Aynı topic ve subject'e sahip kayıt var mı?
+        final matchingMap = existingMaps.where((savedMap) {
+          return savedMap['topic'] == topic && savedMap['subject'] == (_selectedSubject ?? 'Genel');
+        }).toList();
+
+        if (matchingMap.isNotEmpty) {
+          // Kayıtlı harita var, hash'ini hesapla ve kaydet
+          final hash = _calculateMapHash(rootNode);
+          ref.read(savedMapHashProvider.notifier).state = hash;
+        } else {
+          // Kayıtlı harita yok, hash'i sıfırla
+          ref.read(savedMapHashProvider.notifier).state = null;
+        }
+      } else {
+        // Kullanıcı yoksa hash'i sıfırla
+        ref.read(savedMapHashProvider.notifier).state = null;
+      }
 
     } catch (e) {
       if (mounted) {
@@ -972,14 +996,17 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     );
   }
 
-  void _loadPreMadeMap(PreMadeMindMap map) {
+  void _loadPreMadeMap(PreMadeMindMap map) async {
     try {
       final rootNode = MindMapNode.fromJson(map.data, NodeType.root);
       _calculateLayout(rootNode);
       ref.read(mindMapNodeProvider.notifier).state = rootNode;
       _centerCanvas();
 
-      // Hazır harita yüklendiğinde kayıt durumunu sıfırla
+      // Bu hazır bir harita
+      ref.read(isPreMadeMapProvider.notifier).state = true;
+
+      // Hazır haritalar kaydedilemez, hash'i sıfırla
       ref.read(savedMapHashProvider.notifier).state = null;
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -996,6 +1023,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     final rootNode = ref.watch(mindMapNodeProvider);
     final isGenerating = ref.watch(isGeneratingProvider);
     final savedHash = ref.watch(savedMapHashProvider);
+    final isPreMadeMap = ref.watch(isPreMadeMapProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final colorScheme = theme.colorScheme;
@@ -1102,7 +1130,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
             ),
           ],
         ),
-        bottomNavigationBar: (rootNode != null && !isGenerating && currentHash != savedHash)
+        bottomNavigationBar: (rootNode != null && !isGenerating && !isPreMadeMap && currentHash != savedHash)
             ? Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
