@@ -614,11 +614,9 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.auto_awesome, color: colorScheme.primary),
-                          const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'AI ile Konu Seç',
+                              'Konu Seç',
                               style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: colorScheme.onSurface,
