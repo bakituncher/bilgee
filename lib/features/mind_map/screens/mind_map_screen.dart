@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 import 'dart:convert';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:taktik/data/models/exam_model.dart';
@@ -862,7 +864,98 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     );
   }
 
+  void _showPremiumDialog() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.account_tree_rounded,
+                size: 48,
+                color: Color(0xFF6366F1),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Zihin Haritası Premium Özellik',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Yeni zihin haritası oluşturmak için Taktik Pro\'ya yükseltme yapman gerekiyor.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: BorderSide(color: colorScheme.outline),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('İptal'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      context.push('/premium');
+                    },
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      backgroundColor: const Color(0xFF6366F1),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Premium Al'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showTopicSelectionSheet() {
+    // Premium kontrolü
+    final isPremium = ref.read(premiumStatusProvider);
+
+    if (!isPremium) {
+      _showPremiumDialog();
+      return;
+    }
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 

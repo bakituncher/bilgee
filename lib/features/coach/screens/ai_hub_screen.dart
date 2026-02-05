@@ -408,7 +408,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     description: 'Konuları görselleştir,\ndaha iyi anla ve hatırla.',
                     icon: Icons.account_tree_rounded,
                     color: const Color(0xFF6366F1),
-                    isPremium: isPremium,
+                    isPremium: true, // Herkes erişebilir
                     height: 180,
                     onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/mind-map', offerData: {
                       'title': 'Zihin Haritası',
@@ -437,7 +437,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
   }
 
   void _handleNavigation(BuildContext context, bool isPremium, {required String route, required Map<String, dynamic> offerData}) {
-    if (route == '/ai-hub/question-solver') {
+    if (route == '/ai-hub/question-solver' || route == '/ai-hub/mind-map') {
       context.go(route);
       return;
     }
