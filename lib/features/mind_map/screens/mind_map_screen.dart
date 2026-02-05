@@ -594,15 +594,15 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border(top: BorderSide(color: node.color, width: 4)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          border: Border(top: BorderSide(color: node.color, width: 3)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-              blurRadius: 20,
+              blurRadius: 16,
             ),
           ],
         ),
@@ -617,14 +617,14 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                 color: node.color,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               node.description.isEmpty ? "Ek açıklama yok." : node.description,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -660,7 +660,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
               children: [
                 // Header
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
@@ -685,7 +685,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       // Arama çubuğu
                       TextField(
                         decoration: InputDecoration(
@@ -700,7 +700,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
-                            vertical: 12,
+                            vertical: 10,
                           ),
                         ),
                         style: TextStyle(color: colorScheme.onSurface),
@@ -728,7 +728,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                     ),
                   )
                       : ListView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     itemCount: filteredTopics.length,
                     itemBuilder: (context, index) {
                       final subject = filteredTopics.keys.elementAt(index);
@@ -736,7 +736,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
 
                       return Card(
                         color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                        margin: const EdgeInsets.only(bottom: 12),
+                        margin: const EdgeInsets.only(bottom: 8),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -745,7 +745,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                           ),
                         ),
                         child: ExpansionTile(
-                          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           title: Text(
                             subject,
                             style: theme.textTheme.titleMedium?.copyWith(
@@ -810,7 +810,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
         }
 
         return Container(
-          height: 240,
+          height: 220,
           margin: const EdgeInsets.only(bottom: 8),
           child: GestureDetector(
             onPanDown: (_) {
@@ -865,7 +865,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
         );
       },
       loading: () => const Center(child: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(12.0),
         child: CircularProgressIndicator(),
       )),
       error: (error, stack) => const SizedBox.shrink(),
@@ -965,7 +965,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           CircularProgressIndicator(color: colorScheme.primary),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
                           Text(
                             "Zihin haritası oluşturuluyor...",
                             style: theme.textTheme.bodyLarge?.copyWith(
@@ -983,7 +983,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
       ),
       bottomNavigationBar: (rootNode != null && !isGenerating)
           ? Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: colorScheme.surface,
           border: Border(
@@ -995,7 +995,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-              blurRadius: 10,
+              blurRadius: 8,
               offset: const Offset(0, -2),
             ),
           ],
@@ -1003,13 +1003,13 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
         child: SafeArea(
           child: SizedBox(
             width: double.infinity,
-            height: 56,
+            height: 52,
             child: FilledButton.icon(
               onPressed: _saveMindMap,
               icon: const Icon(Icons.save_rounded),
               label: const Text(
                 'Zihin Haritasını Kaydet',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
               ),
               style: FilledButton.styleFrom(
                 backgroundColor: colorScheme.primary,
@@ -1033,16 +1033,16 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 48), // Üst boşluk
+            const SizedBox(height: 32), // Üst boşluk
 
             // 1. Tanıtım Alanı (En üstte)
             Lottie.asset(
               'assets/lotties/Brain.json',
-              width: 120,
-              height: 120,
+              width: 110,
+              height: 110,
               fit: BoxFit.contain,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             Text(
               "Zihin Haritası",
               style: theme.textTheme.headlineMedium?.copyWith(
@@ -1050,9 +1050,9 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                 color: colorScheme.onSurface,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              padding: const EdgeInsets.symmetric(horizontal: 28.0),
               child: Text(
                 "Karmaşık konuları görselleştir. Listeden bir konu seç, yapay zeka senin için dallara ayırsın.",
                 textAlign: TextAlign.center,
@@ -1061,14 +1061,14 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
 
             // 2. Hazır Haritalar Listesi (Önce bu gösterilecek)
             _buildPreMadeMapsHorizontalList(theme, colorScheme),
 
             // Modern Ayırıcı
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 48.0, vertical: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 44.0, vertical: 20),
               child: Row(
                 children: [
                   Expanded(
@@ -1115,21 +1115,21 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
             // 3. Konu Seçme Butonu (Sonra bu gösterilecek)
             if (_topicsBySubject.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                padding: const EdgeInsets.symmetric(horizontal: 28.0),
                 child: SizedBox(
                   width: double.infinity,
-                  height: 56,
+                  height: 52,
                   child: FilledButton.icon(
                     onPressed: _showTopicSelectionSheet,
                     icon: const Icon(Icons.school_rounded),
                     label: Text(
                       _selectedTopic ?? 'Yeni Zihin Haritası Oluştur',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                     ),
                     style: FilledButton.styleFrom(
                       backgroundColor: colorScheme.primary,
                       foregroundColor: colorScheme.onPrimary,
-                      elevation: 4,
+                      elevation: 3,
                       shadowColor: colorScheme.primary.withValues(alpha: 0.4),
                     ),
                   ),
@@ -1139,7 +1139,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
               CircularProgressIndicator(color: colorScheme.primary),
 
 
-            const SizedBox(height: 32), // Alt boşluk
+            const SizedBox(height: 24), // Alt boşluk
           ],
         ),
       ),
@@ -1328,11 +1328,11 @@ class _PreMadeMapCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 320,
-        height: 220, // Toplam yükseklik tanımlandı: 160 (önizleme) + 60 (başlık alanı)
+        height: 200, // Toplam yükseklik optimize edildi: 140 (önizleme) + 60 (başlık alanı)
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: colorScheme.outline.withValues(alpha: 0.3),
             width: 1.5,
@@ -1340,8 +1340,8 @@ class _PreMadeMapCard extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -1350,7 +1350,7 @@ class _PreMadeMapCard extends StatelessWidget {
           children: [
             // Önizleme alanı - GERÇEK zihin haritasının küçültülmüş hali
             Container(
-              height: 160,
+              height: 140,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -1360,17 +1360,17 @@ class _PreMadeMapCard extends StatelessWidget {
                     colorScheme.secondaryContainer.withValues(alpha: 0.15),
                   ],
                 ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(13)),
               ),
               child: previewNode != null
                   ? ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(13)),
                 child: Stack(
                   children: [
                     // Grid arka plan (çok ince)
                     CustomPaint(
                       painter: GridPainter(isDark: isDark),
-                      size: const Size(320, 160),
+                      size: const Size(320, 140),
                     ),
                     // Bağlantılar
                     CustomPaint(
@@ -1378,9 +1378,9 @@ class _PreMadeMapCard extends StatelessWidget {
                         rootNode: previewNode,
                         scale: 0.12, // Daha büyük önizleme için scale artırıldı
                         offsetX: 160,
-                        offsetY: 80,
+                        offsetY: 70,
                       ),
-                      size: const Size(320, 160),
+                      size: const Size(320, 140),
                     ),
                     // Node'lar - gerçek widget'lar ama küçültülmüş
                     ..._buildPreviewNodeWidgets(previewNode, 0.12),
@@ -1391,7 +1391,7 @@ class _PreMadeMapCard extends StatelessWidget {
                 child: Icon(
                   Icons.error_outline,
                   color: colorScheme.error.withValues(alpha: 0.5),
-                  size: 32,
+                  size: 28,
                 ),
               ),
             ),
@@ -1399,7 +1399,7 @@ class _PreMadeMapCard extends StatelessWidget {
             // Konu başlığı
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
