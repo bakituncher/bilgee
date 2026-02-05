@@ -13,7 +13,7 @@ import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/core/utils/exam_utils.dart';
 import 'package:taktik/features/mind_map/screens/saved_mind_maps_screen.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
-  import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:markdown/markdown.dart' as md;
 
@@ -1255,8 +1255,8 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
 
     widgets.add(
       Positioned(
-        left: node.position.dx - (w / 2),
-        top: node.position.dy - (h / 2),
+        left: node.position.dx, // Merkez noktası
+        top: node.position.dy,  // Merkez noktası
         child: _NodeWidget(
           node: node,
           width: w,
@@ -1273,7 +1273,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   }
 }
 
-class _NodeWidget extends StatelessWidget {
+class _NodeWidget extends StatefulWidget {
   final MindMapNode node;
   final VoidCallback onTap;
   final double width;
@@ -1287,62 +1287,106 @@ class _NodeWidget extends StatelessWidget {
   });
 
   @override
+  State<_NodeWidget> createState() => _NodeWidgetState();
+}
+
+class _NodeWidgetState extends State<_NodeWidget> {
+  final GlobalKey _key = GlobalKey();
+  late Offset _offset;
+
+  @override
+  void initState() {
+    super.initState();
+    // Başlangıç offseti - minimum boyuta göre merkez
+    _offset = Offset(-widget.width / 2, -widget.height / 2);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateOffset();
+    });
+  }
+
+  void _updateOffset() {
+    final RenderBox? renderBox = _key.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null && mounted) {
+      final size = renderBox.size;
+      setState(() {
+        // Gerçek boyuta göre merkezi hesapla
+        _offset = Offset(-size.width / 2, -size.height / 2);
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final colorScheme = theme.colorScheme;
-    final isRoot = node.type == NodeType.root;
+    final isRoot = widget.node.type == NodeType.root;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: width,
-        height: height,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        decoration: BoxDecoration(
-          color: isDark
-              ? colorScheme.surfaceContainerHighest
-              : colorScheme.surface,
-          borderRadius: BorderRadius.circular(isRoot ? 35 : 12),
-          border: Border.all(
-            color: node.color,
-            width: isRoot ? 3 : 1.5,
+    return Transform.translate(
+      offset: _offset,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: ConstrainedBox(
+          key: _key,
+          constraints: BoxConstraints(
+            minWidth: widget.width,
+            maxWidth: widget.width * 2.5, // İçerik çok uzunsa 2.5 katına kadar genişleyebilir
+            minHeight: widget.height,
+            maxHeight: widget.height * 3, // İçerik çok uzunsa 3 katına kadar uzayabilir
           ),
-          boxShadow: [
-            BoxShadow(
-              color: node.color.withValues(alpha: 0.4),
-              blurRadius: 16,
-              spreadRadius: 0,
-            )
-          ],
-        ),
-        alignment: Alignment.center,
-        child: MarkdownBody(
-          data: node.label,
-          selectable: false,
-          styleSheet: MarkdownStyleSheet(
-            p: TextStyle(
-              color: isDark ? colorScheme.onSurface : colorScheme.onSurface,
-              fontSize: isRoot ? 13 : 10.5,
-              fontWeight: isRoot ? FontWeight.bold : FontWeight.w600,
-            ),
-            textAlign: WrapAlignment.center,
-            h1Align: WrapAlignment.center,
-            blockSpacing: 0,
-            pPadding: EdgeInsets.zero,
-          ),
-          builders: {
-            'latex': LatexElementBuilder(
-              textStyle: TextStyle(
-                fontSize: isRoot ? 13 : 10.5,
-                color: isDark ? colorScheme.onSurface : colorScheme.onSurface,
-                fontWeight: isRoot ? FontWeight.bold : FontWeight.w600,
+          child: IntrinsicWidth(
+            child: IntrinsicHeight(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? colorScheme.surfaceContainerHighest
+                      : colorScheme.surface,
+                  borderRadius: BorderRadius.circular(isRoot ? 35 : 12),
+                  border: Border.all(
+                    color: widget.node.color,
+                    width: isRoot ? 3 : 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: widget.node.color.withValues(alpha: 0.4),
+                      blurRadius: 16,
+                      spreadRadius: 0,
+                    )
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: MarkdownBody(
+                  data: widget.node.label,
+                  selectable: false,
+                  shrinkWrap: true,
+                  styleSheet: MarkdownStyleSheet(
+                    p: TextStyle(
+                      color: isDark ? colorScheme.onSurface : colorScheme.onSurface,
+                      fontSize: isRoot ? 13 : 10.5,
+                      fontWeight: isRoot ? FontWeight.bold : FontWeight.w600,
+                    ),
+                    textAlign: WrapAlignment.center,
+                    h1Align: WrapAlignment.center,
+                    blockSpacing: 0,
+                    pPadding: EdgeInsets.zero,
+                  ),
+                  builders: {
+                    'latex': LatexElementBuilder(
+                      textStyle: TextStyle(
+                        fontSize: isRoot ? 13 : 10.5,
+                        color: isDark ? colorScheme.onSurface : colorScheme.onSurface,
+                        fontWeight: isRoot ? FontWeight.bold : FontWeight.w600,
+                      ),
+                    ),
+                  },
+                  extensionSet: md.ExtensionSet(
+                    [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
+                    [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, LatexInlineSyntax()],
+                  ),
+                ),
               ),
             ),
-          },
-          extensionSet: md.ExtensionSet(
-            [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
-            [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, LatexInlineSyntax()],
           ),
         ),
       )
