@@ -895,7 +895,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
         }
 
         return Container(
-          height: 220,
+          height: 250, // YÜKSEKLİK ARTIRILDI (225 -> 250)
           margin: const EdgeInsets.only(bottom: 8),
           child: GestureDetector(
             onPanDown: (_) {
@@ -1143,14 +1143,6 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
               fit: BoxFit.contain,
             ),
             const SizedBox(height: 16),
-            Text(
-              "Zihin Haritası",
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 28.0),
               child: Text(
@@ -1413,16 +1405,17 @@ class _PreMadeMapCard extends StatelessWidget {
   List<Widget> _buildPreviewNodeWidgets(MindMapNode node, double scale) {
     List<Widget> widgets = [];
 
-    // Node boyutlarını scale'e göre ayarla
-    double w = (node.type == NodeType.root ? 140 : 110) * scale;
-    double h = (node.type == NodeType.root ? 70 : 55) * scale;
+    // --- ÖNEMLİ: Boyutlar (Aynen korundu) ---
+    double baseW = node.type == NodeType.root ? 160 : 120;
+    double baseH = node.type == NodeType.root ? 80 : 60;
 
-    // Canvas merkezi 2000,2000 - bunu 160,70'e dönüştürmek için offset gerekiyor (140 yükseklik / 2)
+    double w = baseW * scale;
+    double h = baseH * scale;
+
     const canvasCenter = 2000.0;
-    const previewCenterX = 160.0;
-    const previewCenterY = 70.0;
+    const previewCenterX = 180.0;
+    const previewCenterY = 90.0;
 
-    // Node pozisyonunu scale'le ve offset'le
     final scaledX = (node.position.dx - canvasCenter) * scale + previewCenterX;
     final scaledY = (node.position.dy - canvasCenter) * scale + previewCenterY;
 
@@ -1433,19 +1426,20 @@ class _PreMadeMapCard extends StatelessWidget {
         child: Container(
           width: w,
           height: h,
-          padding: EdgeInsets.symmetric(horizontal: 2 * scale),
+          padding: EdgeInsets.symmetric(horizontal: 4 * scale),
           decoration: BoxDecoration(
             color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(node.type == NodeType.root ? 35 * scale : 12 * scale),
+            borderRadius: BorderRadius.circular(node.type == NodeType.root ? 40 * scale : 12 * scale),
             border: Border.all(
               color: node.color,
-              width: (node.type == NodeType.root ? 3 : 1.5) * scale,
+              width: (node.type == NodeType.root ? 4 : 2) * scale,
             ),
             boxShadow: [
               BoxShadow(
-                color: node.color.withValues(alpha: 0.3),
-                blurRadius: 8 * scale,
-                spreadRadius: 0,
+                color: node.color.withValues(alpha: 0.4),
+                blurRadius: 12 * scale,
+                spreadRadius: 1 * scale,
+                offset: Offset(0, 4 * scale),
               )
             ],
           ),
@@ -1453,12 +1447,13 @@ class _PreMadeMapCard extends StatelessWidget {
           child: Text(
             _stripLatex(node.label),
             textAlign: TextAlign.center,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: colorScheme.onSurface,
-              fontSize: (node.type == NodeType.root ? 14 : 11) * scale,
-              fontWeight: node.type == NodeType.root ? FontWeight.bold : FontWeight.w600,
+              fontSize: (node.type == NodeType.root ? 16 : 12) * scale,
+              fontWeight: node.type == NodeType.root ? FontWeight.w800 : FontWeight.w600,
+              height: 1.1,
             ),
           ),
         ),
@@ -1475,11 +1470,13 @@ class _PreMadeMapCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = theme.brightness == Brightness.dark;
 
-    // Zihin haritasını node'a çevir ve GERÇEK layout hesapla
+    // Scale oranı (Zoom etkisi)
+    const double previewScale = 0.20;
+    const double previewHeight = 180.0;
+
     MindMapNode? previewNode;
     try {
       previewNode = MindMapNode.fromJson(map.data, NodeType.root);
-      // Gerçek layout fonksiyonunu kullan - aynı _MindMapScreenState'teki gibi
       _calculateRealLayout(previewNode);
     } catch (e) {
       debugPrint('Preview node oluşturulamadı: $e');
@@ -1489,97 +1486,137 @@ class _PreMadeMapCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 320,
-        height: 200, // Toplam yükseklik optimize edildi: 140 (önizleme) + 60 (başlık alanı)
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: colorScheme.outline.withValues(alpha: 0.3),
-            width: 1.5,
+            color: colorScheme.outline.withValues(alpha: 0.15),
+            width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
+              color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Önizleme alanı - GERÇEK zihin haritasının küçültülmüş hali
-            Container(
-              height: 140,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    colorScheme.primaryContainer.withValues(alpha: 0.15),
-                    colorScheme.secondaryContainer.withValues(alpha: 0.15),
-                  ],
-                ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(13)),
-              ),
-              child: previewNode != null
-                  ? ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(13)),
-                child: Stack(
-                  children: [
-                    // Grid arka plan (çok ince)
-                    CustomPaint(
-                      painter: GridPainter(isDark: isDark),
-                      size: const Size(320, 140),
+            // --- Önizleme Alanı ---
+            SizedBox(
+              height: previewHeight,
+              child: Stack(
+                children: [
+                  // 1. Arka Plan
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF1E1E2C)
+                          : const Color(0xFFF8FAFC),
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                     ),
-                    // Bağlantılar
-                    CustomPaint(
-                      painter: _ScaledConnectionPainter(
-                        rootNode: previewNode,
-                        scale: 0.12, // Daha büyük önizleme için scale artırıldı
-                        offsetX: 160,
-                        offsetY: 70,
+                  ),
+                  // Grid Deseni
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: 0.3,
+                      child: CustomPaint(
+                        painter: GridPainter(isDark: isDark),
                       ),
-                      size: const Size(320, 140),
                     ),
-                    // Node'lar - gerçek widget'lar ama küçültülmüş
-                    ..._buildPreviewNodeWidgets(previewNode, 0.12),
-                  ],
-                ),
-              )
-                  : Center(
-                child: Icon(
-                  Icons.error_outline,
-                  color: colorScheme.error.withValues(alpha: 0.5),
-                  size: 28,
-                ),
+                  ),
+
+                  // 2. İçerik
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    child: previewNode != null
+                        ? Stack(
+                      children: [
+                        // Bağlantı Çizgileri
+                        CustomPaint(
+                          painter: _ScaledConnectionPainter(
+                            rootNode: previewNode,
+                            scale: previewScale,
+                            offsetX: 180,
+                            offsetY: 90,
+                          ),
+                          size: const Size(360, previewHeight),
+                        ),
+                        // Düğümler
+                        ..._buildPreviewNodeWidgets(previewNode, previewScale),
+
+                        // Vignette (Kenar gölgelendirmesi)
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: RadialGradient(
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.transparent,
+                                  (isDark ? Colors.black : Colors.white).withValues(alpha: 0.1),
+                                ],
+                                stops: const [0.0, 0.7, 1.0],
+                                radius: 1.0,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                        : Center(
+                      child: Icon(
+                        Icons.auto_awesome,
+                        color: colorScheme.primary.withValues(alpha: 0.3),
+                        size: 32,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
-            // Konu başlığı
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    map.topic,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: colorScheme.onSurface,
-                      fontWeight: FontWeight.bold,
-                      height: 1.3,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+            // --- Başlık Alanı (Sadeleştirildi) ---
+            Container(
+              // DİKEY PADDING 14 -> 12 OLARAK AZALTILDI
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: colorScheme.outline.withValues(alpha: 0.05),
                   ),
                 ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      map.topic, // Sadece konu başlığı
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  // Ok ikonu
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 16,
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  ),
+                ],
               ),
             ),
           ],
         ),
       ),
-    ).animate().fadeIn(duration: 300.ms).slideX(begin: 0.2, duration: 400.ms);
+    ).animate().fadeIn(duration: 300.ms).slideX(begin: 0.1, duration: 400.ms, curve: Curves.easeOutQuad);
   }
 
   void _calculateRealLayout(MindMapNode root) {
@@ -1665,8 +1702,9 @@ class _ScaledConnectionPainter extends CustomPainter {
 
   void _drawRecursive(Canvas canvas, MindMapNode node, Paint paint) {
     for (var child in node.children) {
-      paint.color = child.color.withValues(alpha: 0.4);
-      paint.strokeWidth = (node.type == NodeType.root ? 3.0 : 1.5) * scale;
+      // Çizgileri biraz daha kalınlaştırarak görünürlüğü artırıyoruz
+      paint.color = child.color.withValues(alpha: 0.5); // Alpha artırıldı
+      paint.strokeWidth = (node.type == NodeType.root ? 4.0 : 2.0) * scale; // Kalınlık artırıldı
 
       final p1 = Offset(
         (node.position.dx - 2000) * scale + offsetX,
