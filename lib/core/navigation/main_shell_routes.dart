@@ -34,6 +34,7 @@ import 'package:taktik/features/profile/screens/avatar_selection_screen.dart'; /
 import 'package:taktik/features/profile/screens/follow_list_screen.dart'; // YENİ: Takip listesi ekranı import edildi
 import 'package:taktik/features/profile/screens/ranks_screen.dart'; // YENİ: Ranks ekranı import edildi
 import 'package:taktik/features/mind_map/screens/mind_map_screen.dart'; // YENİ: Zihin haritası ekranı
+import 'package:taktik/features/coach/screens/content_generator_screen.dart'; // YENİ: İçerik Üretici ekranı
 import 'transition_utils.dart';
 
 StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
@@ -211,6 +212,12 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
                 name: 'MindMap',
                 parentNavigatorKey: rootNavigatorKey,
                 pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const MindMapScreen()),
+              ),
+              GoRoute(
+                path: AppRoutes.contentGenerator,
+                name: 'ContentGenerator',
+                parentNavigatorKey: rootNavigatorKey,
+                pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const ContentGeneratorScreen()),
               ),
               GoRoute(
                 path: AppRoutes.coachPushed,

@@ -42,7 +42,8 @@ const MONTHLY_LIMITS = {
   weekly_plan: 60,    // Haftalık Plan
   chat: 2000,         // Sohbet / Motivasyon
   question_solver: 1000, // Soru Çözücü
-  mind_map: 100       // YENİ: Zihin Haritası (Sadece Premium)
+  mind_map: 100,      // Zihin Haritası (Sadece Premium)
+  content_generator: 150 // YENİ: İçerik Üretici (Sadece Premium)
 };
 
 // Exponential backoff ile retry helper
@@ -149,7 +150,7 @@ exports.generateGemini = onCall(
 
     // MODEL SEÇİMİ
     // Soru çözücü ve Etüt Odası: gemini-3-flash-preview (Güçlü model)
-    // Zihin Haritası ve diğer tüm chat/planlama işleri: gemini-2.5-flash-lite
+    // İçerik Üretici, Zihin Haritası ve diğer tüm chat/planlama işleri: gemini-2.5-flash-lite
     const requestedModel = typeof request.data?.model === "string" ? String(request.data.model).trim() : null;
 
     const modelId = (requestType === 'question_solver' || requestType === 'workshop')
@@ -164,14 +165,16 @@ exports.generateGemini = onCall(
       throw new HttpsError("invalid-argument", "Geçerli bir prompt gerekli");
     }
 
-    // Soru çözücü görsel kontrolü
-    if (requestType === 'question_solver') {
+    // Soru çözücü ve İçerik Üretici görsel kontrolü
+    if (requestType === 'question_solver' || requestType === 'content_generator') {
       if (!imageBase64) {
-        throw new HttpsError("invalid-argument", "Soru çözücü için görsel gerekli.");
+        throw new HttpsError("invalid-argument", requestType === 'question_solver'
+          ? "Soru çözücü için görsel gerekli."
+          : "İçerik üretici için PDF veya görsel gerekli.");
       }
       const maxBase64Chars = parseInt(process.env.QUESTION_SOLVER_IMAGE_MAX_BASE64_CHARS || "6000000", 10);
       if (imageBase64.length > maxBase64Chars) {
-        throw new HttpsError("invalid-argument", "Görsel çok büyük. Lütfen daha net ama daha yakın/az kırpılmış bir fotoğraf deneyin.");
+        throw new HttpsError("invalid-argument", "Dosya çok büyük. Lütfen daha küçük bir dosya deneyin.");
       }
     }
 
@@ -225,7 +228,8 @@ exports.generateGemini = onCall(
             case 'workshop': featureName = "Etüt Odası"; break;
             case 'weekly_plan': featureName = "Haftalık Plan"; break;
             case 'question_solver': featureName = "Soru Çözücü"; break;
-            case 'mind_map': featureName = "Zihin Haritası"; break; // YENİ
+            case 'mind_map': featureName = "Zihin Haritası"; break;
+            case 'content_generator': featureName = "İçerik Üretici"; break; // YENİ
             default: featureName = "Sohbet"; break;
           }
           throw new HttpsError("resource-exhausted", `Bu ayki ${featureName} limitinize (${limit}) ulaştınız. Limitler her ayın başında yenilenir.`);
@@ -251,6 +255,8 @@ exports.generateGemini = onCall(
         effectiveMaxTokens = 10000;
       } else if (requestType === 'mind_map') {
         effectiveMaxTokens = 10000; // Zihin haritası için geniş limit
+      } else if (requestType === 'content_generator') {
+        effectiveMaxTokens = 10000; // İçerik üretici için geniş limit
       } else if (requestType === 'chat') {
         effectiveMaxTokens = 4096;
       }
@@ -265,7 +271,7 @@ exports.generateGemini = onCall(
           {
             parts: [
               { text: normalizedPrompt },
-              ...(requestType === 'question_solver' && imageBase64
+              ...((requestType === 'question_solver' || requestType === 'content_generator') && imageBase64
                 ? [{ inlineData: { mimeType: imageMimeType || 'image/jpeg', data: imageBase64 } }]
                 : []),
             ],

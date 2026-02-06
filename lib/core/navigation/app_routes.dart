@@ -30,6 +30,7 @@ class AppRoutes {
   static const String coachPushed = 'coach-pushed';
   static const String strategyReview = 'strategy-review';
   static const String mindMap = 'mind-map';
+  static const String contentGenerator = 'content-generator'; // İçerik Üretici
 
   // Yeni eklenen rota: Soru Kutusu
   static const String questionBox = '/question-box';
