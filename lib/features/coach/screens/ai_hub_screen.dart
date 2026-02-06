@@ -44,7 +44,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
       final premiumSteps = [
         TutorialStep(
           title: "Taktik Üssü Artık Seninle!",
-          text: "Tebrikler! Artık tüm yapay zeka araçlarına sınırsız erişimin var. Şimdi sana bu güçlü araçları nasıl kullanacağını göstereyim.",
+          text: "Tebrikler! Artık tüm Taktik araçlarına sınırsız erişimin var. Şimdi sana bu güçlü araçları nasıl kullanacağını göstereyim.",
           buttonText: "Hadi Başlayalım",
         ),
         TutorialStep(
@@ -74,7 +74,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
         TutorialStep(
           highlightKey: _coachKey,
           title: "Mentörün Taktik Tavşan",
-          text: "Motivasyon, strateji, analiz ve destek... Sınav yolculuğunda her alanda yanında olacak yapay zeka koçun!",
+          text: "Motivasyon, strateji, analiz ve destek... Sınav yolculuğunda her alanda yanında olacak Taktik koçun!",
           buttonText: "Keşfet",
         ),
       ];
@@ -158,7 +158,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      "Yapay zeka araçları seni sınava nasıl hazırlayacak?",
+                      "Taktik araçları seni sınava nasıl hazırlayacak?",
                       style: TextStyle(
                         fontSize: 16,
                         height: 1.4,
@@ -180,7 +180,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       icon: Icons.camera_alt_rounded,
                       color: const Color(0xFFF59E0B),
                       title: "Fotoğraflı Soru Çözümü",
-                      description: "Çözemediğin sorunun fotoğrafını çek, yapay zeka adım adım nasıl çözüleceğini anlatsın.",
+                      description: "Çözemediğin sorunun fotoğrafını çek, Taktik adım adım nasıl çözüleceğini anlatsın.",
                     ),
                     _ProFeatureRow(
                       theme: theme,
@@ -402,7 +402,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                         'iconName': 'menu_book',
                         'color': const Color(0xFF8B5CF6),
                         'marketingTitle': 'Eksiklerini Kapat!',
-                        'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
+                        'marketingSubtitle': 'Taktik, sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
                         'redirectRoute': '/ai-hub/weakness-workshop',
                       }),
                     ),
@@ -917,7 +917,7 @@ class _HeroCoachCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Sınav stresini yöneten\nyapay zeka koçun.',
+                          'Sınav stresini yöneten\nTaktik koçun.',
                           style: TextStyle(
                               fontSize: 12,
                               color: isDark ? Colors.white70 : const Color(0xFF4338CA),
