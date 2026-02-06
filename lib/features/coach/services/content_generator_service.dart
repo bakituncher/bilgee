@@ -223,16 +223,18 @@ class ContentGeneratorService {
   String _buildMultiPagePrompt(ContentType contentType, String? examType, int pageCount) {
     final basePrompt = _buildPrompt(contentType, examType);
     final multiPageContext = '''
+ÖNEMLİ - ÇOKLU SAYFA ANALİZİ:
+• Toplam $pageCount sayfa/görsel gönderildi
+• Tüm sayfaları BÜTÜNLEŞIK olarak analiz et
+• Sayfalar arası bilgi akışını takip et
+• Tekrarlayan bilgileri TEK SEFER yaz
+• Tüm sayfalardaki ÖNEMLİ bilgileri kapsa
+• Çıktı tutarlı ve bütünlük içinde olsun
 
-**ÇOKLU SAYFA BİLGİSİ:**
-Size $pageCount adet görsel/sayfa gönderildi. Tüm sayfaları tek bir bütün olarak analiz et ve içeriği birleştirerek tutarlı bir çıktı oluştur.
-- Sayfalar arasındaki bilgi akışını takip et.
-- Tekrarlayan bilgileri birleştir.
-- Tüm sayfalardaki önemli bilgileri kapsayacak şekilde içerik üret.
-
+$basePrompt
 ''';
 
-    return multiPageContext + basePrompt;
+    return multiPageContext;
   }
 
   /// Dosyayı işle - görsel ise sıkıştır
