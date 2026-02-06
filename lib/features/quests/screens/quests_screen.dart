@@ -79,19 +79,29 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
           ),
           // Main Content
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(context),
-                  const SizedBox(height: 24),
-                  if (questsState.isLoaded && questsState.allQuests != null)
-                    _buildQuestList(questsState.allQuests!, user?.id ?? '')
-                  else
-                    _buildLoadingState(),
-                ],
-              ),
+            bottom: false, // Listenin en aşağı kadar akmasını sağlar
+            child: Column(
+              children: [
+                // DÜZELTİLEN HEADER
+                _buildHeader(context),
+
+                // Content
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 16), // Header ile liste arası boşluk
+                        if (questsState.isLoaded && questsState.allQuests != null)
+                          _buildQuestList(questsState.allQuests!, user?.id ?? '')
+                        else
+                          _buildLoadingState(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -99,24 +109,26 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
     );
   }
 
+  // --- DÜZELTİLEN HEADER FONKSİYONU ---
   Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 20.0),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center, // Dikey hizalama için kritik
         children: [
-          Row(
-            children: [
-              const CustomBackButton(),
-              const SizedBox(width: 8),
-              Text(
-                'Günlük Görevler',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+          const CustomBackButton(),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              'Günlük Görevler',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith( // Boyut küçültüldü (daha estetik)
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+                height: 1.2, // Satır yüksekliği dengelendi
               ),
-            ],
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
@@ -242,7 +254,7 @@ class GamifiedQuestCard extends ConsumerStatefulWidget {
 }
 
 class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
-  // ÇÖZÜM: Race condition önleme için loading state
+  // Race condition önleme için loading state
   bool _isClaimingReward = false;
 
   // Premium gerektiren route'lar için özel offer verileri
@@ -286,8 +298,6 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
   }
 
   void _handleQuestTap(BuildContext context) {
-    // Analytics logging kaldırıldı - artık başka bir analitik aracı kullanılıyor
-
     String targetRoute = widget.quest.actionRoute;
     if (targetRoute == '/coach') {
       final subjectTag = widget.quest.tags.firstWhere((t) => t.startsWith('subject:'), orElse: () => '');
@@ -301,21 +311,14 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
     final isPremium = ref.read(premiumStatusProvider);
     final offerData = _getPremiumOfferData(targetRoute);
 
-    // Debug log
-    print('🎯 Quest tap - Route: $targetRoute, isPremium: $isPremium, hasOfferData: ${offerData != null}');
-
-    // Eğer premium gerektiren bir route ise ve kullanıcı premium değilse
     if (!isPremium && offerData != null) {
-      print('📱 Redirecting to offer screen');
       context.go('/ai-hub/offer', extra: offerData);
     } else {
-      print('✅ Navigating directly to: $targetRoute');
       context.go(targetRoute);
     }
   }
 
   Future<void> _handleClaimReward(BuildContext context) async {
-    // ÇÖZÜM: Zaten işlem yapılıyorsa, tekrar izin verme
     if (_isClaimingReward) return;
 
     setState(() => _isClaimingReward = true);
@@ -360,7 +363,6 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     VoidCallback? onTapAction;
-    // ÇÖZÜM: Loading sırasında butonu disable et
     if (isClaimable && !_isClaimingReward) {
       onTapAction = () => _handleClaimReward(context);
     } else if (!isCompleted && !_isClaimingReward) {
@@ -422,17 +424,15 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
                     ],
                   ),
                 ),
-                // ÇÖZÜM: Loading sırasında indicator göster
                 _isClaimingReward
                     ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
                     : _buildRewardChip(isClaimable),
               ],
             ),
-            // Yükleme durumunda hiçbir şey gösterme, sadece sağ üstteki indicator yeterli
             if (!_isClaimingReward && (!isCompleted || isClaimable)) ...[
               const SizedBox(height: 20),
               if (isClaimable)
@@ -502,7 +502,6 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
   }
 
   Widget _buildClaimRewardPrompt() {
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -562,7 +561,6 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
     );
   }
 }
-
 
 class AnimatedGridPainter extends CustomPainter {
   final Animation<double> animation;
