@@ -63,7 +63,17 @@ class NotificationService {
 
     // DÜZELTME: '@mipmap/ic_launcher' yerine Manifest'teki '@mipmap/launcher_icon' kullanılmalı
     const androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
-    const iOSInit = DarwinInitializationSettings();
+
+    // ÖNEMLİ DÜZELTME:
+    // iOS için varsayılan izin isteklerini 'false' yapıyoruz.
+    // Böylece uygulama açılır açılmaz sistem dialog'u çıkmaz.
+    // İzinler NotificationPermissionScreen'de manuel olarak istenecek.
+    const iOSInit = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
+
     const initSettings = InitializationSettings(android: androidInit, iOS: iOSInit);
     await _fln.initialize(initSettings, onDidReceiveNotificationResponse: (resp) {
       final route = resp.payload;
