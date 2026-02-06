@@ -1257,7 +1257,27 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
-          leading: const CustomBackButton(),
+          leading: CustomBackButton(
+            onPressed: () {
+              if (rootNode != null) {
+                // Harita gösteriliyorsa, haritayı temizle ve konu seçim ekranına dön
+                ref.read(mindMapNodeProvider.notifier).state = null;
+                // Scroll'u otomatik başlat
+                Future.delayed(const Duration(milliseconds: 500), () {
+                  if (mounted && !_userIsInteracting) {
+                    _startAutoScroll();
+                  }
+                });
+              } else {
+                // Harita yoksa normal geri git
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                } else {
+                  context.go('/home');
+                }
+              }
+            },
+          ),
           actions: [
             if (rootNode == null)
               IconButton(
