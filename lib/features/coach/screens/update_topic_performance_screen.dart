@@ -456,7 +456,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                               'color': const Color(0xFF8B5CF6),
                               'heroTag': 'workshop-offer-${topic.hashCode}',
                               'marketingTitle': 'Eksiklerini Kapat!',
-                              'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
+                              'marketingSubtitle': 'Taktik; sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
                               'redirectRoute': '/ai-hub/${AppRoutes.weaknessWorkshop}?subject=${Uri.encodeComponent(subject)}&topic=${Uri.encodeComponent(topic)}',
                             },
                           );
