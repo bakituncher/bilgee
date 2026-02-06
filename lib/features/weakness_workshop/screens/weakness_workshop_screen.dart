@@ -26,6 +26,7 @@ import 'package:taktik/features/weakness_workshop/widgets/quiz_view.dart';
 // YENİ EKLENEN IMPORTLAR
 import 'package:taktik/core/utils/exam_utils.dart';
 import 'package:taktik/data/models/user_model.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 // DEPRECATED: Eski enum ve provider'lar - Artık WorkshopController içinde
 // Geriye dönük uyumluluk için kalsın ama yeni kullanmayın
@@ -537,6 +538,8 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
                       final total = session?.quiz?.length ?? 0;
                       final safeTotal = total <= 0 ? 1 : total;
                       final safeIndex = _currentQuizPage.clamp(0, safeTotal - 1);
+                      final isDark = Theme.of(context).brightness == Brightness.dark;
+                      final iconColor = isDark ? Colors.white : Colors.black;
 
                       return IconButton(
                         tooltip: 'Sorunu Bildir',
@@ -547,14 +550,7 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
                           if (material == null) return;
                           _openReportSheet(material, safeIndex, _selectedAnswers[safeIndex]);
                         },
-                        icon: Icon(
-                          Icons.flag_outlined,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
-                          shape: const CircleBorder(),
-                        ),
+                        icon: Icon(Icons.flag_outlined, color: iconColor),
                       );
                     },
                   )
@@ -2153,17 +2149,16 @@ class _WSHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor = isDark ? Colors.white : Colors.black;
 
     final left = showBack
-        ? IconButton(
-      onPressed: onBack,
-      // Eğer leadingIcon verilmişse onu kullan, yoksa varsayılan ok işaretini kullan
-      icon: Icon(leadingIcon ?? Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface),
-      style: IconButton.styleFrom(
-        backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
-        shape: const CircleBorder(),
-      ),
-    )
+        ? (leadingIcon != null
+            ? IconButton(
+                onPressed: onBack,
+                icon: Icon(leadingIcon, color: iconColor),
+              )
+            : CustomBackButton(onPressed: onBack))
         : Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -2192,11 +2187,7 @@ class _WSHeader extends StatelessWidget {
           IconButton(
             tooltip: 'Etüt Geçmişi',
             onPressed: onSaved,
-            icon: Icon(Icons.inventory_2_outlined, color: Theme.of(context).colorScheme.onSurface),
-            style: IconButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.08),
-              shape: const CircleBorder(),
-            ),
+            icon: Icon(Icons.inventory_2_outlined, color: iconColor),
           ),
       ],
     );
