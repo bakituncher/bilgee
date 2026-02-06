@@ -131,12 +131,7 @@ class NotificationCenterScreen extends ConsumerWidget {
         body: itemsAsync.when(
           data: (items) {
             if (items.isEmpty) {
-              return _EmptyNotifications(onBack: () async {
-                final popped = await Navigator.of(context).maybePop();
-                if (!popped) {
-                  if (context.mounted) context.go('/home');
-                }
-              });
+              return const _EmptyNotifications();
             }
             return RefreshIndicator(
               onRefresh: () async {
@@ -565,8 +560,7 @@ class _NotificationDetailSheet extends ConsumerWidget {
 }
 
 class _EmptyNotifications extends StatelessWidget {
-  const _EmptyNotifications({required this.onBack});
-  final VoidCallback onBack;
+  const _EmptyNotifications();
 
   @override
   Widget build(BuildContext context) {
@@ -587,12 +581,6 @@ class _EmptyNotifications extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant),
                 textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: onBack,
-              icon: const Icon(Icons.arrow_back_rounded),
-              label: const Text('Geri dön'),
-            ),
           ],
         ),
       ),
