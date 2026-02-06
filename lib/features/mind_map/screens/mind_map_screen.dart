@@ -1404,7 +1404,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 28.0),
               child: Text(
-                "Karmaşık konuları görselleştir. Listeden bir konu seç, yapay zeka senin için dallara ayırsın.",
+                "Karmaşık konuları görselleştir. Listeden bir konu seç, Taktik senin için dallara ayırsın.",
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
