@@ -69,6 +69,20 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: const CustomBackButton(),
+        title: Text(
+          'Günlük Görevler',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: Stack(
         children: [
           // Animated Grid Background
@@ -78,61 +92,22 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
             ),
           ),
           // Main Content
-          SafeArea(
-            bottom: false, // Listenin en aşağı kadar akmasını sağlar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // DÜZELTİLEN HEADER
-                _buildHeader(context),
-
-                // Content
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 16), // Header ile liste arası boşluk
-                        if (questsState.isLoaded && questsState.allQuests != null)
-                          _buildQuestList(questsState.allQuests!, user?.id ?? '')
-                        else
-                          _buildLoadingState(),
-                      ],
-                    ),
-                  ),
-                ),
+                const SizedBox(height: 16),
+                if (questsState.isLoaded && questsState.allQuests != null)
+                  _buildQuestList(questsState.allQuests!, user?.id ?? '')
+                else
+                  _buildLoadingState(),
               ],
             ),
           ),
         ],
       ),
     );
-  }
-
-  // --- DÜZELTİLEN HEADER FONKSİYONU ---
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center, // Dikey hizalama için kritik
-        children: [
-          const CustomBackButton(),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              'Günlük Görevler',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith( // Boyut küçültüldü (daha estetik)
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
-                height: 1.2, // Satır yüksekliği dengelendi
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.2);
   }
 
   Widget _buildLoadingState() {

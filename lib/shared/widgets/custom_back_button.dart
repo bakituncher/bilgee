@@ -29,6 +29,9 @@ class CustomBackButton extends StatelessWidget {
         size: 24,
       ),
       tooltip: 'Geri',
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      splashRadius: 0.1,
       onPressed: onPressed ?? () {
         if (Navigator.of(context).canPop()) {
           Navigator.of(context).pop();
