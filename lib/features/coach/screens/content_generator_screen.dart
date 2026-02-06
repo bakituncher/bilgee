@@ -12,6 +12,7 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:taktik/features/coach/services/content_generator_service.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:taktik/core/theme/app_theme.dart';
 
 class ContentGeneratorScreen extends ConsumerStatefulWidget {
   const ContentGeneratorScreen({super.key});
@@ -37,11 +38,15 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
   // Soru kartları için görünürlük kontrolü
   final Map<int, bool> _revealedAnswers = {};
 
+  // Test soruları için kullanıcı cevapları
+  final Map<int, int> _selectedAnswers = {};
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isPremium = ref.watch(premiumStatusProvider);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -49,24 +54,64 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.colorScheme.onSurface),
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: colorScheme.onSurface.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.arrow_back_ios_new_rounded,
+              color: colorScheme.onSurface,
+              size: 16,
+            ),
+          ),
           onPressed: () => context.pop(),
         ),
-        title: Text(
-          'İçerik Üretici',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: theme.colorScheme.onSurface,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/images/bunnyy.png',
+              width: 26,
+              height: 26,
+              errorBuilder: (_, __, ___) => Icon(
+                Icons.auto_awesome_rounded,
+                color: AppTheme.secondaryBrandColor,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'İçerik Üretici',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: colorScheme.onSurface,
+                letterSpacing: -0.3,
+              ),
+            ),
+          ],
         ),
         centerTitle: true,
         actions: [
           if (_result != null)
-            IconButton(
-              icon: const Icon(Icons.refresh_rounded),
-              tooltip: 'Yeniden Başla',
-              onPressed: _reset,
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.secondaryBrandColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.add_rounded,
+                    color: AppTheme.secondaryBrandColor,
+                    size: 18,
+                  ),
+                ),
+                tooltip: 'Yeni İçerik',
+                onPressed: _createNewContent,
+              ),
             ),
         ],
       ),
@@ -82,36 +127,50 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Başlangıç ekranı - dosya seçimi ve içerik türü
   Widget _buildInitialState(ThemeData theme, bool isDark, bool isPremium) {
+    final colorScheme = theme.colorScheme;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Başlık ve açıklama
+          // Hero Card - Taktik Tavşan tanıtımı
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: isDark
-                    ? [const Color(0xFF1E3A5F), const Color(0xFF0D1B2A)]
-                    : [const Color(0xFFE0F2FE), const Color(0xFFF0F9FF)],
+                    ? [AppTheme.primaryBrandColor, const Color(0xFF1E293B)]
+                    : [const Color(0xFFF8FAFC), const Color(0xFFE2E8F0)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppTheme.secondaryBrandColor.withOpacity(isDark ? 0.2 : 0.15),
+                width: 1,
+              ),
             ),
             child: Row(
               children: [
+                // Tavşan emoji/avatar
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0EA5E9).withOpacity(0.2),
+                    color: AppTheme.secondaryBrandColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: Color(0xFF0EA5E9),
-                    size: 28,
+                  child: Center(
+                    child: Image.asset(
+                      'assets/images/bunnyy.png',
+                      width: 40,
+                      height: 40,
+                      errorBuilder: (_, __, ___) => Text(
+                        '🐰',
+                        style: const TextStyle(fontSize: 28),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -119,20 +178,42 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'PDF veya Görsel Yükle',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.onSurface,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            'Taktik Tavşan',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: colorScheme.onSurface,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppTheme.secondaryBrandColor,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'AI',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Yapay zeka içeriğini analiz edip sana özel materyal üretsin.',
+                        'Dosyanı yükle, sana özel içerik üreteyim!',
                         style: TextStyle(
                           fontSize: 13,
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          color: colorScheme.onSurface.withOpacity(0.6),
+                          height: 1.3,
                         ),
                       ),
                     ],
@@ -140,96 +221,127 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                 ),
               ],
             ),
-          ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1, end: 0),
-
-          const SizedBox(height: 24),
-
-          // Dosya seçim alanı
-          Text(
-            '1. Dosya Seç',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          _buildFileSelector(theme, isDark),
+          ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
 
           const SizedBox(height: 28),
 
-          // İçerik türü seçimi
-          Text(
-            '2. Ne Üreteyim?',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurface,
+          // Dosya Yükleme Alanı
+          _buildFileSelector(theme, isDark),
+
+          const SizedBox(height: 24),
+
+          // İçerik Türü Başlığı
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text(
+              'İçerik Türü',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: colorScheme.onSurface.withOpacity(0.5),
+                letterSpacing: 0.5,
+              ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
+          // İçerik türü seçici
           _buildContentTypeSelector(theme, isDark),
 
+          // Hata mesajı
           if (_error != null) ...[
             const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: AppTheme.accentBrandColor.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.red.withOpacity(0.3)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 20),
-                  const SizedBox(width: 8),
+                  Icon(Icons.info_outline_rounded,
+                    color: AppTheme.accentBrandColor,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       _error!,
-                      style: const TextStyle(color: Colors.red, fontSize: 13),
+                      style: TextStyle(
+                        color: AppTheme.accentBrandColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
+            ).animate().fadeIn().shake(hz: 2, offset: const Offset(2, 0)),
           ],
 
           const SizedBox(height: 32),
 
-          // Üret butonu
-          SizedBox(
+          // Üret butonu - Gradient style
+          Container(
             width: double.infinity,
             height: 56,
-            child: ElevatedButton(
-              onPressed: _selectedFile != null ? _generateContent : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0EA5E9),
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: theme.colorScheme.onSurface.withOpacity(0.1),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.auto_awesome_rounded, size: 22),
-                  const SizedBox(width: 10),
-                  Text(
-                    'İçerik Üret',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: _selectedFile != null ? Colors.white : theme.colorScheme.onSurface.withOpacity(0.4),
+            decoration: BoxDecoration(
+              gradient: _selectedFile != null
+                  ? LinearGradient(
+                      colors: [
+                        AppTheme.secondaryBrandColor,
+                        AppTheme.secondaryBrandColor.withOpacity(0.8),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              color: _selectedFile == null ? colorScheme.onSurface.withOpacity(0.08) : null,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: _selectedFile != null
+                  ? [
+                      BoxShadow(
+                        color: AppTheme.secondaryBrandColor.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _selectedFile != null ? _generateContent : null,
+                borderRadius: BorderRadius.circular(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 22,
+                      color: _selectedFile != null
+                          ? Colors.black
+                          : colorScheme.onSurface.withOpacity(0.3),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 10),
+                    Text(
+                      'İçerik Üret',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: _selectedFile != null
+                            ? Colors.black
+                            : colorScheme.onSurface.withOpacity(0.3),
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
+          ).animate().fadeIn(delay: 250.ms, duration: 400.ms).slideY(begin: 0.1, end: 0),
+
+          const SizedBox(height: 20),
         ],
       ),
     );
@@ -237,28 +349,37 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Dosya seçici widget
   Widget _buildFileSelector(ThemeData theme, bool isDark) {
+    final colorScheme = theme.colorScheme;
+
     return GestureDetector(
       onTap: _pickFile,
-      child: Container(
-        padding: const EdgeInsets.all(20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: _selectedFile != null
+            ? const EdgeInsets.all(16)
+            : const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
         decoration: BoxDecoration(
-          color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.05),
+          color: _selectedFile != null
+              ? (isDark ? AppTheme.secondaryBrandColor.withOpacity(0.08) : AppTheme.secondaryBrandColor.withOpacity(0.05))
+              : (isDark ? Colors.white.withOpacity(0.03) : colorScheme.onSurface.withOpacity(0.02)),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: _selectedFile != null
-                ? const Color(0xFF0EA5E9).withOpacity(0.5)
-                : theme.colorScheme.onSurface.withOpacity(0.1),
-            width: _selectedFile != null ? 2 : 1.5,
+                ? AppTheme.secondaryBrandColor.withOpacity(0.3)
+                : colorScheme.onSurface.withOpacity(0.08),
+            width: 1.5,
             strokeAlign: BorderSide.strokeAlignInside,
           ),
         ),
         child: _selectedFile != null
             ? Row(
                 children: [
+                  // Dosya ikonu
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
-                      color: _getFileIconColor().withOpacity(0.15),
+                      color: _getFileIconColor().withOpacity(0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -268,6 +389,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                     ),
                   ),
                   const SizedBox(width: 14),
+                  // Dosya bilgileri
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,56 +399,118 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurface,
+                            color: colorScheme.onSurface,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _mimeType?.split('/').last.toUpperCase() ?? 'DOSYA',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: theme.colorScheme.onSurface.withOpacity(0.5),
-                          ),
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _getFileIconColor().withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                _mimeType?.split('/').last.toUpperCase() ?? 'DOSYA',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: _getFileIconColor(),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.check_circle_rounded,
+                              size: 14,
+                              color: AppTheme.successBrandColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Hazır',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: AppTheme.successBrandColor,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                  IconButton(
-                    icon: Icon(Icons.close_rounded, color: theme.colorScheme.onSurface.withOpacity(0.5)),
-                    onPressed: () {
+                  // Değiştir butonu
+                  GestureDetector(
+                    onTap: () {
                       setState(() {
                         _selectedFile = null;
                         _fileName = null;
                         _mimeType = null;
                       });
                     },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colorScheme.onSurface.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.close_rounded,
+                        color: colorScheme.onSurface.withOpacity(0.4),
+                        size: 18,
+                      ),
+                    ),
                   ),
                 ],
               )
             : Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.cloud_upload_rounded,
-                    size: 48,
-                    color: theme.colorScheme.onSurface.withOpacity(0.3),
+                  // Upload icon with dashed border effect
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: AppTheme.secondaryBrandColor.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppTheme.secondaryBrandColor.withOpacity(0.2),
+                        width: 2,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.upload_file_rounded,
+                      size: 28,
+                      color: AppTheme.secondaryBrandColor,
+                    ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   Text(
-                    'Dosya seçmek için dokun',
+                    'Dosya Yükle',
                     style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'PDF, PNG, JPG veya WEBP formatında',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colorScheme.onSurface.withOpacity(0.5),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'PDF, PNG, JPG, WEBP',
+                    'dokunarak yükle',
                     style: TextStyle(
                       fontSize: 12,
-                      color: theme.colorScheme.onSurface.withOpacity(0.4),
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.secondaryBrandColor.withOpacity(0.8),
                     ),
                   ),
                 ],
@@ -337,68 +521,86 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// İçerik türü seçici
   Widget _buildContentTypeSelector(ThemeData theme, bool isDark) {
-    return Column(
+    final colorScheme = theme.colorScheme;
+
+    return Row(
       children: ContentType.values.map((type) {
         final isSelected = _selectedContentType == type;
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: GestureDetector(
-            onTap: () => setState(() => _selectedContentType = type),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFF0EA5E9).withOpacity(0.1)
-                    : isDark
-                        ? Colors.white.withOpacity(0.03)
-                        : Colors.grey.withOpacity(0.03),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: isSelected
-                      ? const Color(0xFF0EA5E9).withOpacity(0.5)
-                      : theme.colorScheme.onSurface.withOpacity(0.08),
-                  width: isSelected ? 2 : 1.5,
+        final index = ContentType.values.indexOf(type);
+
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: index > 0 ? 5 : 0,
+              right: index < ContentType.values.length - 1 ? 5 : 0,
+            ),
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedContentType = type),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  gradient: isSelected
+                      ? LinearGradient(
+                          colors: [
+                            AppTheme.secondaryBrandColor.withOpacity(0.15),
+                            AppTheme.secondaryBrandColor.withOpacity(0.08),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        )
+                      : null,
+                  color: isSelected ? null : colorScheme.onSurface.withOpacity(0.03),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isSelected
+                        ? AppTheme.secondaryBrandColor.withOpacity(0.4)
+                        : colorScheme.onSurface.withOpacity(0.06),
+                    width: isSelected ? 1.5 : 1,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppTheme.secondaryBrandColor.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
                 ),
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    type.icon,
-                    style: const TextStyle(fontSize: 22),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          type.displayName,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                        Text(
-                          _getContentTypeDescription(type),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: theme.colorScheme.onSurface.withOpacity(0.5),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (isSelected)
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF0EA5E9),
-                        shape: BoxShape.circle,
+                child: Column(
+                  children: [
+                    Text(
+                      type.icon,
+                      style: TextStyle(
+                        fontSize: isSelected ? 26 : 24,
                       ),
-                      child: const Icon(Icons.check, color: Colors.white, size: 14),
                     ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      _getContentTypeShortName(type),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected
+                            ? AppTheme.secondaryBrandColor
+                            : colorScheme.onSurface.withOpacity(0.6),
+                        letterSpacing: isSelected ? 0.3 : 0,
+                      ),
+                    ),
+                    if (isSelected) ...[
+                      const SizedBox(height: 6),
+                      Container(
+                        width: 20,
+                        height: 3,
+                        decoration: BoxDecoration(
+                          color: AppTheme.secondaryBrandColor,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -407,12 +609,23 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     ).animate().fadeIn(delay: 150.ms, duration: 400.ms);
   }
 
+  String _getContentTypeShortName(ContentType type) {
+    switch (type) {
+      case ContentType.infoCards:
+        return 'Bilgi';
+      case ContentType.questionCards:
+        return 'Test';
+      case ContentType.summary:
+        return 'Özet';
+    }
+  }
+
   String _getContentTypeDescription(ContentType type) {
     switch (type) {
       case ContentType.infoCards:
         return 'Konuyu öğrenmek için kartlar';
       case ContentType.questionCards:
-        return 'Kendini test et';
+        return 'Çoktan seçmeli test';
       case ContentType.summary:
         return 'Hızlı tekrar için özet';
     }
@@ -420,31 +633,95 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Yükleniyor ekranı
   Widget _buildLoadingState(ThemeData theme, bool isDark) {
+    final colorScheme = theme.colorScheme;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Lottie.asset(
-            'assets/lotties/Brain.json',
-            width: 200,
-            height: 200,
+          // Tavşan avatar ile animasyon
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              // Dış halka animasyonu
+              Container(
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppTheme.secondaryBrandColor.withOpacity(0.15),
+                    width: 3,
+                  ),
+                ),
+              ).animate(onPlay: (c) => c.repeat())
+                  .scale(begin: const Offset(0.95, 0.95), end: const Offset(1.05, 1.05), duration: 1000.ms)
+                  .then()
+                  .scale(begin: const Offset(1.05, 1.05), end: const Offset(0.95, 0.95), duration: 1000.ms),
+              // İç container
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: AppTheme.secondaryBrandColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Image.asset(
+                    'assets/images/bunnyy.png',
+                    width: 60,
+                    height: 60,
+                    errorBuilder: (_, __, ___) => Text(
+                      '🐰',
+                      style: const TextStyle(fontSize: 40),
+                    ),
+                  ),
+                ),
+              ).animate(onPlay: (c) => c.repeat())
+                  .shimmer(duration: 1500.ms, color: AppTheme.secondaryBrandColor.withOpacity(0.3)),
+            ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           Text(
-            '${_selectedContentType.displayName} Üretiliyor...',
+            'Taktik Tavşan Çalışıyor',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurface,
+              color: colorScheme.onSurface,
+              letterSpacing: -0.3,
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Yapay zeka içeriğini analiz ediyor',
-            style: TextStyle(
-              fontSize: 14,
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                _selectedContentType.icon,
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '${_selectedContentType.displayName} üretiliyor',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: colorScheme.onSurface.withOpacity(0.5),
+                ),
+              ),
+              const SizedBox(width: 4),
+              SizedBox(
+                width: 20,
+                child: Text(
+                  '...',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                ).animate(onPlay: (c) => c.repeat())
+                    .fadeIn(duration: 600.ms)
+                    .then()
+                    .fadeOut(duration: 600.ms),
+              ),
+            ],
           ),
         ],
       ),
@@ -454,42 +731,88 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
   /// Sonuç ekranı
   Widget _buildResultState(ThemeData theme, bool isDark) {
     if (_result == null) return const SizedBox.shrink();
+    final colorScheme = theme.colorScheme;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Başarı göstergesi
+          // Başarı kartı
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [AppTheme.successBrandColor.withOpacity(0.15), AppTheme.successBrandColor.withOpacity(0.05)]
+                    : [AppTheme.successBrandColor.withOpacity(0.1), AppTheme.successBrandColor.withOpacity(0.03)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppTheme.successBrandColor.withOpacity(0.2),
+              ),
             ),
             child: Row(
               children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.green, size: 24),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    '${_result!.type.displayName} başarıyla oluşturuldu!',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface,
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppTheme.successBrandColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _result!.type.icon,
+                      style: const TextStyle(fontSize: 22),
                     ),
                   ),
                 ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _result!.type.displayName,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _result!.type == ContentType.summary
+                            ? 'Özet hazır'
+                            : '${_result!.cards?.length ?? 0} adet içerik oluşturuldu',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.successBrandColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.check_circle_rounded,
+                  color: AppTheme.successBrandColor,
+                  size: 24,
+                ),
               ],
             ),
-          ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.95, 0.95)),
+          ).animate().fadeIn(duration: 350.ms).scale(begin: const Offset(0.97, 0.97)),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           // İçerik görüntüleme
           if (_result!.type == ContentType.summary)
             _buildSummaryView(theme, isDark)
+          else if (_result!.type == ContentType.questionCards)
+            _buildQuizView(theme, isDark)
           else
             _buildCardsView(theme, isDark),
         ],
@@ -497,84 +820,434 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     );
   }
 
+  /// Quiz görünümü (çoktan seçmeli test)
+  Widget _buildQuizView(ThemeData theme, bool isDark) {
+    final cards = _result!.cards ?? [];
+    final colorScheme = theme.colorScheme;
+
+    if (cards.isEmpty) {
+      return Center(
+        child: Text(
+          'Soru oluşturulamadı.',
+          style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6)),
+        ),
+      );
+    }
+
+    return Column(
+      children: cards.asMap().entries.map((entry) {
+        final index = entry.key;
+        final card = entry.value;
+        final selectedAnswer = _selectedAnswers[index];
+        final isAnswered = selectedAnswer != null;
+        final hasOptions = card.options != null && card.options!.isNotEmpty;
+
+        // Eğer şıklar yoksa eski formatta göster
+        if (!hasOptions) {
+          return _buildOldQuestionCard(theme, isDark, index, card);
+        }
+
+        final isCorrect = isAnswered && selectedAnswer == card.correctIndex;
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isAnswered
+                    ? (isCorrect ? AppTheme.successBrandColor : AppTheme.accentBrandColor).withOpacity(0.3)
+                    : colorScheme.onSurface.withOpacity(0.08),
+                width: isAnswered ? 1.5 : 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Soru numarası ve metni
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppTheme.secondaryBrandColor.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Soru ${index + 1}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.secondaryBrandColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        card.content,
+                        style: TextStyle(
+                          fontSize: 15,
+                          height: 1.5,
+                          fontWeight: FontWeight.w500,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Şıklar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: card.options!.asMap().entries.map((optEntry) {
+                      final optIndex = optEntry.key;
+                      final optText = optEntry.value;
+                      final isSelected = selectedAnswer == optIndex;
+                      final isCorrectOption = card.correctIndex == optIndex;
+                      final optionLetter = String.fromCharCode(65 + optIndex); // A, B, C, D
+
+                      Color bgColor = colorScheme.onSurface.withOpacity(0.04);
+                      Color borderColor = colorScheme.onSurface.withOpacity(0.1);
+                      Color textColor = colorScheme.onSurface;
+
+                      if (isAnswered) {
+                        if (isCorrectOption) {
+                          bgColor = AppTheme.successBrandColor.withOpacity(0.1);
+                          borderColor = AppTheme.successBrandColor.withOpacity(0.4);
+                          textColor = AppTheme.successBrandColor;
+                        } else if (isSelected) {
+                          bgColor = AppTheme.accentBrandColor.withOpacity(0.1);
+                          borderColor = AppTheme.accentBrandColor.withOpacity(0.4);
+                          textColor = AppTheme.accentBrandColor;
+                        }
+                      } else if (isSelected) {
+                        bgColor = AppTheme.secondaryBrandColor.withOpacity(0.1);
+                        borderColor = AppTheme.secondaryBrandColor.withOpacity(0.4);
+                      }
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: GestureDetector(
+                          onTap: isAnswered ? null : () {
+                            setState(() {
+                              _selectedAnswers[index] = optIndex;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: bgColor,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: borderColor, width: 1.5),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: isAnswered && isCorrectOption
+                                        ? AppTheme.successBrandColor
+                                        : (isAnswered && isSelected
+                                            ? AppTheme.accentBrandColor
+                                            : Colors.transparent),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: isAnswered && (isCorrectOption || isSelected)
+                                          ? Colors.transparent
+                                          : colorScheme.onSurface.withOpacity(0.2),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: isAnswered && (isCorrectOption || isSelected)
+                                        ? Icon(
+                                            isCorrectOption ? Icons.check_rounded : Icons.close_rounded,
+                                            color: Colors.white,
+                                            size: 16,
+                                          )
+                                        : Text(
+                                            optionLetter,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: colorScheme.onSurface.withOpacity(0.6),
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    optText,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: isAnswered && (isCorrectOption || isSelected)
+                                          ? textColor
+                                          : colorScheme.onSurface.withOpacity(0.9),
+                                      fontWeight: isAnswered && isCorrectOption
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+
+                // Açıklama (cevaplandıktan sonra)
+                if (isAnswered && card.answer != null) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: (isCorrect ? AppTheme.successBrandColor : AppTheme.secondaryBrandColor).withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline_rounded,
+                          color: isCorrect ? AppTheme.successBrandColor : AppTheme.secondaryBrandColor,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            card.answer!,
+                            style: TextStyle(
+                              fontSize: 13,
+                              height: 1.5,
+                              color: colorScheme.onSurface.withOpacity(0.8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ).animate().fadeIn(duration: 300.ms),
+                ] else
+                  const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ).animate(delay: Duration(milliseconds: 80 * index)).fadeIn(duration: 350.ms).slideY(begin: 0.05, end: 0);
+      }).toList(),
+    );
+  }
+
+  /// Eski format soru kartı (şıksız)
+  Widget _buildOldQuestionCard(ThemeData theme, bool isDark, int index, ContentCard card) {
+    final isRevealed = _revealedAnswers[index] ?? false;
+    final colorScheme = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: colorScheme.onSurface.withOpacity(0.08),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.secondaryBrandColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Soru ${index + 1}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.secondaryBrandColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    card.content,
+                    style: TextStyle(
+                      fontSize: 15,
+                      height: 1.5,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  if (card.hint != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.goldBrandColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.lightbulb_outline_rounded, color: AppTheme.goldBrandColor, size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              card.hint!,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (card.answer != null) ...[
+                    const SizedBox(height: 12),
+                    if (!isRevealed)
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _revealedAnswers[index] = true;
+                            });
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppTheme.secondaryBrandColor,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                          child: const Text('Cevabı Göster'),
+                        ),
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.successBrandColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.check_circle_rounded, color: AppTheme.successBrandColor, size: 16),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                card.answer!,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: colorScheme.onSurface.withOpacity(0.8),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ).animate().fadeIn(duration: 300.ms),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate(delay: Duration(milliseconds: 80 * index)).fadeIn(duration: 350.ms).slideY(begin: 0.05, end: 0);
+  }
+
   /// Özet görünümü
   Widget _buildSummaryView(ThemeData theme, bool isDark) {
+    final colorScheme = theme.colorScheme;
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: theme.colorScheme.onSurface.withOpacity(0.08),
+          color: colorScheme.onSurface.withOpacity(0.06),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: MarkdownBody(
         data: _result!.summary ?? _result!.rawContent,
         selectable: true,
         styleSheet: MarkdownStyleSheet(
           h1: TextStyle(
-            fontSize: 22,
+            fontSize: 20,
             fontWeight: FontWeight.w700,
-            color: theme.colorScheme.onSurface,
+            color: colorScheme.onSurface,
             height: 1.4,
           ),
           h2: TextStyle(
-            fontSize: 18,
+            fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: theme.colorScheme.primary,
+            color: AppTheme.secondaryBrandColor,
             height: 1.4,
           ),
           h3: TextStyle(
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface,
+            color: colorScheme.onSurface,
             height: 1.4,
           ),
           p: TextStyle(
-            fontSize: 15,
-            height: 1.7,
-            color: theme.colorScheme.onSurface.withOpacity(0.9),
+            fontSize: 14,
+            height: 1.65,
+            color: colorScheme.onSurface.withOpacity(0.85),
           ),
           listBullet: TextStyle(
-            color: theme.colorScheme.primary,
-            fontSize: 15,
+            color: AppTheme.secondaryBrandColor,
+            fontSize: 14,
           ),
-          listIndent: 20,
+          listIndent: 18,
           strong: TextStyle(
             fontWeight: FontWeight.w700,
-            color: theme.colorScheme.onSurface,
+            color: colorScheme.onSurface,
           ),
           em: TextStyle(
             fontStyle: FontStyle.italic,
-            color: theme.colorScheme.onSurface.withOpacity(0.85),
+            color: colorScheme.onSurface.withOpacity(0.8),
           ),
           blockquote: TextStyle(
-            color: theme.colorScheme.onSurface.withOpacity(0.8),
+            color: colorScheme.onSurface.withOpacity(0.75),
             fontStyle: FontStyle.italic,
-            fontSize: 14,
+            fontSize: 13,
           ),
           blockquoteDecoration: BoxDecoration(
-            color: const Color(0xFF0EA5E9).withOpacity(0.08),
-            borderRadius: BorderRadius.circular(8),
+            color: AppTheme.secondaryBrandColor.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(6),
             border: Border(
               left: BorderSide(
-                color: const Color(0xFF0EA5E9),
-                width: 4,
+                color: AppTheme.secondaryBrandColor,
+                width: 3,
               ),
             ),
           ),
-          blockquotePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          blockquotePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           horizontalRuleDecoration: BoxDecoration(
             border: Border(
               top: BorderSide(
-                color: theme.colorScheme.onSurface.withOpacity(0.1),
+                color: colorScheme.onSurface.withOpacity(0.08),
                 width: 1,
               ),
             ),
@@ -586,13 +1259,13 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
           code: TextStyle(
             backgroundColor: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
             fontFamily: 'monospace',
-            fontSize: 13,
-            color: theme.colorScheme.onSurface,
+            fontSize: 12,
+            color: colorScheme.onSurface,
           ),
         ),
         builders: {
           'latex': _LatexElementBuilder(
-            textStyle: TextStyle(color: theme.colorScheme.onSurface),
+            textStyle: TextStyle(color: colorScheme.onSurface),
           ),
         },
         extensionSet: md.ExtensionSet(
@@ -600,18 +1273,19 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
           [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, _LatexInlineSyntax()],
         ),
       ),
-    ).animate().fadeIn(delay: 200.ms, duration: 400.ms).slideY(begin: 0.1, end: 0);
+    ).animate().fadeIn(delay: 150.ms, duration: 350.ms);
   }
 
-  /// Kartlar görünümü
+  /// Kartlar görünümü (Bilgi kartları için)
   Widget _buildCardsView(ThemeData theme, bool isDark) {
     final cards = _result!.cards ?? [];
+    final colorScheme = theme.colorScheme;
 
     if (cards.isEmpty) {
       return Center(
         child: Text(
           'Kart oluşturulamadı.',
-          style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+          style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6)),
         ),
       );
     }
@@ -620,64 +1294,55 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       children: cards.asMap().entries.map((entry) {
         final index = entry.key;
         final card = entry.value;
-        final isQuestion = _result!.type == ContentType.questionCards;
-        final isRevealed = _revealedAnswers[index] ?? false;
 
         return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.only(bottom: 12),
           child: Container(
             decoration: BoxDecoration(
               color: theme.cardColor,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: theme.colorScheme.onSurface.withOpacity(0.08),
+                color: colorScheme.onSurface.withOpacity(0.06),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Kart başlığı
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0EA5E9).withOpacity(0.08),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    color: AppTheme.secondaryBrandColor.withOpacity(0.06),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
                   ),
                   child: Row(
                     children: [
                       Container(
-                        width: 32,
-                        height: 32,
+                        width: 26,
+                        height: 26,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0EA5E9),
-                          borderRadius: BorderRadius.circular(8),
+                          color: AppTheme.secondaryBrandColor,
+                          borderRadius: BorderRadius.circular(7),
                         ),
                         child: Center(
                           child: Text(
                             '${index + 1}',
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: Colors.black,
                               fontWeight: FontWeight.w700,
-                              fontSize: 14,
+                              fontSize: 12,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           card.title,
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: theme.colorScheme.onSurface,
+                            color: colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -688,146 +1353,38 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                 // Kart içeriği
                 Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      MarkdownBody(
-                        data: card.content,
-                        styleSheet: MarkdownStyleSheet(
-                          p: TextStyle(
-                            fontSize: 14,
-                            height: 1.6,
-                            color: theme.colorScheme.onSurface.withOpacity(0.9),
-                          ),
-                          strong: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                        builders: {
-                          'latex': _LatexElementBuilder(
-                            textStyle: TextStyle(color: theme.colorScheme.onSurface),
-                          ),
-                        },
-                        extensionSet: md.ExtensionSet(
-                          [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
-                          [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, _LatexInlineSyntax()],
-                        ),
+                  child: MarkdownBody(
+                    data: card.content,
+                    styleSheet: MarkdownStyleSheet(
+                      p: TextStyle(
+                        fontSize: 14,
+                        height: 1.6,
+                        color: colorScheme.onSurface.withOpacity(0.85),
                       ),
-
-                      // Soru kartları için ipucu ve cevap
-                      if (isQuestion && card.hint != null) ...[
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.lightbulb_outline_rounded, color: Colors.amber, size: 20),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'İpucu: ${card.hint}',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: theme.colorScheme.onSurface.withOpacity(0.8),
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-
-                      if (isQuestion && card.answer != null) ...[
-                        const SizedBox(height: 12),
-                        if (!isRevealed)
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                setState(() {
-                                  _revealedAnswers[index] = true;
-                                });
-                              },
-                              icon: const Icon(Icons.visibility_rounded, size: 18),
-                              label: const Text('Cevabı Göster'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF0EA5E9),
-                                side: const BorderSide(color: Color(0xFF0EA5E9)),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          )
-                        else
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.green.withOpacity(0.3)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(Icons.check_circle_rounded, color: Colors.green, size: 18),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Cevap',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: theme.colorScheme.onSurface,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                MarkdownBody(
-                                  data: card.answer!,
-                                  styleSheet: MarkdownStyleSheet(
-                                    p: TextStyle(
-                                      fontSize: 14,
-                                      height: 1.6,
-                                      color: theme.colorScheme.onSurface.withOpacity(0.9),
-                                    ),
-                                    strong: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      color: theme.colorScheme.onSurface,
-                                    ),
-                                  ),
-                                  builders: {
-                                    'latex': _LatexElementBuilder(
-                                      textStyle: TextStyle(color: theme.colorScheme.onSurface),
-                                    ),
-                                  },
-                                  extensionSet: md.ExtensionSet(
-                                    [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
-                                    [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, _LatexInlineSyntax()],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ).animate().fadeIn(duration: 300.ms).slideY(begin: -0.1, end: 0),
-                      ],
-                    ],
+                      strong: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    builders: {
+                      'latex': _LatexElementBuilder(
+                        textStyle: TextStyle(color: colorScheme.onSurface),
+                      ),
+                    },
+                    extensionSet: md.ExtensionSet(
+                      [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
+                      [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, _LatexInlineSyntax()],
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-        ).animate(delay: Duration(milliseconds: 100 * index)).fadeIn(duration: 400.ms).slideX(begin: 0.05, end: 0);
+        ).animate(delay: Duration(milliseconds: 60 * index)).fadeIn(duration: 300.ms).slideY(begin: 0.03, end: 0);
       }).toList(),
     );
   }
+
 
   // --- İşlevler ---
 
@@ -884,6 +1441,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         _result = result;
         _isLoading = false;
         _revealedAnswers.clear();
+        _selectedAnswers.clear();
       });
     } catch (e) {
       setState(() {
@@ -902,6 +1460,18 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       _result = null;
       _error = null;
       _revealedAnswers.clear();
+      _selectedAnswers.clear();
+    });
+  }
+
+  /// Yeni içerik oluştur - dosyayı koru
+  void _createNewContent() {
+    setState(() {
+      _result = null;
+      _error = null;
+      _revealedAnswers.clear();
+      _selectedAnswers.clear();
+      // Dosya korunuyor, kullanıcı başka içerik türü seçebilir
     });
   }
 

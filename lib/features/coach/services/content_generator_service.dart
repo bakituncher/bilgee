@@ -29,7 +29,7 @@ extension ContentTypeExtension on ContentType {
       case ContentType.infoCards:
         return '📚';
       case ContentType.questionCards:
-        return '❓';
+        return '✅';
       case ContentType.summary:
         return '📝';
     }
@@ -59,20 +59,44 @@ class ContentCard {
   final String content;
   final String? hint; // Soru kartları için ipucu
   final String? answer; // Soru kartları için cevap
+  final List<String>? options; // Test şıkları (A, B, C, D)
+  final int? correctIndex; // Doğru şık indeksi (0-3)
 
   ContentCard({
     required this.title,
     required this.content,
     this.hint,
     this.answer,
+    this.options,
+    this.correctIndex,
   });
 
   factory ContentCard.fromJson(Map<String, dynamic> json) {
+    // Şıkları parse et
+    List<String>? options;
+    if (json['options'] != null) {
+      options = (json['options'] as List).map((e) => e.toString()).toList();
+    } else if (json['siklar'] != null) {
+      options = (json['siklar'] as List).map((e) => e.toString()).toList();
+    }
+
+    // Doğru cevap indeksini parse et
+    int? correctIndex;
+    if (json['correctIndex'] != null) {
+      correctIndex = json['correctIndex'] as int;
+    } else if (json['dogruIndex'] != null) {
+      correctIndex = json['dogruIndex'] as int;
+    } else if (json['correct_index'] != null) {
+      correctIndex = json['correct_index'] as int;
+    }
+
     return ContentCard(
       title: json['title'] ?? json['baslik'] ?? '',
-      content: json['content'] ?? json['icerik'] ?? '',
+      content: json['content'] ?? json['icerik'] ?? json['question'] ?? json['soru'] ?? '',
       hint: json['hint'] ?? json['ipucu'],
-      answer: json['answer'] ?? json['cevap'],
+      answer: json['answer'] ?? json['cevap'] ?? json['explanation'] ?? json['aciklama'],
+      options: options,
+      correctIndex: correctIndex,
     );
   }
 }
@@ -194,29 +218,32 @@ SADECE JSON döndür, başka hiçbir şey yazma.
 
       case ContentType.questionCards:
         return '''
-Sen bir sınav hazırlık uzmanısın. Gönderilen PDF veya görsel içindeki bilgileri analiz et ve öğrencinin kendini test edebileceği soru kartları oluştur.$examContext
+Sen bir sınav hazırlık uzmanısın. Gönderilen PDF veya görsel içindeki bilgileri analiz et ve çoktan seçmeli test soruları oluştur.$examContext
 
 GÖREVİN:
-Verilen içerikten 5-10 adet soru kartı oluştur. Her soru, içerikteki önemli bir kavramı test etmeli.
+Verilen içerikten 5-10 adet çoktan seçmeli test sorusu oluştur. Her soru 4 şıklı (A, B, C, D) olmalı.
 
 KURALLAR:
-1. Sorular açık ve anlaşılır olmalı.
-2. Farklı zorluk seviyelerinde sorular oluştur (kolay, orta, zor).
-3. Her sorunun bir ipucu ve doğru cevabı olmalı.
-4. Sınavda çıkabilecek tarzda sorular sor.
+1. Sorular net, anlaşılır ve sınav formatında olmalı.
+2. Her sorunun 4 şıkkı olmalı, sadece 1 tanesi doğru.
+3. Şıklar mantıklı ve birbirine yakın olmalı (çeldirici şıklar).
+4. Farklı zorluk seviyelerinde sorular oluştur.
+5. Her sorunun kısa bir açıklaması (neden doğru cevap bu) olmalı.
 
 JSON formatında yanıt ver:
 {
   "cards": [
     {
-      "title": "Soru",
-      "content": "Soru metni buraya gelecek.",
-      "hint": "Bu soruyu çözerken dikkat etmen gereken ipucu.",
-      "answer": "Doğru cevap ve kısa açıklama."
+      "title": "Soru 1",
+      "content": "Soru metni buraya gelecek?",
+      "options": ["A şıkkı metni", "B şıkkı metni", "C şıkkı metni", "D şıkkı metni"],
+      "correctIndex": 0,
+      "explanation": "Doğru cevap A çünkü..."
     }
   ]
 }
 
+ÖNEMLİ: correctIndex 0'dan başlar (0=A, 1=B, 2=C, 3=D).
 SADECE JSON döndür, başka hiçbir şey yazma.
 ''';
 
