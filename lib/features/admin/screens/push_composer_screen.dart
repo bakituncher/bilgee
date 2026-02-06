@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class PushComposerScreen extends StatefulWidget {
   const PushComposerScreen({super.key});
@@ -400,17 +401,10 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
         final isAdmin = ref.watch(isAdminAsync).value ?? false;
         if (!isAdmin) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Bildirim Gönder'), leading: IconButton(
-              tooltip: 'Geri',
-              icon: const Icon(Icons.arrow_back_rounded),
-              onPressed: () {
-                if (Navigator.of(context).canPop()) {
-                  Navigator.of(context).pop();
-                } else {
-                  context.go('/home');
-                }
-              },
-            )),
+            appBar: AppBar(
+              title: const Text('Bildirim Gönder'),
+              leading: const CustomBackButton(),
+            ),
             body: const Center(child: Text('Bu sayfayı görüntülemek için yetkiniz yok.')),
           );
         }
@@ -446,17 +440,7 @@ class _PushComposerScreenState extends State<PushComposerScreen> {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Bildirim Gönder'),
-            leading: IconButton(
-              tooltip: 'Geri',
-              icon: const Icon(Icons.arrow_back_rounded),
-              onPressed: () {
-                if (Navigator.of(context).canPop()) {
-                  Navigator.of(context).pop();
-                } else {
-                  context.go('/home');
-                }
-              },
-            ),
+            leading: const CustomBackButton(),
             actions: [
               IconButton(
                 tooltip: _simpleMode ? 'Detaylı görünüm' : 'Basit görünüm',

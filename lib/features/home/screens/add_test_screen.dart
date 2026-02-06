@@ -9,6 +9,7 @@ import '../widgets/add_test_step1.dart';
 import '../widgets/add_test_step2.dart';
 import '../widgets/add_test_step3.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class AddTestScreen extends ConsumerWidget {
   const AddTestScreen({super.key});
@@ -73,6 +74,7 @@ class AddTestScreen extends ConsumerWidget {
 
         return Scaffold(
           appBar: AppBar(
+            leading: const CustomBackButton(),
             title: Text('${selectedExamType.displayName} Sonuç Bildirimi'),
             // İsteğe bağlı: Geri butonu davranışını state'i temizlemek için özelleştirebilirsiniz.
           ),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/core/services/version_check_service.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class VersionManagementScreen extends ConsumerStatefulWidget {
   const VersionManagementScreen({super.key});
@@ -154,10 +155,7 @@ class _VersionManagementScreenState extends ConsumerState<VersionManagementScree
     return Scaffold(
       appBar: AppBar(
         title: const Text('Versiyon Yönetimi'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
+        leading: const CustomBackButton(),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

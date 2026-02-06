@@ -63,7 +63,17 @@ class NotificationService {
 
     // DÜZELTME: '@mipmap/ic_launcher' yerine Manifest'teki '@mipmap/launcher_icon' kullanılmalı
     const androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
-    const iOSInit = DarwinInitializationSettings();
+
+    // ÖNEMLİ DÜZELTME:
+    // iOS için varsayılan izin isteklerini 'false' yapıyoruz.
+    // Böylece uygulama açılır açılmaz sistem dialog'u çıkmaz.
+    // İzinler NotificationPermissionScreen'de manuel olarak istenecek.
+    const iOSInit = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
+
     const initSettings = InitializationSettings(android: androidInit, iOS: iOSInit);
     await _fln.initialize(initSettings, onDidReceiveNotificationResponse: (resp) {
       final route = resp.payload;
@@ -82,23 +92,11 @@ class NotificationService {
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_channel!);
 
-    // Android 13+ bildirim izni – areNotificationsEnabled ile kontrol ve gerekirse iste
-    try {
-      final androidFln = _fln.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-      final enabled = await androidFln?.areNotificationsEnabled() ?? true;
-      if (!enabled && Platform.isAndroid) {
-        final status = await ph.Permission.notification.status;
-        if (!status.isGranted) {
-          await ph.Permission.notification.request();
-        }
-      }
-    } catch (_) {}
-
     // iOS foreground sunum ayarları
     await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(alert: false, badge: true, sound: false);
 
-    await _requestPermission();
-
+    // NOT: Bildirim izni artık NotificationPermissionScreen'de isteniyor
+    // İzin durumunu kontrol edip token'ı kaydet
     await _ensureAndRegisterToken();
     FirebaseMessaging.instance.onTokenRefresh.listen((t) {
       _registerToken(t, _appVersion, _appBuild);
@@ -130,63 +128,25 @@ class NotificationService {
     // Arka planda sistem bildirimi zaten gösterilir.
   }
 
-  Future<void> _requestPermission() async {
-    try {
-      // iOS için önce App Tracking Transparency (ATT) iznini iste
-      if (Platform.isIOS) {
-        try {
-          final trackingStatus = await AppTrackingTransparency.trackingAuthorizationStatus;
-
-          if (trackingStatus == TrackingStatus.notDetermined) {
-            // Sistemin hazır olması için kısa bir bekleme
-            await Future.delayed(const Duration(milliseconds: 500));
-
-            // ATT izin penceresini göster
-            final newStatus = await AppTrackingTransparency.requestTrackingAuthorization();
-
-            if (kDebugMode) {
-              debugPrint('ATT izin durumu: $newStatus');
-            }
-          } else {
-            if (kDebugMode) {
-              debugPrint('ATT izin durumu (mevcut): $trackingStatus');
-            }
-          }
-        } catch (e) {
-          if (kDebugMode) debugPrint('ATT izin talebi hatası: $e');
-        }
-      }
-
-      // ATT izni alındıktan sonra bildirim iznini iste
-      final settings = await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        announcement: true,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
-      );
-
-      if (kDebugMode) {
-        debugPrint('Bildirim izin durumu: ${settings.authorizationStatus}');
-        debugPrint('Alert: ${settings.alert}, Badge: ${settings.badge}, Sound: ${settings.sound}');
-      }
-
-      // iOS için ek kontrol
-      if (Platform.isIOS) {
-        final token = await FirebaseMessaging.instance.getAPNSToken();
-        if (kDebugMode) {
-          debugPrint('APNS Token: ${token != null ? "Alındı" : "Alınamadı"}');
-        }
-      }
-    } catch (e) {
-      if (kDebugMode) debugPrint('İzin talebi hatası: $e');
-    }
-  }
 
   Future<void> _ensureAndRegisterToken() async {
     try {
+      // iOS'ta izin verilmeden token almaya çalışmak izin dialogu açabilir
+      // Bu yüzden önce izin durumunu kontrol ediyoruz
+      final settings = await FirebaseMessaging.instance.getNotificationSettings();
+      if (settings.authorizationStatus == AuthorizationStatus.notDetermined) {
+        // İzin henüz sorulmamış, NotificationPermissionScreen'de sorulacak
+        if (kDebugMode) debugPrint('FCM: İzin henüz sorulmamış, token alınmadı');
+        return;
+      }
+
+      if (settings.authorizationStatus == AuthorizationStatus.denied) {
+        // İzin reddedilmiş, token almaya gerek yok
+        if (kDebugMode) debugPrint('FCM: İzin reddedilmiş, token alınmadı');
+        return;
+      }
+
+      // İzin verilmiş veya provisional, token alabiliriz
       final token = await FirebaseMessaging.instance.getToken();
       if (token != null) await _registerToken(token, _appVersion, _appBuild);
     } catch (e) {
@@ -249,6 +209,21 @@ class NotificationService {
       if (kDebugMode) debugPrint('Yeni giriş için token yenilendi');
     } catch (e) {
       if (kDebugMode) debugPrint('Token yenileme hatası: $e');
+    }
+  }
+
+  /// Bildirim izni verildikten sonra çağrılmalı - token'ı kaydeder
+  /// NotificationPermissionScreen'den çağrılır
+  Future<void> registerTokenAfterPermissionGranted() async {
+    try {
+      // İzin verildi, şimdi token alabiliriz
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        await _registerToken(token, _appVersion, _appBuild);
+        if (kDebugMode) debugPrint('İzin sonrası FCM token kaydedildi');
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('İzin sonrası token kaydı hatası: $e');
     }
   }
 

@@ -239,7 +239,7 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
     // Sekme bazlı özellikler
     final features = title == 'Taktik Raporun'
         ? [
-      _FeatureItem(Icons.psychology_rounded, 'Yapay Zeka Analizi', 'Performansını derinlemesine analiz et'),
+      _FeatureItem(Icons.psychology_rounded, 'Taktik Analizi', 'Performansını derinlemesine analiz et'),
       _FeatureItem(Icons.lightbulb_rounded, 'Kişisel Öneriler', 'Sana özel strateji tavsiyeleri'),
       _FeatureItem(Icons.trending_up_rounded, 'Gelişim Yol Haritası', 'Adım adım ilerleme planı'),
     ]

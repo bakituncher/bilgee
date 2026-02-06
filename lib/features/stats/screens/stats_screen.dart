@@ -13,6 +13,7 @@ import 'package:taktik/features/stats/widgets/fortress_tab_selector.dart';
 import 'package:taktik/features/stats/widgets/cached_analysis_view.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/shared/widgets/pro_badge.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 final selectedTabIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -383,6 +384,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             scrolledUnderElevation: 0,
             centerTitle: false,
             titleSpacing: 12,
+            leading: const CustomBackButton(),
             title: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

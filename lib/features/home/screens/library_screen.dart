@@ -14,6 +14,7 @@ import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:lottie/lottie.dart';
 import 'dart:ui';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({super.key});
@@ -284,20 +285,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 22,
-            color: theme.colorScheme.onSurface.withOpacity(0.9),
-          ),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/home');
-            }
-          },
-        ),
+        leading: const CustomBackButton(),
         title: Text(
           'Deneme Arşivi',
           style: theme.textTheme.titleMedium?.copyWith(

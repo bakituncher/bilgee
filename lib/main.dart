@@ -350,7 +350,7 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
       'iconName': 'menu_book',
       'color': const Color(0xFF8B5CF6),
       'marketingTitle': 'Eksiklerini Kapat!',
-      'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
+      'marketingSubtitle': 'Taktik, sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
       'redirectRoute': '/ai-hub/weakness-workshop',
     },
     '/ai-hub/strategic-planning': {

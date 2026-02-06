@@ -8,6 +8,7 @@ import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class NotificationCenterScreen extends ConsumerWidget {
   const NotificationCenterScreen({super.key});
@@ -28,18 +29,16 @@ class NotificationCenterScreen extends ConsumerWidget {
         }
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Bildirimler'),
-          leading: IconButton(
-            tooltip: 'Geri',
-            icon: const Icon(Icons.arrow_back_rounded),
-            onPressed: () async {
-              final popped = await Navigator.of(context).maybePop();
-              if (!popped) {
-                if (context.mounted) context.go('/home');
-              }
-            },
-          ),
+      appBar: AppBar(
+        title: const Text('Bildirimler'),
+        leading: CustomBackButton(
+          onPressed: () async {
+            final popped = await Navigator.of(context).maybePop();
+            if (!popped) {
+              if (context.mounted) context.go('/home');
+            }
+          },
+        ),
           actions: [
             IconButton(
               tooltip: 'Tümünü okundu işaretle',

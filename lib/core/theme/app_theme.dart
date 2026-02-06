@@ -144,7 +144,9 @@ class AppTheme {
           fontSize: 20,
           color: textColor,
         ),
-        iconTheme: const IconThemeData(color: secondaryBrandColor),
+        iconTheme: IconThemeData(
+          color: isDark ? Colors.white : Colors.black,
+        ),
       ),
       iconTheme: IconThemeData(color: secondaryTextColor),
       tooltipTheme: TooltipThemeData(

@@ -16,6 +16,7 @@ import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/core/theme/theme_provider.dart';
 import 'package:taktik/core/utils/app_info_provider.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -817,11 +818,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         centerTitle: true,
         elevation: 0,
         automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Geri',
-          onPressed: handleBack,
-        ),
+        leading: CustomBackButton(onPressed: handleBack),
       ),
       body: user == null
           ? const LogoLoader()

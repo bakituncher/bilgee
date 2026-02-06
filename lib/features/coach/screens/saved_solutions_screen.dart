@@ -18,6 +18,7 @@ import 'package:taktik/features/coach/models/saved_solution_model.dart';
 import 'package:taktik/features/coach/providers/saved_solutions_provider.dart';
 import 'package:taktik/features/coach/screens/subject_solutions_screen.dart';
 import 'package:taktik/utils/subject_utils.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class SavedSolutionsScreen extends ConsumerStatefulWidget {
   final bool isSelectionMode; // Ders seçim modu aktif mi?
@@ -620,7 +621,7 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
-          widget.isSelectionMode ? 'Nereye Kaydedelim?' : 'Soru Kutusu',
+          widget.isSelectionMode ? 'Nereye Kaydedelim?' : 'Soru Kutum',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: theme.scaffoldBackgroundColor,
@@ -631,16 +632,7 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
           icon: const Icon(Icons.close_rounded),
           onPressed: () => Navigator.pop(context),
         )
-            : IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go(AppRoutes.home);
-            }
-          },
-        ),
+            : const CustomBackButton(),
         actions: [
           IconButton(
             onPressed: _showInfoSheet,

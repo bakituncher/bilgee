@@ -6,6 +6,7 @@ import 'logic/pomodoro_notifier.dart';
 import 'widgets/pomodoro_stats_view.dart';
 import 'widgets/pomodoro_timer_view.dart';
 import 'widgets/pomodoro_completed_view.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class PomodoroScreen extends ConsumerStatefulWidget {
   const PomodoroScreen({super.key});
@@ -93,6 +94,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> with TickerProv
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
+          leading: const CustomBackButton(color: Colors.white),
           iconTheme: const IconThemeData(color: Colors.white),
           titleTextStyle: const TextStyle(
             color: Colors.white,

@@ -5,6 +5,7 @@ import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/core/utils/exam_utils.dart';
 import 'package:taktik/utils/subject_utils.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class SelectSubjectScreen extends ConsumerWidget {
   const SelectSubjectScreen({super.key});
@@ -80,13 +81,7 @@ class SelectSubjectScreen extends ConsumerWidget {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       elevation: 0,
       surfaceTintColor: Colors.transparent,
-      leading: IconButton(
-        icon: Icon(
-          Icons.arrow_back,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
-        onPressed: () => context.pop(),
-      ),
+      leading: const CustomBackButton(),
       title: Text(
         'Ders Seçimi',
         style: Theme.of(context).textTheme.titleLarge?.copyWith(

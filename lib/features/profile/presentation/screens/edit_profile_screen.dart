@@ -5,6 +5,7 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/profile/application/profile_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:taktik/shared/widgets/custom_date_picker.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -175,11 +176,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profilimi Düzenle'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Geri',
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        leading: const CustomBackButton(),
       ),
       body: userProfileAsync.when(
         data: (user) {

@@ -4,7 +4,7 @@ class MotivationQuotesData {
   static const List<(String quote, String author)> quotes = [
     // Eğitim ve Öğrenme (50 söz)
     ('Eğitim, geleceğe açılan en güçlü kapıdır.', 'Nelson Mandela'),
-    ('Öğrenmek, yaşam boyu süren bir macerадır.', 'Sokrates'),
+    ('Öğrenmek, yaşam boyu süren bir macerаdır.', 'Sokrates'),
     ('Bilgi güçtür, ama uygulama başarıdır.', 'Francis Bacon'),
     ('Her gün biraz daha iyi olmak, mükemmelliğe giden yoldur.', 'Konfüçyüs'),
     ('Başarısızlık, başarının ilk adımıdır.', 'Thomas Edison'),
@@ -277,7 +277,7 @@ class MotivationQuotesData {
     ('Eleştirel düşünce, kaliteyi artırır.', 'Anonim'),
     ('Akıl, en güvenilir rehberimizdir.', 'Anonim'),
     ('Zihinsel dayanıklılık, uzun vadeli başarıyı getirir.', 'Anonim'),
-    ('Her problemi bir bulmacа gibi çözün.', 'Anonim'),
+    ('Her problemi bir bulmaca gibi çözün.', 'Anonim'),
     ('Düşünme gücünüz, potansiyelinizi belirler.', 'Anonim'),
     ('Mantıklı yaklaşım, etkili sonuç doğurur.', 'Anonim'),
     ('Zihin açıklığı, fırsat yaratır.', 'Anonim'),

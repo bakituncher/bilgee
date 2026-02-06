@@ -75,7 +75,7 @@ const PREMIUM_SALES_MESSAGES = [
   },
   {
     title: 'Soru çözerken takıldın mı? 🤔',
-    body: 'Fotoğrafla, yapay zeka sana adım adım anlatsın. Daha kolay öğrenmenin yolu bu!',
+    body: 'Fotoğrafla, Taktik sana adım adım anlatsın. Daha kolay öğrenmenin yolu bu!',
     route: '/ai-hub'
   },
 
@@ -126,7 +126,7 @@ const PREMIUM_SALES_MESSAGES = [
   },
   {
     title: 'Akıllı çalışmanın sırrı burada 🔓',
-    body: 'Yapay zeka destekli soru çözümü, konu analizi ve kişisel plan. Tüm araçlar emrinde!',
+    body: 'Soru çözümü, konu analizi, kişisel plan ve zihin haritaları. Tüm araçlar emrinde!',
     route: '/premium'
   },
   {

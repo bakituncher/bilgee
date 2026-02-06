@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 final _reportSearchProvider = StateProvider.autoDispose<String>((_) => '');
 
@@ -32,16 +33,7 @@ class QuestionReportsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Cevher Bildirimleri'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/home');
-            }
-          },
-        ),
+        leading: const CustomBackButton(),
       ),
       body: isAdminAsync.when(
         data: (isAdmin) {

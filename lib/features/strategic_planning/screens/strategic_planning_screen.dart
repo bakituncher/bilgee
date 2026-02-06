@@ -13,6 +13,7 @@ import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/models/plan_document.dart';
 import 'package:lottie/lottie.dart';
 import 'package:taktik/core/safety/ai_content_safety.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 enum Pacing { relaxed, moderate, intense }
 enum PlanningStep { dataCheck, confirmation, pacing, loading }
@@ -137,7 +138,10 @@ class StrategicPlanningScreen extends ConsumerWidget {
             }
           },
           child: Scaffold(
-            appBar: AppBar(title: const Text('Strateji Oturumu')),
+            appBar: AppBar(
+              title: const Text('Strateji Oturumu'),
+              leading: const CustomBackButton(),
+            ),
             body: AnimatedSwitcher(
               duration: 400.ms,
               transitionBuilder: (child, animation) {
@@ -336,6 +340,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: const CustomBackButton(),
       ),
       body: Container(
         decoration: BoxDecoration(

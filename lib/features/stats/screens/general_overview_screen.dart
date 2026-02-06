@@ -6,6 +6,7 @@ import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/stats/widgets/overview_content.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 /// Redesigned General Overview Screen with sector-level education analytics
 /// Features: Modern design, comprehensive metrics, interactive charts, elegant UI
@@ -107,33 +108,7 @@ class _GeneralOverviewScreenState extends ConsumerState<GeneralOverviewScreen> {
           ],
         ),
         automaticallyImplyLeading: false,
-        leading: Container(
-          margin: const EdgeInsets.only(left: 8),
-          child: IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withOpacity(0.08)
-                    : Colors.black.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.1)
-                      : Colors.black.withOpacity(0.08),
-                  width: 1,
-                ),
-              ),
-              child: Icon(
-                Icons.arrow_back_rounded,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
-                size: 18,
-              ),
-            ),
-            tooltip: 'Geri',
-            onPressed: () => _handleBack(context),
-          ),
-        ),
+        leading: CustomBackButton(onPressed: () => _handleBack(context)),
       ),
       body: SafeArea(
         child: userAsync.when(

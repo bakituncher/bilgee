@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class AdminPanelScreen extends ConsumerWidget {
   const AdminPanelScreen({super.key});
@@ -11,10 +12,7 @@ class AdminPanelScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Admin Paneli'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
+        leading: const CustomBackButton(),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),

@@ -15,6 +15,7 @@ import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/data/providers/monetization_provider.dart';
 import 'package:taktik/core/services/monetization_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 final _updateModeProvider = StateProvider.autoDispose<bool>((ref) => true);
 final _sessionQuestionCountProvider = StateProvider.autoDispose<int>((ref) => 20);
@@ -50,6 +51,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
         title: Text(topic),
         elevation: 0,
         backgroundColor: Colors.transparent,
+        leading: const CustomBackButton(),
       ),
       body: Column(
         children: [
@@ -454,7 +456,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
                               'color': const Color(0xFF8B5CF6),
                               'heroTag': 'workshop-offer-${topic.hashCode}',
                               'marketingTitle': 'Eksiklerini Kapat!',
-                              'marketingSubtitle': 'Yapay zeka sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
+                              'marketingSubtitle': 'Taktik; sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
                               'redirectRoute': '/ai-hub/${AppRoutes.weaknessWorkshop}?subject=${Uri.encodeComponent(subject)}&topic=${Uri.encodeComponent(topic)}',
                             },
                           );

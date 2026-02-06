@@ -6,6 +6,7 @@ import 'package:taktik/features/mind_map/screens/mind_map_screen.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'dart:convert';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class SavedMindMapsScreen extends ConsumerStatefulWidget {
   const SavedMindMapsScreen({super.key});
@@ -31,7 +32,10 @@ class _SavedMindMapsScreenState extends ConsumerState<SavedMindMapsScreen> {
 
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Zihin Haritalarım')),
+        appBar: AppBar(
+          title: const Text('Zihin Haritalarım'),
+          leading: const CustomBackButton(),
+        ),
         body: const Center(child: Text('Kullanıcı bulunamadı')),
       );
     }
@@ -42,6 +46,7 @@ class _SavedMindMapsScreenState extends ConsumerState<SavedMindMapsScreen> {
         title: const Text('Zihin Haritalarım'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: const CustomBackButton(),
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: ref.read(firestoreServiceProvider).getSavedMindMaps(user.id),
