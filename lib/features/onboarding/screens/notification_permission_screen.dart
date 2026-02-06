@@ -139,12 +139,16 @@ class _NotificationPermissionScreenState extends ConsumerState<NotificationPermi
               const SizedBox(height: 32),
 
               // Başlık
-              Text(
-                'Bildirimlerle Haberdar Ol! 🔔',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'Bildirimlerle Haberdar Ol!',
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
               ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
 
@@ -157,7 +161,7 @@ class _NotificationPermissionScreenState extends ConsumerState<NotificationPermi
                 'bildirimlere izin verebilirsin.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.7),
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
                   height: 1.5,
                 ),
               ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
