@@ -11,21 +11,12 @@ import FirebaseMessaging
   ) -> Bool {
     FirebaseApp.configure()
 
-    // Push notification ayarları
+    // Push notification delegate ayarları
     if #available(iOS 10.0, *) {
       UNUserNotificationCenter.current().delegate = self
-
-      let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
-      UNUserNotificationCenter.current().requestAuthorization(
-        options: authOptions,
-        completionHandler: { _, _ in }
-      )
-    } else {
-      let settings: UIUserNotificationSettings =
-        UIUserNotificationSettings(types: [.alert, .badge, .sound], categories: nil)
-      application.registerUserNotificationSettings(settings)
     }
 
+    // APNs için device kaydı (izin Flutter tarafında istenecek)
     application.registerForRemoteNotifications()
 
     // Firebase Messaging delegate

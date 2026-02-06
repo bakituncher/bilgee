@@ -1,5 +1,6 @@
 // lib/core/navigation/app_router.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
@@ -36,6 +37,7 @@ import 'transition_utils.dart';
 import 'package:taktik/features/home/screens/user_guide_screen.dart';
 import 'package:taktik/features/coach/screens/question_solver_screen.dart';
 import 'package:taktik/features/coach/screens/saved_solutions_screen.dart'; // YENİ EKLENEN IMPORT
+import 'package:shared_preferences/shared_preferences.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -49,7 +51,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     debugLogDiagnostics: true,
     refreshListenable: listenable,
-    redirect: (BuildContext context, GoRouterState state) {
+    redirect: (BuildContext context, GoRouterState state) async {
       final authState = ref.read(authControllerProvider);
       final userProfileState = ref.read(userProfileProvider);
       final location = state.matchedLocation;
@@ -100,6 +102,21 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         // Onboarding Step 4: Intro / Tutorial
         if (!user.tutorialCompleted) {
           return location == '/intro' ? null : '/intro';
+        }
+
+        // Onboarding Step 5: Notification Permission
+        // Tutorial tamamlandıysa ve bildirim izni henüz sorulmadıysa
+        if (location != '/notification-permission') {
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            final notificationPermissionAsked = prefs.getBool('notification_permission_asked') ?? false;
+            if (!notificationPermissionAsked) {
+              return '/notification-permission';
+            }
+          } catch (e) {
+            // SharedPreferences hatası durumunda devam et
+            if (kDebugMode) debugPrint('SharedPreferences redirect hatası: $e');
+          }
         }
 
         // **** HATAYI ÇÖZEN ANA MANTIK ****

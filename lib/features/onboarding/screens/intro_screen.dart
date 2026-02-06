@@ -72,6 +72,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
         await ref.read(firestoreServiceProvider).markTutorialAsCompleted(user.uid);
       }
       if (mounted) {
+        // Router otomatik olarak bildirim izni ekranına yönlendirecek
         context.go('/');
       }
     } catch (e) {
