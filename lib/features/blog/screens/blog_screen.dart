@@ -14,6 +14,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/features/blog/models/blog_post.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class BlogScreen extends ConsumerStatefulWidget {
   const BlogScreen({super.key});
@@ -555,11 +556,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
       appBar: AppBar(
         title: Text('Blog', style: GoogleFonts.montserrat(fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
         automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, size: 26),
-          tooltip: 'Geri',
-          onPressed: () => _handleBack(context),
-        ),
+        leading: CustomBackButton(onPressed: () => _handleBack(context)),
         elevation: 0,
         scrolledUnderElevation: 0,
         backgroundColor: Theme.of(context).colorScheme.surface,

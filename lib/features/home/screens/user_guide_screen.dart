@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   _SliverAppBarDelegate(this._tabBar, {required this.isDark});
@@ -86,15 +87,8 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
               pinned: true,
               floating: false,
               backgroundColor: colorScheme.primary,
-              leading: IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
-                ),
+              leading: CustomBackButton(
+                color: Colors.white,
                 onPressed: () => context.canPop() ? context.pop() : context.go('/home'),
               ),
               flexibleSpace: FlexibleSpaceBar(

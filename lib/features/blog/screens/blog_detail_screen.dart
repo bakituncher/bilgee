@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class BlogDetailScreen extends ConsumerWidget {
   final String slug;
@@ -71,9 +72,7 @@ class BlogDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text('Blog', style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.w700)),
         automaticallyImplyLeading: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, size: 24),
-          tooltip: 'Geri',
+        leading: CustomBackButton(
           onPressed: () {
             if (Navigator.of(context).canPop()) {
               context.pop();

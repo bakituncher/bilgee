@@ -3,6 +3,7 @@ import 'package:taktik/data/models/test_model.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 class TestDetailScreen extends StatelessWidget {
   final TestModel test;
   const TestDetailScreen({super.key, required this.test});
@@ -42,10 +43,7 @@ class TestDetailScreen extends StatelessWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 22, color: theme.colorScheme.onSurface.withOpacity(0.9)),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        leading: const CustomBackButton(),
         title: Text("Detayli Analiz", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, fontSize: 17, letterSpacing: 0.5)),
         centerTitle: true,
         backgroundColor: Colors.transparent,

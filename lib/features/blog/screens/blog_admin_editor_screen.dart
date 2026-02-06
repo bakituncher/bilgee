@@ -11,6 +11,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class BlogAdminEditorScreen extends ConsumerStatefulWidget {
   const BlogAdminEditorScreen({super.key, this.initialSlug});
@@ -717,11 +718,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
         appBar: AppBar(
           title: Text(_isEditing ? 'Yazıyı Düzenle' : 'Yeni Blog Yazısı'),
           automaticallyImplyLeading: true,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
-            tooltip: 'Geri',
-            onPressed: _goBack,
-          ),
+          leading: CustomBackButton(onPressed: _goBack),
           actions: [
             IconButton(
               tooltip: 'İçe aktar',

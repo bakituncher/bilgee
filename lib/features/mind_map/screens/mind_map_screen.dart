@@ -18,6 +18,7 @@ import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 // -----------------------------------------------------------------------------
 // MODELS
@@ -1256,6 +1257,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
+          leading: const CustomBackButton(),
           actions: [
             if (rootNode == null)
               IconButton(

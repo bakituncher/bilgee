@@ -15,6 +15,7 @@ import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/data/providers/monetization_provider.dart';
 import 'package:taktik/core/services/monetization_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 final _updateModeProvider = StateProvider.autoDispose<bool>((ref) => true);
 final _sessionQuestionCountProvider = StateProvider.autoDispose<int>((ref) => 20);
@@ -50,6 +51,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
         title: Text(topic),
         elevation: 0,
         backgroundColor: Colors.transparent,
+        leading: const CustomBackButton(),
       ),
       body: Column(
         children: [

@@ -13,6 +13,7 @@ import 'package:intl/intl.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'dart:ui';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class TestResultSummaryScreen extends ConsumerWidget {
   final TestModel test;
@@ -49,12 +50,7 @@ class TestResultSummaryScreen extends ConsumerWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(
-            fromArchive ? Icons.arrow_back_ios_new_rounded : Icons.close_rounded,
-            size: 22,
-            color: theme.colorScheme.onSurface.withOpacity(0.9),
-          ),
+        leading: CustomBackButton(
           onPressed: () => fromArchive ? context.pop() : context.go('/home'),
         ),
         title: Text(

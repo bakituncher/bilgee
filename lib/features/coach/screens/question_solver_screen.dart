@@ -25,6 +25,7 @@ import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/core/utils/exam_utils.dart';
 import 'package:taktik/shared/widgets/full_screen_image_viewer.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 // Basit mesaj modeli
 class SolverMessage {
@@ -852,10 +853,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
           backgroundColor: theme.scaffoldBackgroundColor,
           elevation: 0,
           centerTitle: true,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.colorScheme.onSurface),
-            onPressed: _handleBack,
-          ),
+          leading: CustomBackButton(onPressed: _handleBack),
           title: Text(
             _isChatMode ? 'Soru Asistanı' : (_initialSolution != null ? 'Çözüm' : 'Anlık Çözüm'),
             style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),

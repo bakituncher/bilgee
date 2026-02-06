@@ -10,6 +10,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class QuestsScreen extends ConsumerStatefulWidget {
   const QuestsScreen({super.key});
@@ -106,10 +107,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
         children: [
           Row(
             children: [
-              IconButton(
-                icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface),
-                onPressed: () => context.pop(),
-              ),
+              const CustomBackButton(),
               const SizedBox(width: 8),
               Text(
                 'Günlük Görevler',
