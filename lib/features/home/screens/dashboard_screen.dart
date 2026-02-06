@@ -282,7 +282,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               shadowColor: Colors.black.withOpacity(0.2),
               leading: Builder(
                 builder: (ctx) => IconButton(
-                  icon: Icon(Icons.menu_rounded, color: Theme.of(context).colorScheme.primary),
+                  icon: Icon(
+                    Icons.menu_rounded,
+                    color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : Colors.black,
+                  ),
                   onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
                   tooltip: 'Menü',
                 ),
@@ -376,7 +381,12 @@ class _NotificationBell extends ConsumerWidget {
         IconButton(
           tooltip: 'Bildirimler',
           onPressed: () => context.go('/notifications'),
-          icon: Icon(Icons.notifications_none_rounded, color: Theme.of(context).colorScheme.primary),
+          icon: Icon(
+            Icons.notifications_none_rounded,
+            color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : Colors.black,
+          ),
         ),
         if (count > 0)
           Positioned(
