@@ -100,18 +100,6 @@ class _NotificationPermissionScreenState extends ConsumerState<NotificationPermi
     }
   }
 
-  void _skipPermission() async {
-    if (_isLoading) return;
-
-    // Atladığını kaydet
-    await _markPermissionAsked();
-
-    // Kullanıcı şimdilik atlamak isterse direkt ana ekrana git
-    if (mounted) {
-      context.go('/');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -207,24 +195,7 @@ class _NotificationPermissionScreenState extends ConsumerState<NotificationPermi
                 ),
               ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.3, end: 0),
 
-              const SizedBox(height: 12),
-
-              // Şimdilik Atla Butonu
-              TextButton(
-                onPressed: _isLoading ? null : _skipPermission,
-                style: TextButton.styleFrom(
-                  foregroundColor: colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                child: Text(
-                  'Şimdilik Atla',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ).animate().fadeIn(delay: 600.ms),
-
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
             ],
           ),
         ),
