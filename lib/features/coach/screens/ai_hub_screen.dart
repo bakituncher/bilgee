@@ -343,7 +343,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       isPremium: isPremium,
                       height: 180,
                       onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/strategic-planning', offerData: {
-                        'title': 'Haftalık Stratejist',
+                        'title': 'Haftalık Planlama',
                         'subtitle': 'Sana özel ders programı.',
                         'iconName': 'calendar_month',
                         'color': const Color(0xFF10B981),

@@ -535,8 +535,8 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
 
           if (!userIsPremium) {
             context.go('/ai-hub/offer', extra: {
-              'title': 'Haftalık Stratejist',
-              'subtitle': 'Haftalık stratejist ile verimli planını saniyeler içinde oluştur',
+              'title': 'Haftalık Plan',
+              'subtitle': 'Haftalık planını saniyeler içinde oluştur',
               'icon': Icons.map_rounded,
               'color': const Color(0xFF10B981),
               'heroTag': 'offer-weekly-strategist',
@@ -572,7 +572,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Haftalık Strateji',
+                  'Haftalık Plan',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                     fontSize: 13.5,

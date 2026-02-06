@@ -354,7 +354,7 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
       'redirectRoute': '/ai-hub/weakness-workshop',
     },
     '/ai-hub/strategic-planning': {
-      'title': 'Haftalık Stratejist',
+      'title': 'Haftalık Planlama',
       'subtitle': 'Sana özel ders programı.',
       'iconName': 'calendar_month',
       'color': const Color(0xFF10B981),

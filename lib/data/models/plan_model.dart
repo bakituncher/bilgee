@@ -160,7 +160,7 @@ class WeeklyPlan {
 
 
     return WeeklyPlan(
-      planTitle: json['planTitle'] ?? "Haftalık Stratejik Plan",
+      planTitle: json['planTitle'] ?? "Haftalık Planlama",
       strategyFocus: json['strategyFocus'] ?? "Strateji belirlenemedi.",
       plan: dailyPlans,
       creationDate: date,

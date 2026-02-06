@@ -156,7 +156,7 @@ class _CompactPlanContent extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Haftalık Strateji',
+                      'Haftalık Plan',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         fontSize: 13,

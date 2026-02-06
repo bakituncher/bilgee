@@ -237,7 +237,7 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
     switch (route) {
       case '/ai-hub/strategic-planning':
         return {
-          'title': 'Haftalık Stratejist',
+          'title': 'Haftalık Planlama',
           'subtitle': 'Hedefine giden en kısa yol.',
           'icon': Icons.map_rounded,
           'color': const Color(0xFF10B981),
