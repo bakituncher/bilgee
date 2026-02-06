@@ -31,6 +31,14 @@ class _NotificationPermissionScreenState extends ConsumerState<NotificationPermi
     }
   }
 
+  // Çarpıya basınca çalışacak fonksiyon (İzin istemeden geç)
+  Future<void> _skipPermission() async {
+    await _markPermissionAsked();
+    if (mounted) {
+      context.go('/');
+    }
+  }
+
   Future<void> _requestNotificationPermission() async {
     if (_isLoading) return;
 
@@ -120,6 +128,24 @@ class _NotificationPermissionScreenState extends ConsumerState<NotificationPermi
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             children: [
+              // --- EKLEME BAŞLANGICI ---
+              // Sağ üst köşeye, çok belli olmayan (silik) kapatma butonu
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: IconButton(
+                    onPressed: _isLoading ? null : _skipPermission,
+                    icon: const Icon(Icons.close_rounded),
+                    // Rengi temanın yüzey rengine uyumlu ama çok şeffaf (0.3) yapıyoruz
+                    color: colorScheme.onSurface.withValues(alpha: 0.3),
+                    iconSize: 26, // Standarttan bir tık büyük ama ince durabilir
+                    splashRadius: 20,
+                  ),
+                ),
+              ).animate().fadeIn(delay: 1000.ms), // Kullanıcı önce içeriği görsün, buton sonra belirsin
+              // --- EKLEME BİTİŞİ ---
+
               const Spacer(flex: 1),
 
               // Lottie Animasyonu
@@ -152,8 +178,8 @@ class _NotificationPermissionScreenState extends ConsumerState<NotificationPermi
               // Açıklama Metni
               Text(
                 'Sana özel hatırlatmalar, motivasyon mesajları ve önemli güncellemeleri kaçırma! '
-                'Taktik Tavşan olarak seni bilgilendirmek ve hedeflerine ulaşmanda destek olmak için '
-                'bildirimlere izin verebilirsin.',
+                    'Taktik Tavşan olarak seni bilgilendirmek ve hedeflerine ulaşmanda destek olmak için '
+                    'bildirimlere izin verebilirsin.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: colorScheme.onSurface.withValues(alpha: 0.7),
@@ -178,27 +204,27 @@ class _NotificationPermissionScreenState extends ConsumerState<NotificationPermi
                   ),
                   child: _isLoading
                       ? SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: colorScheme.onPrimary,
-                          ),
-                        )
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: colorScheme.onPrimary,
+                    ),
+                  )
                       : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.notifications_active_rounded, size: 24),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Bildirimlere İzin Ver',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.notifications_active_rounded, size: 24),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Bildirimlere İzin Ver',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
+                      ),
+                    ],
+                  ),
                 ),
               ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.3, end: 0),
 
@@ -210,4 +236,3 @@ class _NotificationPermissionScreenState extends ConsumerState<NotificationPermi
     );
   }
 }
-
