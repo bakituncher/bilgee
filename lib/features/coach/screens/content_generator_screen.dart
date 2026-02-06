@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
+import 'package:markdown/markdown.dart' as md;
 import 'package:taktik/features/coach/services/content_generator_service.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
@@ -515,42 +517,87 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       ),
       child: MarkdownBody(
         data: _result!.summary ?? _result!.rawContent,
+        selectable: true,
         styleSheet: MarkdownStyleSheet(
           h1: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w700,
             color: theme.colorScheme.onSurface,
+            height: 1.4,
           ),
           h2: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface,
+            color: theme.colorScheme.primary,
+            height: 1.4,
           ),
           h3: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: theme.colorScheme.onSurface,
+            height: 1.4,
           ),
           p: TextStyle(
             fontSize: 15,
-            height: 1.6,
-            color: theme.colorScheme.onSurface.withOpacity(0.85),
+            height: 1.7,
+            color: theme.colorScheme.onSurface.withOpacity(0.9),
           ),
           listBullet: TextStyle(
-            color: theme.colorScheme.onSurface.withOpacity(0.85),
+            color: theme.colorScheme.primary,
+            fontSize: 15,
           ),
+          listIndent: 20,
           strong: TextStyle(
             fontWeight: FontWeight.w700,
             color: theme.colorScheme.onSurface,
           ),
+          em: TextStyle(
+            fontStyle: FontStyle.italic,
+            color: theme.colorScheme.onSurface.withOpacity(0.85),
+          ),
+          blockquote: TextStyle(
+            color: theme.colorScheme.onSurface.withOpacity(0.8),
+            fontStyle: FontStyle.italic,
+            fontSize: 14,
+          ),
           blockquoteDecoration: BoxDecoration(
+            color: const Color(0xFF0EA5E9).withOpacity(0.08),
+            borderRadius: BorderRadius.circular(8),
             border: Border(
               left: BorderSide(
-                color: const Color(0xFF0EA5E9).withOpacity(0.5),
+                color: const Color(0xFF0EA5E9),
                 width: 4,
               ),
             ),
           ),
+          blockquotePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          horizontalRuleDecoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(
+                color: theme.colorScheme.onSurface.withOpacity(0.1),
+                width: 1,
+              ),
+            ),
+          ),
+          codeblockDecoration: BoxDecoration(
+            color: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          code: TextStyle(
+            backgroundColor: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
+            fontFamily: 'monospace',
+            fontSize: 13,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        builders: {
+          'latex': _LatexElementBuilder(
+            textStyle: TextStyle(color: theme.colorScheme.onSurface),
+          ),
+        },
+        extensionSet: md.ExtensionSet(
+          [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
+          [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, _LatexInlineSyntax()],
         ),
       ),
     ).animate().fadeIn(delay: 200.ms, duration: 400.ms).slideY(begin: 0.1, end: 0);
@@ -649,9 +696,22 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                         styleSheet: MarkdownStyleSheet(
                           p: TextStyle(
                             fontSize: 14,
-                            height: 1.5,
-                            color: theme.colorScheme.onSurface.withOpacity(0.85),
+                            height: 1.6,
+                            color: theme.colorScheme.onSurface.withOpacity(0.9),
                           ),
+                          strong: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        builders: {
+                          'latex': _LatexElementBuilder(
+                            textStyle: TextStyle(color: theme.colorScheme.onSurface),
+                          ),
+                        },
+                        extensionSet: md.ExtensionSet(
+                          [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
+                          [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, _LatexInlineSyntax()],
                         ),
                       ),
 
@@ -736,9 +796,22 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                                   styleSheet: MarkdownStyleSheet(
                                     p: TextStyle(
                                       fontSize: 14,
-                                      height: 1.5,
-                                      color: theme.colorScheme.onSurface.withOpacity(0.85),
+                                      height: 1.6,
+                                      color: theme.colorScheme.onSurface.withOpacity(0.9),
                                     ),
+                                    strong: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  builders: {
+                                    'latex': _LatexElementBuilder(
+                                      textStyle: TextStyle(color: theme.colorScheme.onSurface),
+                                    ),
+                                  },
+                                  extensionSet: md.ExtensionSet(
+                                    [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
+                                    [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, _LatexInlineSyntax()],
                                   ),
                                 ),
                               ],
@@ -846,5 +919,49 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       return Colors.red;
     }
     return Colors.blue;
+  }
+}
+
+// --- LaTeX Syntax Sınıfları ---
+
+/// LaTeX inline syntax parser - $...$ ve $$...$$ formatlarını yakalar
+class _LatexInlineSyntax extends md.InlineSyntax {
+  _LatexInlineSyntax() : super(r'(\$\$[\s\S]*?\$\$)|(\$[^$]*\$)');
+
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    final match0 = match.group(0)!;
+    final isDisplay = match0.startsWith(r'$$');
+    final raw = isDisplay
+        ? match0.substring(2, match0.length - 2)
+        : match0.substring(1, match0.length - 1);
+    final el = md.Element.text('latex', raw);
+    el.attributes['mathStyle'] = isDisplay ? 'display' : 'text';
+    parser.addNode(el);
+    return true;
+  }
+}
+
+/// LaTeX element builder - matematik ifadelerini render eder
+class _LatexElementBuilder extends MarkdownElementBuilder {
+  final TextStyle? textStyle;
+  _LatexElementBuilder({this.textStyle});
+
+  @override
+  Widget visitElementAfter(md.Element element, TextStyle? preferredStyle) {
+    final bool isDisplay = element.attributes['mathStyle'] == 'display';
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: isDisplay ? Alignment.center : Alignment.centerLeft,
+      child: Math.tex(
+        element.textContent,
+        textStyle: textStyle ?? preferredStyle,
+        mathStyle: isDisplay ? MathStyle.display : MathStyle.text,
+        onErrorFallback: (err) => Text(
+          element.textContent,
+          style: (textStyle ?? preferredStyle)?.copyWith(color: Colors.red),
+        ),
+      ),
+    );
   }
 }
