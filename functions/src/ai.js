@@ -130,9 +130,45 @@ exports.generateGemini = onCall(
       throw new HttpsError("permission-denied", "Bu özellik yalnızca premium kullanıcılara açıktır.");
     }
 
-    // Soru çözücü görseli
-    const imageBase64 = typeof request.data?.imageBase64 === 'string' ? request.data.imageBase64.trim() : null;
-    const imageMimeType = typeof request.data?.imageMimeType === 'string' ? request.data.imageMimeType.trim() : 'image/jpeg';
+    // --- GÖRSEL VERİLERİNİ TOPLAMA (Tekli veya Çoklu) ---
+    const imageParts = [];
+    const maxBase64Chars = parseInt(process.env.QUESTION_SOLVER_IMAGE_MAX_BASE64_CHARS || "6000000", 10);
+
+    // 1. Durum: Frontend 'images' dizisi gönderiyorsa (Çoklu Sayfa - İçerik Üretici)
+    if (request.data?.images && Array.isArray(request.data.images)) {
+      request.data.images.forEach((img, index) => {
+        if (img.base64 && typeof img.base64 === 'string') {
+          const trimmedBase64 = img.base64.trim();
+          if (trimmedBase64.length <= maxBase64Chars) {
+            imageParts.push({
+              inlineData: {
+                mimeType: img.mimeType || 'image/jpeg',
+                data: trimmedBase64
+              }
+            });
+          } else {
+            logger.warn(`Image ${index} skipped - too large`, { size: trimmedBase64.length, max: maxBase64Chars });
+          }
+        }
+      });
+      logger.info("Multi-image request", { imageCount: imageParts.length, requestType });
+    }
+    // 2. Durum: Frontend tekil 'imageBase64' gönderiyorsa (Eski Yöntem / Tek Sayfa)
+    else if (request.data?.imageBase64 && typeof request.data.imageBase64 === 'string') {
+      const imageBase64 = request.data.imageBase64.trim();
+      const imageMimeType = typeof request.data.imageMimeType === 'string' ? request.data.imageMimeType.trim() : 'image/jpeg';
+
+      if (imageBase64.length > maxBase64Chars) {
+        throw new HttpsError("invalid-argument", "Dosya çok büyük. Lütfen daha küçük bir dosya deneyin.");
+      }
+
+      imageParts.push({
+        inlineData: {
+          mimeType: imageMimeType,
+          data: imageBase64
+        }
+      });
+    }
 
     // Geçersiz tür kontrolü
     if (!Object.keys(MONTHLY_LIMITS).includes(requestType)) {
@@ -165,16 +201,12 @@ exports.generateGemini = onCall(
       throw new HttpsError("invalid-argument", "Geçerli bir prompt gerekli");
     }
 
-    // Soru çözücü ve İçerik Üretici görsel kontrolü
+    // Soru çözücü ve İçerik Üretici görsel zorunluluk kontrolü
     if (requestType === 'question_solver' || requestType === 'content_generator') {
-      if (!imageBase64) {
+      if (imageParts.length === 0) {
         throw new HttpsError("invalid-argument", requestType === 'question_solver'
           ? "Soru çözücü için görsel gerekli."
           : "İçerik üretici için PDF veya görsel gerekli.");
-      }
-      const maxBase64Chars = parseInt(process.env.QUESTION_SOLVER_IMAGE_MAX_BASE64_CHARS || "6000000", 10);
-      if (imageBase64.length > maxBase64Chars) {
-        throw new HttpsError("invalid-argument", "Dosya çok büyük. Lütfen daha küçük bir dosya deneyin.");
       }
     }
 
@@ -271,9 +303,8 @@ exports.generateGemini = onCall(
           {
             parts: [
               { text: normalizedPrompt },
-              ...((requestType === 'question_solver' || requestType === 'content_generator') && imageBase64
-                ? [{ inlineData: { mimeType: imageMimeType || 'image/jpeg', data: imageBase64 } }]
-                : []),
+              // imageParts dizisini ekle (tekli veya çoklu görsel)
+              ...imageParts,
             ],
           },
         ],
