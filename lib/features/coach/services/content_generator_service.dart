@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:taktik/core/prompts/content_generator_prompts.dart';
 
 /// İçerik üretici türleri
 enum ContentType {
@@ -24,14 +25,15 @@ extension ContentTypeExtension on ContentType {
     }
   }
 
-  String get icon {
+  /// Kısa isim (UI için)
+  String get shortName {
     switch (this) {
       case ContentType.infoCards:
-        return '📚';
+        return 'Bilgi';
       case ContentType.questionCards:
-        return '✅';
+        return 'Test';
       case ContentType.summary:
-        return '📝';
+        return 'Özet';
     }
   }
 }
@@ -159,6 +161,80 @@ class ContentGeneratorService {
     }
   }
 
+  /// Birden fazla görselden içerik üretir (kamera ile çoklu sayfa)
+  Future<GeneratedContent> generateContentFromMultipleImages({
+    required List<File> files,
+    required ContentType contentType,
+    String? examType,
+  }) async {
+    if (files.isEmpty) {
+      throw Exception('En az bir görsel seçmelisiniz.');
+    }
+
+    try {
+      // Tüm görselleri işle ve base64'e çevir
+      final List<Map<String, String>> images = [];
+
+      for (final file in files) {
+        final mimeType = getMimeType(file.path);
+        final Uint8List bytes = await _processFile(file, mimeType);
+        final b64 = base64Encode(bytes);
+        images.add({
+          'base64': b64,
+          'mimeType': mimeType,
+        });
+      }
+
+      final callable = FirebaseFunctions.instanceFor(region: 'us-central1')
+          .httpsCallable('ai-generateGemini');
+
+      final prompt = _buildMultiPagePrompt(contentType, examType, files.length);
+
+      final result = await callable
+          .call({
+            'prompt': prompt,
+            'expectJson': true,
+            'requestType': 'content_generator',
+            'images': images, // Birden fazla görsel
+            'maxOutputTokens': 15000, // Daha fazla içerik için artırıldı
+            'temperature': 0.4,
+          })
+          .timeout(const Duration(minutes: 7)); // Daha uzun timeout
+
+      final data = result.data;
+      final rawResponse = (data is Map && data['raw'] is String)
+          ? (data['raw'] as String).trim()
+          : '';
+
+      if (rawResponse.isEmpty) {
+        throw Exception('İçerik üretilemedi. Lütfen tekrar deneyin.');
+      }
+
+      return _parseResponse(rawResponse, contentType);
+    } on FirebaseFunctionsException catch (e) {
+      final msg = e.message ?? 'AI hizmeti hatası. Lütfen tekrar deneyin.';
+      throw Exception(msg);
+    } catch (e) {
+      throw Exception('Bir hata oluştu: $e');
+    }
+  }
+
+  /// Çoklu sayfa için prompt oluştur
+  String _buildMultiPagePrompt(ContentType contentType, String? examType, int pageCount) {
+    final basePrompt = _buildPrompt(contentType, examType);
+    final multiPageContext = '''
+
+**ÇOKLU SAYFA BİLGİSİ:**
+Size $pageCount adet görsel/sayfa gönderildi. Tüm sayfaları tek bir bütün olarak analiz et ve içeriği birleştirerek tutarlı bir çıktı oluştur.
+- Sayfalar arasındaki bilgi akışını takip et.
+- Tekrarlayan bilgileri birleştir.
+- Tüm sayfalardaki önemli bilgileri kapsayacak şekilde içerik üret.
+
+''';
+
+    return multiPageContext + basePrompt;
+  }
+
   /// Dosyayı işle - görsel ise sıkıştır
   Future<Uint8List> _processFile(File file, String mimeType) async {
     // PDF dosyası doğrudan okunur
@@ -184,90 +260,13 @@ class ContentGeneratorService {
 
   /// İçerik türüne göre prompt oluştur
   String _buildPrompt(ContentType contentType, String? examType) {
-    String examContext = '';
-    if (examType != null && examType.isNotEmpty) {
-      examContext = '\n\n**SINAV BAĞLAMI:** İçeriği **$examType** sınavına hazırlanan öğrenciler için uygun şekilde hazırla.';
-    }
-
     switch (contentType) {
       case ContentType.infoCards:
-        return '''
-Sen bir eğitim içeriği uzmanısın. Gönderilen PDF veya görsel içindeki bilgileri analiz et ve öğrenci dostu bilgi kartlarına dönüştür.$examContext
-
-GÖREVİN:
-Verilen içerikten 5-10 adet bilgi kartı oluştur. Her kart, tek bir kavram veya bilgiyi açıkça anlatmalı.
-
-KURALLAR:
-1. Her kart kısa, öz ve akılda kalıcı olmalı.
-2. Karmaşık konuları basitleştir.
-3. Görsel dil kullan (emoji, vurgu vb.)
-4. Bilgileri öncelik sırasına göre düzenle.
-
-JSON formatında yanıt ver:
-{
-  "cards": [
-    {
-      "title": "Kart Başlığı",
-      "content": "Kartın açıklaması veya bilgisi. Markdown formatında olabilir."
-    }
-  ]
-}
-
-SADECE JSON döndür, başka hiçbir şey yazma.
-''';
-
+        return ContentGeneratorPrompts.getInfoCardsPrompt(examType);
       case ContentType.questionCards:
-        return '''
-Sen bir sınav hazırlık uzmanısın. Gönderilen PDF veya görsel içindeki bilgileri analiz et ve çoktan seçmeli test soruları oluştur.$examContext
-
-GÖREVİN:
-Verilen içerikten 5-10 adet çoktan seçmeli test sorusu oluştur. Her soru 4 şıklı (A, B, C, D) olmalı.
-
-KURALLAR:
-1. Sorular net, anlaşılır ve sınav formatında olmalı.
-2. Her sorunun 4 şıkkı olmalı, sadece 1 tanesi doğru.
-3. Şıklar mantıklı ve birbirine yakın olmalı (çeldirici şıklar).
-4. Farklı zorluk seviyelerinde sorular oluştur.
-5. Her sorunun kısa bir açıklaması (neden doğru cevap bu) olmalı.
-
-JSON formatında yanıt ver:
-{
-  "cards": [
-    {
-      "title": "Soru 1",
-      "content": "Soru metni buraya gelecek?",
-      "options": ["A şıkkı metni", "B şıkkı metni", "C şıkkı metni", "D şıkkı metni"],
-      "correctIndex": 0,
-      "explanation": "Doğru cevap A çünkü..."
-    }
-  ]
-}
-
-ÖNEMLİ: correctIndex 0'dan başlar (0=A, 1=B, 2=C, 3=D).
-SADECE JSON döndür, başka hiçbir şey yazma.
-''';
-
+        return ContentGeneratorPrompts.getQuestionCardsPrompt(examType);
       case ContentType.summary:
-        return '''
-Sen bir özetleme uzmanısın. Gönderilen PDF veya görsel içindeki bilgileri analiz et ve kapsamlı bir özet oluştur.$examContext
-
-GÖREVİN:
-Verilen içeriğin önemli noktalarını vurgulayan, akıcı ve öğrenci dostu bir özet hazırla.
-
-KURALLAR:
-1. Ana konuları ve alt başlıkları belirle.
-2. Önemli kavramları vurgula.
-3. Gereksiz detayları ele, özü çıkar.
-4. Markdown formatında (başlıklar, listeler, kalın yazı) düzenle.
-5. En alta "📌 Hatırlatma" başlığıyla 3-5 maddelik kritik noktalar ekle.
-
-JSON formatında yanıt ver:
-{
-  "summary": "Markdown formatında özet metni buraya gelecek."
-}
-
-SADECE JSON döndür, başka hiçbir şey yazma.
-''';
+        return ContentGeneratorPrompts.getSummaryPrompt(examType);
     }
   }
 
