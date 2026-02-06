@@ -16,8 +16,9 @@ import FirebaseMessaging
       UNUserNotificationCenter.current().delegate = self
     }
 
-    // APNs için device kaydı (izin Flutter tarafında istenecek)
-    application.registerForRemoteNotifications()
+    // NOT: registerForRemoteNotifications() burada çağrılmaz!
+    // Bildirim izni ve APNs kaydı Flutter tarafında NotificationPermissionScreen'de yapılır.
+    // Erken çağrı, izin verilmeden önce izin dialogu gösterir.
 
     // Firebase Messaging delegate
     Messaging.messaging().delegate = self

@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:taktik/shared/notifications/notification_service.dart';
 
 class NotificationPermissionScreen extends ConsumerStatefulWidget {
   const NotificationPermissionScreen({super.key});
@@ -75,6 +76,12 @@ class _NotificationPermissionScreenState extends ConsumerState<NotificationPermi
         if (!status.isGranted) {
           await ph.Permission.notification.request();
         }
+      }
+
+      // İzin verildiyse FCM token'ı kaydet
+      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional) {
+        await NotificationService.instance.registerTokenAfterPermissionGranted();
       }
 
       // İzni sorduğumuzu kaydet

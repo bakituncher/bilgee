@@ -121,6 +121,22 @@ class NotificationService {
 
   Future<void> _ensureAndRegisterToken() async {
     try {
+      // iOS'ta izin verilmeden token almaya çalışmak izin dialogu açabilir
+      // Bu yüzden önce izin durumunu kontrol ediyoruz
+      final settings = await FirebaseMessaging.instance.getNotificationSettings();
+      if (settings.authorizationStatus == AuthorizationStatus.notDetermined) {
+        // İzin henüz sorulmamış, NotificationPermissionScreen'de sorulacak
+        if (kDebugMode) debugPrint('FCM: İzin henüz sorulmamış, token alınmadı');
+        return;
+      }
+
+      if (settings.authorizationStatus == AuthorizationStatus.denied) {
+        // İzin reddedilmiş, token almaya gerek yok
+        if (kDebugMode) debugPrint('FCM: İzin reddedilmiş, token alınmadı');
+        return;
+      }
+
+      // İzin verilmiş veya provisional, token alabiliriz
       final token = await FirebaseMessaging.instance.getToken();
       if (token != null) await _registerToken(token, _appVersion, _appBuild);
     } catch (e) {
@@ -183,6 +199,21 @@ class NotificationService {
       if (kDebugMode) debugPrint('Yeni giriş için token yenilendi');
     } catch (e) {
       if (kDebugMode) debugPrint('Token yenileme hatası: $e');
+    }
+  }
+
+  /// Bildirim izni verildikten sonra çağrılmalı - token'ı kaydeder
+  /// NotificationPermissionScreen'den çağrılır
+  Future<void> registerTokenAfterPermissionGranted() async {
+    try {
+      // İzin verildi, şimdi token alabiliriz
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        await _registerToken(token, _appVersion, _appBuild);
+        if (kDebugMode) debugPrint('İzin sonrası FCM token kaydedildi');
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('İzin sonrası token kaydı hatası: $e');
     }
   }
 

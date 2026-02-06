@@ -197,7 +197,7 @@ class _CompactPlanContent extends ConsumerWidget {
                     ),
                   ),
                   Text(
-                    '${(ratio * 100).round()}%',
+                    '%${(ratio * 100).round()}',
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 10,
