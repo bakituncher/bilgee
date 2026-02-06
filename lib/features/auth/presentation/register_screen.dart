@@ -11,7 +11,6 @@ import 'package:flutter/gestures.dart';
 import 'package:taktik/shared/widgets/custom_date_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -187,7 +186,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_showEmailForm ? 'Kayıt Ol' : 'Hesap Oluştur'),
-        leading: CustomBackButton(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: _showEmailForm ? 'Geri dön' : 'Girişe dön',
           onPressed: () {
             if (_showEmailForm) {
               setState(() {
@@ -195,7 +196,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 _errorMessage = null;
               });
             } else {
-              context.pop();
+              if (context.canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                context.go(AppRoutes.login);
+              }
             }
           },
         ),
