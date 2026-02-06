@@ -29,7 +29,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
   String? _mimeType;
 
   // Çoklu görsel seçimi (kamera ile)
-  final List<File> _capturedImages = [];
+  List<File> _capturedImages = [];
   static const int _maxCapturedImages = 5;
 
   // Seçili içerik türü
@@ -1883,7 +1883,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
   /// Çoklu sayfa çekme başlat
   Future<void> _startMultiPageCapture() async {
     setState(() {
-      _capturedImages.clear();
+      _capturedImages = [];
       _selectedFile = null;
       _fileName = null;
       _mimeType = null;
@@ -1907,119 +1907,192 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         maxHeight: 1920,
       );
 
-      if (image != null) {
+      if (image != null && mounted) {
+        // Yeni liste oluşturarak Flutter'ın değişikliği algılamasını sağla
         setState(() {
-          _capturedImages.add(File(image.path));
+          _capturedImages = [..._capturedImages, File(image.path)];
           _error = null;
         });
 
         // Devam etmek isteyip istemediğini sor
-        if (_capturedImages.length < _maxCapturedImages) {
+        if (_capturedImages.length < _maxCapturedImages && mounted) {
           _showContinueCaptureDialog();
         }
       }
     } catch (e) {
-      setState(() {
-        _error = 'Görsel çekilemedi: $e';
-      });
+      if (mounted) {
+        setState(() {
+          _error = 'Görsel çekilemedi: $e';
+        });
+      }
     }
   }
 
   /// Devam etmek isteyip istemediğini soran dialog
   void _showContinueCaptureDialog() {
+    if (!mounted) return;
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final remaining = _maxCapturedImages - _capturedImages.length;
+    final capturedCount = _capturedImages.length;
+
+    // Güvenli kopya oluştur
+    final imagesCopy = List<File>.from(_capturedImages);
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      barrierDismissible: false,
+      builder: (dialogContext) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppTheme.successBrandColor.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Başlık satırı
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppTheme.successBrandColor.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.check_circle_rounded,
+                      color: AppTheme.successBrandColor,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$capturedCount. Sayfa Eklendi',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '$remaining sayfa daha ekleyebilirsin',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: colorScheme.onSurface.withOpacity(0.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              child: Icon(
-                Icons.check_circle_rounded,
-                color: AppTheme.successBrandColor,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              '${_capturedImages.length}. Sayfa Eklendi',
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '$remaining sayfa daha ekleyebilirsin.',
-              style: TextStyle(
-                fontSize: 14,
-                color: colorScheme.onSurface.withOpacity(0.7),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Önizleme satırı
-            SizedBox(
-              height: 60,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _capturedImages.length,
-                itemBuilder: (context, index) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      _capturedImages[index],
-                      width: 60,
-                      height: 60,
-                      fit: BoxFit.cover,
+
+              const SizedBox(height: 20),
+
+              // Önizleme görselleri - yatay kaydırılabilir
+              if (imagesCopy.isNotEmpty)
+                SizedBox(
+                  height: 70,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: imagesCopy.map((file) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: AppTheme.successBrandColor.withOpacity(0.3),
+                                width: 2,
+                              ),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(
+                                file,
+                                width: 60,
+                                height: 60,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  color: colorScheme.surfaceContainerHighest,
+                                  child: Icon(
+                                    Icons.image_rounded,
+                                    size: 24,
+                                    color: colorScheme.onSurface.withOpacity(0.3),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ),
                 ),
+
+              const SizedBox(height: 24),
+
+              // Butonlar
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: BorderSide(
+                          color: colorScheme.onSurface.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Text(
+                        'Tamamla',
+                        style: TextStyle(
+                          color: colorScheme.onSurface.withOpacity(0.7),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                        // Kısa gecikme ile kamera aç
+                        Future.delayed(const Duration(milliseconds: 200), () {
+                          if (mounted) _captureNextPage();
+                        });
+                      },
+                      icon: const Icon(Icons.add_a_photo_rounded, size: 18),
+                      label: const Text('Devam Et'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.secondaryBrandColor,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Tamamla
-            },
-            child: Text(
-              'Tamamla',
-              style: TextStyle(
-                color: colorScheme.onSurface.withOpacity(0.6),
-              ),
-            ),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(context);
-              _captureNextPage();
-            },
-            icon: const Icon(Icons.add_a_photo_rounded, size: 18),
-            label: const Text('Devam Et'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.secondaryBrandColor,
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -2062,7 +2135,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         _selectedFile = File(path);
         _fileName = result.files.first.name;
         _mimeType = ContentGeneratorService.getMimeType(path);
-        _capturedImages.clear();
+        _capturedImages = [];
         _error = null;
       });
     } catch (e) {
@@ -2078,7 +2151,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       _selectedFile = null;
       _fileName = null;
       _mimeType = null;
-      _capturedImages.clear();
+      _capturedImages = [];
       _error = null;
     });
   }
@@ -2138,7 +2211,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       _selectedFile = null;
       _fileName = null;
       _mimeType = null;
-      _capturedImages.clear();
+      _capturedImages = [];
       _result = null;
       _error = null;
       _revealedAnswers.clear();
