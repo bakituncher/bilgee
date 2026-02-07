@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:taktik/features/profile/models/badge_model.dart' as app_badge;
 import 'package:confetti/confetti.dart'; // YENİ: Partikül efekti için
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class HonorWallScreen extends StatelessWidget {
   final List<app_badge.Badge> allBadges;
@@ -16,43 +17,52 @@ class HonorWallScreen extends StatelessWidget {
     final progress = allBadges.isNotEmpty ? unlockedBadges.length / allBadges.length : 0.0;
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            title: const Text("Şeref Duvarı"),
-            expandedHeight: 120.0,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Padding(
-                padding: const EdgeInsets.only(top: 80.0, left: 20, right: 20),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("Madalya Koleksiyonu", style: Theme.of(context).textTheme.titleMedium),
-                        Text("${unlockedBadges.length} / ${allBadges.length}", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary)),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 8,
-                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
-                      ),
-                    ),
-                  ],
+      appBar: AppBar(
+        leading: const CustomBackButton(),
+        title: const Text("Şeref Duvarı"),
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          // Progress Section
+          Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Madalya Koleksiyonu", style: Theme.of(context).textTheme.titleMedium),
+                  Text("${unlockedBadges.length} / ${allBadges.length}", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 8,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
                 ),
               ),
-            ),
+            ],
           ),
-          _SliverSectionHeader(title: "Kazanılan Zaferler (${unlockedBadges.length})"),
+          const SizedBox(height: 24),
+          // Unlocked Badges Section
+          Text(
+            "Kazanılan Zaferler (${unlockedBadges.length})",
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
           _buildBadgeGrid(context, unlockedBadges, true),
-          _SliverSectionHeader(title: "Gelecek Hedefler (${lockedBadges.length})"),
+          const SizedBox(height: 24),
+          // Locked Badges Section
+          Text(
+            "Gelecek Hedefler (${lockedBadges.length})",
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
           _buildBadgeGrid(context, lockedBadges, false),
         ],
       ),
@@ -61,51 +71,33 @@ class HonorWallScreen extends StatelessWidget {
 
   Widget _buildBadgeGrid(BuildContext context, List<app_badge.Badge> badges, bool isUnlocked) {
     if (badges.isEmpty) {
-      return SliverToBoxAdapter(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 48.0),
-            child: Column(
-              children: [
-                Icon( isUnlocked ? Icons.shield_moon_rounded : Icons.flag_rounded, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                const SizedBox(height: 16),
-                Text( isUnlocked ? 'Henüz Madalya Kazanılmadı' : 'Tüm Hedefler Fethedildi!', style: Theme.of(context).textTheme.headlineSmall),
-              ],
-            ),
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 48.0),
+          child: Column(
+            children: [
+              Icon( isUnlocked ? Icons.shield_moon_rounded : Icons.flag_rounded, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              const SizedBox(height: 16),
+              Text( isUnlocked ? 'Henüz Madalya Kazanılmadı' : 'Tüm Hedefler Fethedildi!', style: Theme.of(context).textTheme.headlineSmall),
+            ],
           ),
         ),
       );
     }
-    return SliverPadding(
-      padding: const EdgeInsets.all(20),
-      sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3, crossAxisSpacing: 20, mainAxisSpacing: 20, childAspectRatio: 0.85,
-        ),
-        delegate: SliverChildBuilderDelegate(
-              (context, index) => BadgeCard(badge: badges[index])
-              .animate()
-              .fadeIn(delay: (100 * (index % 9)).ms)
-              .slideY(begin: 0.5, curve: Curves.easeOutCubic),
-          childCount: badges.length,
-        ),
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 20,
+        mainAxisSpacing: 20,
+        childAspectRatio: 0.85,
       ),
-    );
-  }
-}
-
-// YENİ WIDGET: Kaydırılabilir Başlık
-class _SliverSectionHeader extends StatelessWidget {
-  final String title;
-  const _SliverSectionHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-        child: Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-      ),
+      itemCount: badges.length,
+      itemBuilder: (context, index) => BadgeCard(badge: badges[index])
+          .animate()
+          .fadeIn(delay: (100 * (index % 9)).ms)
+          .slideY(begin: 0.5, curve: Curves.easeOutCubic),
     );
   }
 }
