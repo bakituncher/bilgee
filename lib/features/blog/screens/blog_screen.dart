@@ -554,12 +554,8 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: Text('Blog', style: GoogleFonts.montserrat(fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
-        automaticallyImplyLeading: false,
         leading: CustomBackButton(onPressed: () => _handleBack(context)),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: const Text('Blog'),
       ),
       floatingActionButton: buildFab(),
       body: postsAsync.when(
