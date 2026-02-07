@@ -77,6 +77,7 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: isHistoryView
           ? IconButton(
               icon: const Icon(Icons.arrow_back),

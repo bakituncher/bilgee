@@ -13,7 +13,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:lottie/lottie.dart';
-import 'dart:ui';
 import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class LibraryScreen extends ConsumerStatefulWidget {
@@ -280,33 +279,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
         leading: const CustomBackButton(),
-        title: Text(
-          'Deneme Arşivi',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w800,
-            fontSize: 17,
-            letterSpacing: 0.5,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(color: Colors.transparent),
-          ),
-        ),
+        title: const Text('Deneme Arşivi'),
+        scrolledUnderElevation: 0,
         actions: [
           IconButton(
             tooltip: 'Sırala',
-            icon: Icon(
-              Icons.sort_rounded,
-              color: theme.colorScheme.onSurface.withOpacity(0.9),
-            ),
+            icon: const Icon(Icons.sort_rounded),
             onPressed: _showSortSheet,
           ),
         ],
@@ -427,7 +407,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     return Column(
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 70, 20, 0),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

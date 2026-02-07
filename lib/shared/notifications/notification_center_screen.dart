@@ -39,7 +39,8 @@ class NotificationCenterScreen extends ConsumerWidget {
             }
           },
         ),
-          actions: [
+        scrolledUnderElevation: 0,
+        actions: [
             IconButton(
               tooltip: 'Tümünü okundu işaretle',
               onPressed: user == null

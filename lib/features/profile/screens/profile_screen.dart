@@ -160,6 +160,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(

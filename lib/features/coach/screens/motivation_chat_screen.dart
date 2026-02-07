@@ -356,6 +356,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
           ),
           backgroundColor: Theme.of(context).colorScheme.surface,
           elevation: 0,
+          scrolledUnderElevation: 0,
           centerTitle: true,
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,

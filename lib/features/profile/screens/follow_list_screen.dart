@@ -102,6 +102,7 @@ class _FollowListScreenState extends ConsumerState<FollowListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_isFollowers ? 'Takipçiler' : 'Takip Edilenler'),
+        scrolledUnderElevation: 0,
       ),
       body: Container(
         decoration: BoxDecoration(

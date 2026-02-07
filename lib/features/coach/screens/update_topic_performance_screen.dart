@@ -51,6 +51,7 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
         title: Text(topic),
         elevation: 0,
         backgroundColor: Colors.transparent,
+        scrolledUnderElevation: 0,
         leading: const CustomBackButton(),
       ),
       body: Column(

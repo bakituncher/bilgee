@@ -140,6 +140,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
             appBar: AppBar(
               title: const Text('Haftalık Planlama'),
               leading: const CustomBackButton(),
+              scrolledUnderElevation: 0,
             ),
             body: AnimatedSwitcher(
               duration: 400.ms,
@@ -309,6 +310,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: const CustomBackButton(),
       ),
       body: Container(

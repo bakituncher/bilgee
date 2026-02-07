@@ -35,6 +35,7 @@ class _SavedWorkshopsScreenState extends ConsumerState<SavedWorkshopsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Etüt Geçmişi"),
+        scrolledUnderElevation: 0,
       ),
       body: Column(
         children: [

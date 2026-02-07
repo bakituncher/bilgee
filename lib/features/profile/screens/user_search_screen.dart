@@ -44,6 +44,7 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
         title: const Text('Kullanıcı Ara'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
       ),
       body: Container(
         decoration: BoxDecoration(

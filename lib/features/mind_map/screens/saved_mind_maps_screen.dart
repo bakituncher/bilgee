@@ -35,6 +35,7 @@ class _SavedMindMapsScreenState extends ConsumerState<SavedMindMapsScreen> {
         appBar: AppBar(
           title: const Text('Zihin Haritalarım'),
           leading: const CustomBackButton(),
+          scrolledUnderElevation: 0,
         ),
         body: const Center(child: Text('Kullanıcı bulunamadı')),
       );
@@ -46,6 +47,7 @@ class _SavedMindMapsScreenState extends ConsumerState<SavedMindMapsScreen> {
         title: const Text('Zihin Haritalarım'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: const CustomBackButton(),
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(

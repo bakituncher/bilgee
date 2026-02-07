@@ -250,6 +250,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: true,
         title: Row(
           mainAxisSize: MainAxisSize.min,

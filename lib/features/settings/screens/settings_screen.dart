@@ -817,6 +817,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         centerTitle: true,
         elevation: 0,
+        scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
         leading: CustomBackButton(onPressed: handleBack),
       ),

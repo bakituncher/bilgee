@@ -186,6 +186,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_showEmailForm ? 'Kayıt Ol' : 'Hesap Oluştur'),
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           tooltip: _showEmailForm ? 'Geri dön' : 'Girişe dön',

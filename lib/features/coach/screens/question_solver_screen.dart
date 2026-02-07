@@ -852,6 +852,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
         appBar: AppBar(
           backgroundColor: theme.scaffoldBackgroundColor,
           elevation: 0,
+          scrolledUnderElevation: 0,
           centerTitle: true,
           leading: CustomBackButton(onPressed: _handleBack),
           title: Text(

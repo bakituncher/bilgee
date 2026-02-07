@@ -84,6 +84,7 @@ class AvailabilityScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text("Zaman Haritası"),
         automaticallyImplyLeading: context.canPop(),
+        scrolledUnderElevation: 0,
         actions: [
           if (clipboard != null)
             TextButton.icon(

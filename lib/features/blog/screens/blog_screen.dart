@@ -556,6 +556,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
       appBar: AppBar(
         leading: CustomBackButton(onPressed: () => _handleBack(context)),
         title: const Text('Blog'),
+        scrolledUnderElevation: 0,
       ),
       floatingActionButton: buildFab(),
       body: postsAsync.when(
