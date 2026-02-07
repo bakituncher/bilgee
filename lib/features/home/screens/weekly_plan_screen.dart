@@ -74,7 +74,7 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
         title: Text(
           isHistoryView
             ? 'Geçmiş Plan ${DateFormat('d MMM', 'tr_TR').format(displayedPlan.creationDate)}'
-            : 'Harekât Takvimi',
+            : 'Çalışma Takvimi',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
