@@ -638,7 +638,7 @@ class _TaskListViewState extends ConsumerState<_TaskListView> with AutomaticKeep
                     if(desired) {
                       ref.read(questNotifierProvider.notifier).userCompletedWeeklyPlanTask();
                       if(context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Plan görevi fethedildi: ${item.activity}')));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${item.activity} görevi tamamlandı.')));
                       }
                     }
                   },

@@ -432,7 +432,7 @@ class _TaskTile extends ConsumerWidget {
                 ref.invalidate(completedTasksForDateProvider(dateForTile));
                 if(!isCompleted){
                   if(context.mounted){
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Plan görevi fethedildi: ${item.activity}')));
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${item.activity} görevi tamamlandı')));
                   }
                 }
               },
