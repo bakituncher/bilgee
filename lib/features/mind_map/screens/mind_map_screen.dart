@@ -112,22 +112,21 @@ class PreMadeMindMap {
   }
 }
 
-// Hazır haritaları yükleyen provider - keepAlive ile cache'leniyor
-final preMadeMapsProvider = FutureProvider<List<PreMadeMindMap>>((ref) async {
+// Hazır haritaları yükleyen provider - examType parametreli family provider
+final preMadeMapsProvider = FutureProvider.family<List<PreMadeMindMap>, String?>((ref, examType) async {
   // Provider'ı canlı tut, dispose olmasın
   ref.keepAlive();
 
-  final user = ref.watch(userProfileProvider).value;
-  if (user?.selectedExam == null) return [];
+  if (examType == null || examType.isEmpty) return [];
 
-  final examType = user!.selectedExam!.toLowerCase();
+  final examTypeLower = examType.toLowerCase();
 
   // KPSS türleri için ortak dosya
   String assetPath;
-  if (examType.contains('kpss')) {
+  if (examTypeLower.contains('kpss')) {
     assetPath = 'assets/data/mind_maps_kpss.json';
   } else {
-    assetPath = 'assets/data/mind_maps_$examType.json';
+    assetPath = 'assets/data/mind_maps_$examTypeLower.json';
   }
 
   try {
@@ -138,7 +137,7 @@ final preMadeMapsProvider = FutureProvider<List<PreMadeMindMap>>((ref) async {
         .toList();
     return maps;
   } catch (e) {
-    debugPrint('Hazır haritalar yüklenemedi: $e');
+    debugPrint('Hazır haritalar yüklenemedi ($assetPath): $e');
     return [];
   }
 });
@@ -282,7 +281,9 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   void initState() {
     super.initState();
     // Ekran açıldığında önceki haritayı temizle
-    ref.read(mindMapNodeProvider.notifier).state = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(mindMapNodeProvider.notifier).state = null;
+    });
 
     // İlk açılışta kaydedilmiş tema tercihini veya global tema ayarını kullan
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -299,8 +300,8 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
       }
       _centerCanvas();
       _loadTopics();
-      // Otomatik kaydırmayı biraz daha geç başlat
-      Future.delayed(const Duration(milliseconds: 500), () {
+      // Otomatik kaydırmayı daha geç başlat - kartların yüklenmesini bekle
+      Future.delayed(const Duration(milliseconds: 800), () {
         if (mounted) {
           _startAutoScroll();
         }
@@ -308,10 +309,37 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Ekrana geri dönüldüğünde auto-scroll'u yeniden başlat
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _cardsScrollController.hasClients) {
+        // Eğer timer yoksa veya aktif değilse, interaction false yap ve yeniden başlat
+        if (_autoScrollTimer == null || !_autoScrollTimer!.isActive) {
+          _userIsInteracting = false;
+          Future.delayed(const Duration(milliseconds: 300), () {
+            if (mounted) {
+              _startAutoScroll();
+            }
+          });
+        }
+      }
+    });
+  }
+
   void _startAutoScroll() {
     _autoScrollTimer?.cancel();
 
     if (!mounted) return;
+
+    // Controller hazır değilse bekle
+    if (!_cardsScrollController.hasClients) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) _startAutoScroll();
+      });
+      return;
+    }
 
     _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 20), (timer) {
       if (!mounted || !_cardsScrollController.hasClients) {
@@ -1192,7 +1220,9 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   }
 
   Widget _buildPreMadeMapsHorizontalList(ThemeData theme, ColorScheme colorScheme) {
-    final preMadeMapsAsync = ref.watch(preMadeMapsProvider);
+    final user = ref.watch(userProfileProvider).value;
+    final examType = user?.selectedExam;
+    final preMadeMapsAsync = ref.watch(preMadeMapsProvider(examType));
     final isDark = theme.brightness == Brightness.dark; // Global tema ayarını kullan
 
     return preMadeMapsAsync.when(
@@ -1200,6 +1230,16 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
         if (maps.isEmpty) {
           return const SizedBox.shrink();
         }
+
+        // Auto-scroll başlatma kontrolü - kartlar yüklendikten sonra
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _cardsScrollController.hasClients && !_userIsInteracting) {
+            // Eğer timer yoksa veya iptal edilmişse başlat
+            if (_autoScrollTimer == null || !_autoScrollTimer!.isActive) {
+              _startAutoScroll();
+            }
+          }
+        });
 
         return Container(
           height: 250, // YÜKSEKLİK ARTIRILDI (225 -> 250)
@@ -1250,6 +1290,14 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                       _selectedSubject = map.subject;
                     });
                     _loadPreMadeMap(map);
+                    // Harita yüklendikten sonra flag'i resetle
+                    // Kullanıcı etkileşimi bitti, 2 saniye sonra scroll'u yeniden başlat
+                    Future.delayed(const Duration(seconds: 2), () {
+                      if (mounted) {
+                        _userIsInteracting = false;
+                        _startAutoScroll();
+                      }
+                    });
                   },
                 );
               },
