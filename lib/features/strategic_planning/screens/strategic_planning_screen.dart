@@ -63,7 +63,6 @@ class StrategyGenerationNotifier extends StateNotifier<AsyncValue<void>> {
       }
 
       final result = {
-        // long-term strateji kaldırıldı
         'weeklyPlan': decodedData['weeklyPlan'],
         'pacing': pacing.name,
       };
@@ -111,7 +110,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: Theme.of(context).colorScheme.error,
-            content: Text('Strateji oluşturulurken bir hata oluştu: ${state.error}'),
+            content: Text('Plan oluşturulurken bir hata oluştu: ${state.error}'),
           ),
         );
       }
@@ -139,7 +138,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
           },
           child: Scaffold(
             appBar: AppBar(
-              title: const Text('Strateji Oturumu'),
+              title: const Text('Haftalık Planlama'),
               leading: const CustomBackButton(),
             ),
             body: AnimatedSwitcher(
@@ -222,7 +221,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                       ),
                     ],
                     child: Text(
-                      "Strateji Oluşturuluyor",
+                      "Plan Oluşturuluyor",
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w800,
@@ -302,7 +301,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Stratejik Plan",
+          "Haftalık Planlama",
           style: TextStyle(
             fontWeight: FontWeight.w600,
             letterSpacing: -0.5,
@@ -401,7 +400,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
 
                               // Başlık
                               Text(
-                                isExpired ? "Plan Yenileme Zamanı!" : "Stratejik Plan Aktif",
+                                isExpired ? "Plan Yenileme Zamanı!" : "Haftalık Plan Aktif",
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.w800,
@@ -565,7 +564,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                               ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
                             },
                             icon: Icons.auto_awesome_rounded,
-                            label: "Yeni Strateji Oluştur",
+                            label: "Yeni Plan Oluştur",
                             isPrimary: true,
                             gradient: LinearGradient(
                               colors: [
@@ -589,13 +588,12 @@ class StrategicPlanningScreen extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          // Yeni Strateji - Secondary Button
                           _ModernButton(
                             onPressed: () {
                               ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
                             },
                             icon: Icons.refresh_rounded,
-                            label: "Yeni Strateji Oluştur",
+                            label: "Yeni Plan Oluştur",
                             isPrimary: false,
                           ),
                         ],
@@ -754,7 +752,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                   ),
                 ],
                 child: Text(
-                  "Strateji İçin Veri Gerekli",
+                  "Plan İçin Veri Gerekli",
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
@@ -771,7 +769,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                   ),
                 ],
                 child: Text(
-                  "Sana özel bir strateji oluşturabilmem için önce düşmanı tanımam gerek. Lütfen en az bir deneme sonucu ekle.",
+                  "Sana özel bir plan oluşturabilmem için önce düşmanı tanımam gerek. Lütfen en az bir deneme sonucu ekle.",
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -897,7 +895,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                           const SizedBox(height: 8),
                           // Açıklama
                           Text(
-                            'Stratejini planlamaya başla',
+                            'Haftanı planlamaya başla',
                             style: textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
@@ -992,7 +990,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                   _ChecklistItemCard(
                     icon: Icons.schedule_rounded,
                     title: "Zaman Haritası",
-                    description: "Stratejin, haftalık olarak ayırdığın zamana göre şekillenecek.",
+                    description: "Planın, haftalık olarak ayırdığın zamana göre şekillenecek.",
                     statusText: "$totalHours Saat",
                     statusDescription: "Haftalık Plan",
                     // isTimeMapOk artık > 0 olduğu için kullanıcı az saat seçse de yeşil yanacak
@@ -1103,7 +1101,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                     pacing: Pacing.relaxed,
                     icon: Icons.directions_walk_rounded,
                     title: "Rahat Tempo",
-                    subtitle: "Temel tekrar ve konu pekiştirme odaklı yaklaşım",
+                    subtitle: "Temel tekrar ve konu pekiştirme",
                     isSelected: ref.watch(selectedPacingProvider) == Pacing.relaxed,
                     onTap: () => ref.read(selectedPacingProvider.notifier).state = Pacing.relaxed,
                   ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.15, curve: Curves.easeOut),
@@ -1114,7 +1112,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                     pacing: Pacing.moderate,
                     icon: Icons.directions_run_rounded,
                     title: "Dengeli Tempo",
-                    subtitle: "Sağlam ve istikrarlı ilerleme stratejisi",
+                    subtitle: "Sağlam ve istikrarlı ilerleme",
                     isSelected: ref.watch(selectedPacingProvider) == Pacing.moderate,
                     onTap: () => ref.read(selectedPacingProvider.notifier).state = Pacing.moderate,
                   ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.15, curve: Curves.easeOut),
@@ -1125,7 +1123,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                     pacing: Pacing.intense,
                     icon: Icons.rocket_launch_rounded,
                     title: "Yoğun Tempo",
-                    subtitle: "Maksimum verimlilik ve yoğun çalışma programı",
+                    subtitle: "Maksimum verimlilik ve yoğun çalışma",
                     isSelected: ref.watch(selectedPacingProvider) == Pacing.intense,
                     onTap: () => ref.read(selectedPacingProvider.notifier).state = Pacing.intense,
                   ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.15, curve: Curves.easeOut),
@@ -1145,7 +1143,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                 _ModernButton(
                   onPressed: () => ref.read(strategyGenerationProvider.notifier).generatePlan(context),
                   icon: Icons.auto_awesome_rounded,
-                  label: "Stratejiyi Oluştur",
+                  label: "Planı Oluştur",
                   isPrimary: true,
                   gradient: LinearGradient(
                     colors: [
