@@ -66,8 +66,9 @@ service cloud.firestore {
         allow read: if request.auth.uid == userId;
         // ai_memory belgesi kullanıcı tarafından yazılabilir (AI sohbet hafızası için)
         // stats belgesi kullanıcı tarafından yazılabilir (deneme silme işlemleri için)
+        // app_state belgesi kullanıcı tarafından yazılabilir (uygulama durumu için)
         // points belgesi SADECE sunucu tarafından yazılabilir
-        allow write: if request.auth.uid == userId && (docId == 'ai_memory' || docId == 'stats');
+        allow write: if request.auth.uid == userId && (docId == 'ai_memory' || docId == 'stats' || docId == 'app_state');
       }
 
       match /archived_plans/{docId} {
@@ -153,8 +154,10 @@ service cloud.firestore {
     // PUBLIC PROFILES - GÜVENLİK DÜZELTMESİ
     // =====================================================================
     match /public_profiles/{userId} {
-      // Herkese açık profilleri tüm giriş yapmış kullanıcılar okuyabilir.
-      allow read, list: if request.auth != null;
+      // Herkese açık profilleri tüm kullanıcılar okuyabilir.
+      // NOT: Kayıt sırasında kullanıcı adı kontrolü yapılabilmesi için
+      // anonim okuma izni gereklidir (kullanıcı henüz giriş yapmamış olabilir).
+      allow read, list: if true;
       // Kullanıcılar kendi public profile'larını oluşturabilir ve güncelleyebilir
       allow create, update: if request.auth != null && request.auth.uid == userId;
       // Profillerin silinmesine istemci tarafından izin verilmez.
