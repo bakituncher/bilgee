@@ -65,9 +65,6 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
     final creationDate = displayedPlan.creationDate;
     final creationDayStart = DateTime(creationDate.year, creationDate.month, creationDate.day);
     final startOfWeek = creationDayStart.subtract(Duration(days: creationDayStart.weekday - 1));
-    final endOfWeek = startOfWeek.add(const Duration(days: 6));
-
-    final dateRangeText = "${DateFormat('d MMM', 'tr_TR').format(startOfWeek)} - ${DateFormat('d MMM', 'tr_TR').format(endOfWeek)}";
 
     return Scaffold(
       appBar: AppBar(
@@ -151,31 +148,6 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
               if (isReadOnly)
                  _buildStatusBanner(context, isHistoryView, isExpired),
 
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Haftanın Odağı",
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        ),
-                        Text(
-                          dateRangeText,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.outline),
-                        )
-                      ],
-                    ),
-                    if (displayedPlan.motivationalQuote != null && displayedPlan.motivationalQuote!.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      _buildQuoteCard(context, displayedPlan.motivationalQuote!),
-                    ],
-                  ],
-                ).animate().fadeIn(duration: 500.ms),
-              ),
 
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
@@ -487,42 +459,6 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
       }
   }
 
-  // Quote kartını widget olarak ayırdım (temizlik için)
-  Widget _buildQuoteCard(BuildContext context, String quote) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
-            Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.format_quote, size: 16, color: Theme.of(context).colorScheme.primary.withOpacity(0.7)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              quote,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontStyle: FontStyle.italic,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
-                height: 1.3,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildPlanView(BuildContext context, WidgetRef ref, WeeklyPlan weeklyPlan, String userId, DateTime startOfWeek, {required bool isReadOnly}) {
     final selectedDayIndex = ref.watch(_selectedDayProvider);
