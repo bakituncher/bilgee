@@ -196,6 +196,13 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       title: "Etüt Odası",
                       description: "Sadece senin eksik olduğun konulara özel konu özeti ve test soruları üretir.",
                     ),
+                    _ProFeatureRow(
+                      theme: theme,
+                      icon: Icons.auto_awesome_rounded,
+                      color: const Color(0xFF0EA5E9),
+                      title: "İçerik Üretici",
+                      description: "PDF veya görsel yükle, yapay zeka bilgi kartları, soru kartları veya özet üretsin.",
+                    ),
                   ],
                 ),
               ),
@@ -435,6 +442,27 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
               ],
             ),
 
+            const SizedBox(height: gap),
+
+            // Satır 3 - İçerik Üretici (Tam genişlik)
+            _BentoCard(
+              title: 'İçerik Üretici',
+              description: 'PDF veya görsel yükle, bilgi kartları, soru kartları veya özet üret.',
+              icon: Icons.auto_awesome_rounded,
+              color: const Color(0xFF0EA5E9),
+              isPremium: isPremium,
+              height: 120,
+              onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/content-generator', offerData: {
+                'title': 'İçerik Üretici',
+                'subtitle': 'PDF ve görsellerden akıllı içerik.',
+                'iconName': 'auto_awesome',
+                'color': const Color(0xFF0EA5E9),
+                'marketingTitle': 'Notlarını Dönüştür!',
+                'marketingSubtitle': 'PDF veya görsel yükle, yapay zeka sana bilgi kartları, soru kartları veya özet üretsin.',
+                'redirectRoute': '/ai-hub/content-generator',
+              }),
+            ),
+
             const SizedBox(height: 32),
 
             if (!isPremium)
@@ -448,7 +476,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
   }
 
   void _handleNavigation(BuildContext context, bool isPremium, {required String route, required Map<String, dynamic> offerData}) {
-    if (route == '/ai-hub/question-solver' || route == '/ai-hub/mind-map') {
+    if (route == '/ai-hub/question-solver' || route == '/ai-hub/mind-map' || route == '/ai-hub/content-generator') {
       context.push(route); // ✅ context.go yerine context.push - geri tuşu çalışır
       return;
     }
