@@ -147,7 +147,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
                   children: [
                     Text(
-                      "Bu Özellikler Ne İşe Yarar?",
+                      "Taktik Araçları Seni Sınava Nasıl Hazırlayacak?",
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w900,
@@ -158,7 +158,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      "Taktik araçları seni sınava nasıl hazırlayacak?",
+                      "Her araç, sınav başarını artırmak için özel olarak tasarlandı.",
                       style: TextStyle(
                         fontSize: 16,
                         height: 1.4,
