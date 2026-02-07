@@ -265,6 +265,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   Timer? _autoScrollTimer;
   bool _userIsInteracting = false;
   bool _scrollingForward = true; // true = sağa, false = sola
+  bool _isLightMode = false; // Ekrana özel tema durumu (false = koyu mod, true = açık mod)
 
   Map<String, List<String>> _topicsBySubject = {};
   String? _selectedSubject;
@@ -776,8 +777,22 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
 
   void _showNodeDetails(MindMapNode node) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final colorScheme = theme.colorScheme;
+    final isDark = !_isLightMode; // Ekrana özel tema durumu
+
+    // Ekrana özel colorScheme
+    final colorScheme = isDark
+        ? ColorScheme.dark(
+            primary: theme.colorScheme.primary,
+            surface: const Color(0xFF1E1E1E),
+            onSurface: Colors.white,
+            onSurfaceVariant: Colors.white70,
+          )
+        : ColorScheme.light(
+            primary: theme.colorScheme.primary,
+            surface: Colors.white,
+            onSurface: Colors.black87,
+            onSurfaceVariant: Colors.black54,
+          );
 
     showModalBottomSheet(
       context: context,
@@ -962,7 +977,26 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     }
 
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final isDark = !_isLightMode;
+
+    // Ekrana özel colorScheme
+    final colorScheme = isDark
+        ? ColorScheme.dark(
+            primary: theme.colorScheme.primary,
+            surface: const Color(0xFF1E1E1E),
+            onSurface: Colors.white,
+            onSurfaceVariant: Colors.white70,
+            outline: Colors.white24,
+            surfaceContainerHighest: const Color(0xFF2C2C2C),
+          )
+        : ColorScheme.light(
+            primary: theme.colorScheme.primary,
+            surface: Colors.white,
+            onSurface: Colors.black87,
+            onSurfaceVariant: Colors.black54,
+            outline: Colors.black12,
+            surfaceContainerHighest: const Color(0xFFF5F5F5),
+          );
 
     showModalBottomSheet(
       context: context,
@@ -971,7 +1005,6 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
           final filteredTopics = _filterTopics(_topicsBySubject);
-          final isDark = theme.brightness == Brightness.dark;
 
           return Container(
             height: MediaQuery.of(context).size.height * 0.75,
@@ -1230,19 +1263,33 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     final savedHash = ref.watch(savedMapHashProvider);
     final isPreMadeMap = ref.watch(isPreMadeMapProvider);
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final colorScheme = theme.colorScheme;
+    final isDark = !_isLightMode;
 
-    // Mevcut haritanın hash'i
+    final colorScheme = isDark
+        ? ColorScheme.dark(
+      primary: theme.colorScheme.primary,
+      surface: const Color(0xFF1E1E1E),
+      onSurface: Colors.white,
+      onSurfaceVariant: Colors.white70,
+      outline: Colors.white24,
+      surfaceContainerHighest: const Color(0xFF2C2C2C),
+    )
+        : ColorScheme.light(
+      primary: theme.colorScheme.primary,
+      surface: Colors.white,
+      onSurface: Colors.black87,
+      onSurfaceVariant: Colors.black54,
+      outline: Colors.black12,
+      surfaceContainerHighest: const Color(0xFFF5F5F5),
+    );
+
     final currentHash = rootNode != null ? _calculateMapHash(rootNode) : null;
 
     return PopScope(
-      canPop: rootNode == null, // Harita yoksa normal geri gidebilir
+      canPop: rootNode == null,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop && rootNode != null) {
-          // Harita varsa ve geri gidemediyse, haritayı temizle
           ref.read(mindMapNodeProvider.notifier).state = null;
-          // Scroll'u otomatik başlat
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted && !_userIsInteracting) {
               _startAutoScroll();
@@ -1251,25 +1298,44 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
         }
       },
       child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
         appBar: AppBar(
-          title: const Text("Zihin Haritası"),
+          title: rootNode != null
+              ? GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _isLightMode = !_isLightMode;
+                    });
+                  },
+                  child: Transform.rotate(
+                    angle: 3.14159,
+                    child: Icon(
+                      _isLightMode ? Icons.lightbulb : Icons.lightbulb_outline,
+                      color: _isLightMode
+                          ? Colors.amber
+                          : (isDark ? Colors.white : Colors.black),
+                      size: 28,
+                    ),
+                  ),
+                )
+              : Text(
+                  "Zihin Haritası",
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                ),
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
           leading: CustomBackButton(
+            color: isDark ? Colors.white : Colors.black,
             onPressed: () {
               if (rootNode != null) {
-                // Harita gösteriliyorsa, haritayı temizle ve konu seçim ekranına dön
                 ref.read(mindMapNodeProvider.notifier).state = null;
-                // Scroll'u otomatik başlat
                 Future.delayed(const Duration(milliseconds: 500), () {
                   if (mounted && !_userIsInteracting) {
                     _startAutoScroll();
                   }
                 });
               } else {
-                // Harita yoksa normal geri git
                 if (Navigator.of(context).canPop()) {
                   Navigator.of(context).pop();
                 } else {
@@ -1281,13 +1347,17 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
           actions: [
             if (rootNode == null)
               IconButton(
-                icon: const Icon(Icons.folder_outlined),
+                icon: Icon(
+                  Icons.folder_outlined,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
                 tooltip: 'Kaydedilenler',
                 onPressed: () {
                   Navigator.push(
                     context,
                     PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const SavedMindMapsScreen(),
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                      const SavedMindMapsScreen(),
                       transitionDuration: Duration.zero,
                       reverseTransitionDuration: Duration.zero,
                     ),
@@ -1296,69 +1366,73 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
               ),
             if (rootNode != null)
               IconButton(
-                icon: const Icon(Icons.center_focus_strong),
+                icon: Icon(
+                  Icons.center_focus_strong,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
                 tooltip: 'Ortala',
                 onPressed: _centerCanvas,
               ),
           ],
         ),
-        body: Column(
+        // Column kaldırıldı veya sadeleştirildi, Stack ana gövdeye yayıldı
+        body: Stack(
           children: [
-            // Ana içerik
-            Expanded(
-              child: Stack(
-                children: [
-                  if (rootNode != null)
-                    InteractiveViewer(
-                      transformationController: _transformationController,
-                      boundaryMargin: const EdgeInsets.all(2000),
-                      minScale: 0.1,
-                      maxScale: 3.0,
-                      constrained: false,
-                      child: SizedBox(
-                        width: _canvasSize.width,
-                        height: _canvasSize.height,
-                        child: Stack(
-                          children: [
-                            Positioned.fill(child: CustomPaint(painter: GridPainter(isDark: isDark))),
-                            Positioned.fill(
-                              child: CustomPaint(
-                                painter: ConnectionPainter(rootNode: rootNode, scale: 1.0),
-                              ),
-                            ),
-                            ..._buildNodeWidgets(rootNode),
-                          ],
+            // 1. Zihin Haritası veya Boş Durum
+            if (rootNode != null)
+              InteractiveViewer(
+                transformationController: _transformationController,
+                boundaryMargin: const EdgeInsets.all(2000),
+                minScale: 0.1,
+                maxScale: 3.0,
+                constrained: false,
+                child: SizedBox(
+                  width: _canvasSize.width,
+                  height: _canvasSize.height,
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                          child: CustomPaint(painter: GridPainter(isDark: isDark))),
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: ConnectionPainter(rootNode: rootNode, scale: 1.0),
                         ),
                       ),
-                    )
-                  else
-                    _buildEmptyState(),
+                      ..._buildNodeWidgets(rootNode),
+                    ],
+                  ),
+                ),
+              )
+            else
+              _buildEmptyState(),
 
-                  if (isGenerating)
-                    Container(
-                      color: colorScheme.surface.withValues(alpha: 0.8),
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CircularProgressIndicator(color: colorScheme.primary),
-                            const SizedBox(height: 16),
-                            Text(
-                              "Zihin haritası oluşturuluyor...",
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                          ],
+
+            // 3. Yükleniyor Göstergesi
+            if (isGenerating)
+              Container(
+                color: colorScheme.surface.withValues(alpha: 0.8),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(color: colorScheme.primary),
+                      const SizedBox(height: 16),
+                      Text(
+                        "Zihin haritası oluşturuluyor...",
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.onSurface,
                         ),
                       ),
-                    ),
-                ],
+                    ],
+                  ),
+                ),
               ),
-            ),
           ],
         ),
-        bottomNavigationBar: (rootNode != null && !isGenerating && !isPreMadeMap && currentHash != savedHash)
+        bottomNavigationBar: (rootNode != null &&
+            !isGenerating &&
+            !isPreMadeMap &&
+            currentHash != savedHash)
             ? Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -1397,13 +1471,34 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
           ),
         )
             : null,
-      ), // Scaffold kapanışı
-    ); // PopScope kapanışı
+      ),
+    );
   }
 
   Widget _buildEmptyState() {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final isDark = !_isLightMode;
+
+    // Ekrana özel colorScheme
+    final colorScheme = isDark
+        ? ColorScheme.dark(
+            primary: theme.colorScheme.primary,
+            onPrimary: theme.colorScheme.onPrimary,
+            surface: const Color(0xFF1E1E1E),
+            onSurface: Colors.white,
+            onSurfaceVariant: Colors.white70,
+            outline: Colors.white24,
+            surfaceContainerHighest: const Color(0xFF2C2C2C),
+          )
+        : ColorScheme.light(
+            primary: theme.colorScheme.primary,
+            onPrimary: theme.colorScheme.onPrimary,
+            surface: Colors.white,
+            onSurface: Colors.black87,
+            onSurfaceVariant: Colors.black54,
+            outline: Colors.black12,
+            surfaceContainerHighest: const Color(0xFFF5F5F5),
+          );
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -1517,6 +1612,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   }
 
   List<Widget> _buildNodeWidgets(MindMapNode node) {
+    final isDark = !_isLightMode;
     List<Widget> widgets = [];
 
     // Node'u tam merkezinden yerleştirmek için offset ayarı
@@ -1531,6 +1627,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
           node: node,
           width: w,
           height: h,
+          isDark: isDark,
           onTap: () => _showNodeDetails(node),
         ),
       ),
@@ -1548,12 +1645,14 @@ class _NodeWidget extends StatefulWidget {
   final VoidCallback onTap;
   final double width;
   final double height;
+  final bool isDark;
 
   const _NodeWidget({
     required this.node,
     required this.onTap,
     required this.width,
     required this.height,
+    required this.isDark,
   });
 
   @override
@@ -1588,8 +1687,25 @@ class _NodeWidgetState extends State<_NodeWidget> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final colorScheme = theme.colorScheme;
+    final isDark = widget.isDark;
+
+    // Ekrana özel colorScheme
+    final colorScheme = isDark
+        ? ColorScheme.dark(
+            primary: theme.colorScheme.primary,
+            surface: const Color(0xFF1E1E1E),
+            onSurface: Colors.white,
+            onSurfaceVariant: Colors.white70,
+            surfaceContainerHighest: const Color(0xFF2C2C2C),
+          )
+        : ColorScheme.light(
+            primary: theme.colorScheme.primary,
+            surface: Colors.white,
+            onSurface: Colors.black87,
+            onSurfaceVariant: Colors.black54,
+            surfaceContainerHighest: const Color(0xFFF5F5F5),
+          );
+
     final isRoot = widget.node.type == NodeType.root;
 
     return Transform.translate(
