@@ -215,11 +215,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget _buildMethodSelection(BuildContext context, bool isDarkMode, double bottomPadding) {
     return SingleChildScrollView(
       // Alt kısma güvenli alan boşluğu ekliyoruz
-      padding: EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 24.0 + bottomPadding),
+      padding: EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 24.0 + bottomPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 20),
           // Logo veya İkon
           Container(
             height: 100,
@@ -231,7 +230,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
           Text(
             'Taktik\'e Hoş Geldin!',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -239,7 +238,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             'Hesabını oluşturmak için bir yöntem seç',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -247,33 +246,35 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 48),
+          const SizedBox(height: 24),
 
           // Hata mesajı
           if (_errorMessage != null && _errorMessage!.isNotEmpty)
-            Card(
-              color: Theme.of(context).colorScheme.errorContainer,
-              margin: const EdgeInsets.only(bottom: 24),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                child: Row(
-                  children: [
-                    Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onErrorContainer),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _errorMessage!,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onErrorContainer,
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Card(
+                color: Theme.of(context).colorScheme.errorContainer,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onErrorContainer),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onErrorContainer,
+                          ),
                         ),
                       ),
-                    ),
-                    IconButton(
-                      tooltip: 'Kapat',
-                      onPressed: _isLoading ? null : () => setState(() => _errorMessage = null),
-                      icon: Icon(Icons.close_rounded, color: Theme.of(context).colorScheme.onErrorContainer),
-                    )
-                  ],
+                      IconButton(
+                        tooltip: 'Kapat',
+                        onPressed: _isLoading ? null : () => setState(() => _errorMessage = null),
+                        icon: Icon(Icons.close_rounded, color: Theme.of(context).colorScheme.onErrorContainer),
+                      )
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -304,7 +305,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           Row(
             children: [
@@ -321,7 +322,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               Expanded(child: Divider(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3))),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // Google ile Devam Et
           SizedBox(
@@ -387,7 +388,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             ),
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
 
           // Zaten hesabın var mı?
           Row(
@@ -409,7 +410,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
 
           // Politika metni
           Padding(
@@ -480,7 +481,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget _buildEmailForm(BuildContext context, String passValue, double strength, bool isDarkMode, double bottomPadding) {
     return SingleChildScrollView(
       // Alt kısma güvenli alan boşluğu ekliyoruz
-      padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 16.0 + bottomPadding),
+      padding: EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 16.0 + bottomPadding),
       child: Form(
         key: _formKey,
         child: Column(
@@ -493,7 +494,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               'Hesabını oluşturmak için aşağıdaki bilgileri doldur',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -501,25 +502,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             if (_errorMessage != null && _errorMessage!.isNotEmpty)
-              Card(
-                color: Theme.of(context).colorScheme.errorContainer,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  child: Row(children: [
-                    Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onErrorContainer),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(_errorMessage!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onErrorContainer))),
-                    IconButton(
-                      tooltip: 'Kapat',
-                      onPressed: _isLoading ? null : () => setState(() => _errorMessage = null),
-                      icon: Icon(Icons.close_rounded, color: Theme.of(context).colorScheme.onErrorContainer),
-                    )
-                  ]),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Card(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    child: Row(children: [
+                      Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onErrorContainer),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(_errorMessage!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onErrorContainer))),
+                      IconButton(
+                        tooltip: 'Kapat',
+                        onPressed: _isLoading ? null : () => setState(() => _errorMessage = null),
+                        icon: Icon(Icons.close_rounded, color: Theme.of(context).colorScheme.onErrorContainer),
+                      )
+                    ]),
+                  ),
                 ),
               ),
-            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -665,7 +668,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               onChanged: (_) => setState(() {}),
               onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             // Şifre gücü göstergesi
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
@@ -678,12 +681,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 minHeight: 6,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
               strength < .34 ? 'Zayıf şifre' : (strength < .67 ? 'Orta şifre' : 'Güçlü şifre'),
               style: Theme.of(context).textTheme.labelMedium,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             TextFormField(
               controller: _confirmPasswordController,
               obscureText: _obscurePass2,
@@ -768,7 +771,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
             SizedBox(
               height: 52,
               child: ElevatedButton(
@@ -797,7 +800,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
