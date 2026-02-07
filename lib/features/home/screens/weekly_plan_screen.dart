@@ -312,22 +312,21 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
                                           isCurrentPlan ? 'Güncel Plan' : 'Geçmiş Plan',
                                           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                             fontWeight: FontWeight.bold,
-                                            color: isCurrentPlan ? Colors.green : null,
                                           ),
                                         ),
                                       ),
-                                      if (isExpired && !isCurrentPlan)
+                                      if (!isCurrentPlan)
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                           decoration: BoxDecoration(
-                                            color: Colors.orange.withOpacity(0.2),
+                                            color: Colors.orange.withOpacity(0.15),
                                             borderRadius: BorderRadius.circular(8),
                                           ),
                                           child: Text(
                                             'Arşiv',
                                             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                               color: Colors.orange,
-                                              fontWeight: FontWeight.bold,
+                                              fontWeight: FontWeight.w600,
                                             ),
                                           ),
                                         ),
