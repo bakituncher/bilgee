@@ -11,6 +11,7 @@ import 'package:lottie/lottie.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:taktik/features/coach/services/content_generator_service.dart';
+import 'package:taktik/features/coach/providers/content_generator_state_provider.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/core/theme/app_theme.dart';
@@ -23,34 +24,19 @@ class ContentGeneratorScreen extends ConsumerStatefulWidget {
 }
 
 class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen> {
-  // Seçili dosya (tekli seçim için)
-  File? _selectedFile;
-  String? _fileName;
-  String? _mimeType;
-
-  // Çoklu görsel seçimi (kamera ile)
-  List<File> _capturedImages = [];
+  // Çoklu görsel seçimi için maksimum limit
   static const int _maxCapturedImages = 5;
-
-  // Seçili içerik türü
-  ContentType _selectedContentType = ContentType.infoCards;
-
-  // State değişkenleri
-  bool _isLoading = false;
-  String? _error;
-  GeneratedContent? _result;
-
-  // Soru kartları için görünürlük kontrolü
-  final Map<int, bool> _revealedAnswers = {};
-
-  // Test soruları için kullanıcı cevapları
-  final Map<int, int> _selectedAnswers = {};
 
   // Image picker
   final ImagePicker _picker = ImagePicker();
 
+  // Provider notifier getter
+  ContentGeneratorNotifier get _notifier => ref.read(contentGeneratorStateProvider.notifier);
+
   @override
   Widget build(BuildContext context) {
+    // Provider'ı watch et - değişikliklerde rebuild olsun
+    final state = ref.watch(contentGeneratorStateProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isPremium = ref.watch(premiumStatusProvider);
@@ -102,7 +88,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         ),
         centerTitle: true,
         actions: [
-          if (_result != null)
+          if (state.result != null)
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: IconButton(
@@ -124,9 +110,9 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         ],
       ),
       body: SafeArea(
-        child: _isLoading
+        child: state.isLoading
             ? _buildLoadingState(theme, isDark)
-            : _result != null
+            : state.result != null
                 ? _buildResultState(theme, isDark)
                 : _buildInitialState(theme, isDark, isPremium),
       ),
@@ -135,6 +121,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Başlangıç ekranı - dosya seçimi ve içerik türü
   Widget _buildInitialState(ThemeData theme, bool isDark, bool isPremium) {
+    final state = ref.watch(contentGeneratorStateProvider);
     final colorScheme = theme.colorScheme;
 
     return SingleChildScrollView(
@@ -257,7 +244,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
           _buildContentTypeSelector(theme, isDark),
 
           // Hata mesajı
-          if (_error != null) ...[
+          if (state.error != null) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(14),
@@ -274,7 +261,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      _error!,
+                      state.error!,
                       style: TextStyle(
                         color: AppTheme.accentBrandColor,
                         fontSize: 13,
@@ -292,7 +279,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
           // Üret butonu - Gradient style
           Builder(
             builder: (context) {
-              final hasContent = _selectedFile != null || _capturedImages.isNotEmpty;
+              final hasContent = state.selectedFile != null || state.capturedImages.isNotEmpty;
 
               return Container(
                 width: double.infinity,
@@ -337,8 +324,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          _capturedImages.isNotEmpty
-                              ? '${_capturedImages.length} Sayfadan Üret'
+                          state.capturedImages.isNotEmpty
+                              ? '${state.capturedImages.length} Sayfadan Üret'
                               : 'İçerik Üret',
                           style: TextStyle(
                             fontSize: 16,
@@ -365,9 +352,10 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Dosya seçici widget
   Widget _buildFileSelector(ThemeData theme, bool isDark) {
+    final state = ref.watch(contentGeneratorStateProvider);
     final colorScheme = theme.colorScheme;
-    final hasFile = _selectedFile != null || _capturedImages.isNotEmpty;
-    final fileCount = _capturedImages.isNotEmpty ? _capturedImages.length : (_selectedFile != null ? 1 : 0);
+    final hasFile = state.selectedFile != null || state.capturedImages.isNotEmpty;
+    final fileCount = state.capturedImages.isNotEmpty ? state.capturedImages.length : (state.selectedFile != null ? 1 : 0);
 
     return GestureDetector(
       onTap: hasFile ? null : _showUploadOptions,
@@ -398,7 +386,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Dosya seçildikten sonraki görünüm
   Widget _buildSelectedFileContent(ColorScheme colorScheme, int fileCount) {
-    final isCaptured = _capturedImages.isNotEmpty;
+    final state = ref.watch(contentGeneratorStateProvider);
+    final isCaptured = state.capturedImages.isNotEmpty;
 
     return Row(
       children: [
@@ -407,20 +396,20 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: _getFileIconColor().withOpacity(0.12),
+            color: _getFileIconColor(state.mimeType).withOpacity(0.12),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: isCaptured && _capturedImages.isNotEmpty
+          child: isCaptured && state.capturedImages.isNotEmpty
               ? ClipRRect(
                   borderRadius: BorderRadius.circular(14),
                   child: Image.file(
-                    _capturedImages.first,
+                    state.capturedImages.first,
                     fit: BoxFit.cover,
                   ),
                 )
               : Icon(
-                  _getFileIcon(),
-                  color: _getFileIconColor(),
+                  _getFileIcon(state.mimeType),
+                  color: _getFileIconColor(state.mimeType),
                   size: 26,
                 ),
         ),
@@ -433,7 +422,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
               Text(
                 isCaptured
                     ? '$fileCount Sayfa Çekildi'
-                    : _fileName ?? 'Dosya',
+                    : state.fileName ?? 'Dosya',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -448,7 +437,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: _getFileIconColor().withOpacity(0.1),
+                      color: _getFileIconColor(state.mimeType).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
@@ -457,15 +446,15 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                         Icon(
                           isCaptured ? Icons.photo_library_rounded : Icons.insert_drive_file_rounded,
                           size: 12,
-                          color: _getFileIconColor(),
+                          color: _getFileIconColor(state.mimeType),
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          isCaptured ? 'GÖRSEL' : _mimeType?.split('/').last.toUpperCase() ?? 'DOSYA',
+                          isCaptured ? 'GÖRSEL' : state.mimeType?.split('/').last.toUpperCase() ?? 'DOSYA',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: _getFileIconColor(),
+                            color: _getFileIconColor(state.mimeType),
                           ),
                         ),
                       ],
@@ -597,11 +586,12 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// İçerik türü seçici
   Widget _buildContentTypeSelector(ThemeData theme, bool isDark) {
+    final state = ref.watch(contentGeneratorStateProvider);
     final colorScheme = theme.colorScheme;
 
     return Row(
       children: ContentType.values.map((type) {
-        final isSelected = _selectedContentType == type;
+        final isSelected = state.selectedContentType == type;
         final index = ContentType.values.indexOf(type);
 
         return Expanded(
@@ -611,7 +601,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
               right: index < ContentType.values.length - 1 ? 6 : 0,
             ),
             child: GestureDetector(
-              onTap: () => setState(() => _selectedContentType = type),
+              onTap: () => _notifier.setContentType(type),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
@@ -733,6 +723,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Yükleniyor ekranı
   Widget _buildLoadingState(ThemeData theme, bool isDark) {
+    final state = ref.watch(contentGeneratorStateProvider);
     final colorScheme = theme.colorScheme;
 
     return Center(
@@ -796,13 +787,13 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                _getContentTypeIcon(_selectedContentType),
+                _getContentTypeIcon(state.selectedContentType),
                 size: 18,
                 color: colorScheme.onSurface.withOpacity(0.6),
               ),
               const SizedBox(width: 6),
               Text(
-                '${_selectedContentType.displayName} üretiliyor',
+                '${state.selectedContentType.displayName} üretiliyor',
                 style: TextStyle(
                   fontSize: 14,
                   color: colorScheme.onSurface.withOpacity(0.5),
@@ -831,7 +822,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Sonuç ekranı
   Widget _buildResultState(ThemeData theme, bool isDark) {
-    if (_result == null) return const SizedBox.shrink();
+    final state = ref.watch(contentGeneratorStateProvider);
+    if (state.result == null) return const SizedBox.shrink();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -840,9 +832,9 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         children: [
 
           // İçerik görüntüleme
-          if (_result!.type == ContentType.summary)
+          if (state.result!.type == ContentType.summary)
             _buildSummaryView(theme, isDark)
-          else if (_result!.type == ContentType.questionCards)
+          else if (state.result!.type == ContentType.questionCards)
             _buildQuizView(theme, isDark)
           else
             _buildCardsView(theme, isDark),
@@ -853,7 +845,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Quiz görünümü (çoktan seçmeli test) - Sektör seviyesi tasarım
   Widget _buildQuizView(ThemeData theme, bool isDark) {
-    final cards = _result!.cards ?? [];
+    final state = ref.watch(contentGeneratorStateProvider);
+    final cards = state.result!.cards ?? [];
     final colorScheme = theme.colorScheme;
 
     if (cards.isEmpty) {
@@ -866,8 +859,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     }
 
     // İlerleme hesapla
-    final answeredCount = _selectedAnswers.length;
-    final correctCount = _selectedAnswers.entries
+    final answeredCount = state.selectedAnswers.length;
+    final correctCount = state.selectedAnswers.entries
         .where((e) => cards.length > e.key && cards[e.key].correctIndex == e.value)
         .length;
 
@@ -966,7 +959,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         ...cards.asMap().entries.map((entry) {
           final index = entry.key;
           final card = entry.value;
-          final selectedAnswer = _selectedAnswers[index];
+          final selectedAnswer = state.selectedAnswers[index];
           final isAnswered = selectedAnswer != null;
           final hasOptions = card.options != null && card.options!.isNotEmpty;
 
@@ -1125,9 +1118,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                           padding: const EdgeInsets.only(bottom: 10),
                           child: GestureDetector(
                             onTap: isAnswered ? null : () {
-                              setState(() {
-                                _selectedAnswers[index] = optIndex;
-                              });
+                              _notifier.setSelectedAnswer(index, optIndex);
                             },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
@@ -1253,7 +1244,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Eski format soru kartı (şıksız)
   Widget _buildOldQuestionCard(ThemeData theme, bool isDark, int index, ContentCard card) {
-    final isRevealed = _revealedAnswers[index] ?? false;
+    final state = ref.watch(contentGeneratorStateProvider);
+    final isRevealed = state.revealedAnswers[index] ?? false;
     final colorScheme = theme.colorScheme;
 
     return Padding(
@@ -1330,9 +1322,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                         width: double.infinity,
                         child: TextButton(
                           onPressed: () {
-                            setState(() {
-                              _revealedAnswers[index] = true;
-                            });
+                            _notifier.toggleRevealedAnswer(index, true);
                           },
                           style: TextButton.styleFrom(
                             foregroundColor: AppTheme.secondaryBrandColor,
@@ -1377,8 +1367,9 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Özet görünümü - Sektör seviyesi tasarım
   Widget _buildSummaryView(ThemeData theme, bool isDark) {
+    final state = ref.watch(contentGeneratorStateProvider);
     final colorScheme = theme.colorScheme;
-    final summaryText = _result!.summary ?? _result!.rawContent;
+    final summaryText = state.result!.summary ?? state.result!.rawContent;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1614,7 +1605,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Kartlar görünümü (Bilgi kartları için) - Sektör seviyesi tasarım
   Widget _buildCardsView(ThemeData theme, bool isDark) {
-    final cards = _result!.cards ?? [];
+    final state = ref.watch(contentGeneratorStateProvider);
+    final cards = state.result!.cards ?? [];
     final colorScheme = theme.colorScheme;
 
     if (cards.isEmpty) {
@@ -2285,36 +2277,27 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       );
 
       if (image != null) {
-        setState(() {
-          _selectedFile = File(image.path);
-          _fileName = 'Kamera Görseli';
-          _mimeType = ContentGeneratorService.getMimeType(image.path);
-          _capturedImages.clear();
-          _error = null;
-        });
+        _notifier.setSelectedFile(
+          File(image.path),
+          'Kamera Görseli',
+          ContentGeneratorService.getMimeType(image.path),
+        );
       }
     } catch (e) {
-      setState(() {
-        _error = 'Görsel çekilemedi: $e';
-      });
+      _notifier.setError('Görsel çekilemedi: $e');
     }
   }
 
   /// Çoklu sayfa çekme başlat
   Future<void> _startMultiPageCapture() async {
-    setState(() {
-      _capturedImages = [];
-      _selectedFile = null;
-      _fileName = null;
-      _mimeType = null;
-    });
-
+    _notifier.clearSelection();
     await _captureNextPage();
   }
 
   /// Sonraki sayfayı çek
   Future<void> _captureNextPage() async {
-    if (_capturedImages.length >= _maxCapturedImages) {
+    final currentImages = ref.read(contentGeneratorStateProvider).capturedImages;
+    if (currentImages.length >= _maxCapturedImages) {
       _showMaxPagesReached();
       return;
     }
@@ -2328,22 +2311,17 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       );
 
       if (image != null && mounted) {
-        // Yeni liste oluşturarak Flutter'ın değişikliği algılamasını sağla
-        setState(() {
-          _capturedImages = [..._capturedImages, File(image.path)];
-          _error = null;
-        });
+        _notifier.addCapturedImage(File(image.path));
 
         // Devam etmek isteyip istemediğini sor
-        if (_capturedImages.length < _maxCapturedImages && mounted) {
+        final updatedImages = ref.read(contentGeneratorStateProvider).capturedImages;
+        if (updatedImages.length < _maxCapturedImages && mounted) {
           _showContinueCaptureDialog();
         }
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _error = 'Görsel çekilemedi: $e';
-        });
+        _notifier.setError('Görsel çekilemedi: $e');
       }
     }
   }
@@ -2354,11 +2332,12 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final remaining = _maxCapturedImages - _capturedImages.length;
-    final capturedCount = _capturedImages.length;
+    final currentState = ref.read(contentGeneratorStateProvider);
+    final remaining = _maxCapturedImages - currentState.capturedImages.length;
+    final capturedCount = currentState.capturedImages.length;
 
     // Güvenli kopya oluştur
-    final imagesCopy = List<File>.from(_capturedImages);
+    final imagesCopy = List<File>.from(currentState.capturedImages);
 
     showDialog(
       context: context,
@@ -2551,40 +2530,29 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       final path = result.files.first.path;
       if (path == null) return;
 
-      setState(() {
-        _selectedFile = File(path);
-        _fileName = result.files.first.name;
-        _mimeType = ContentGeneratorService.getMimeType(path);
-        _capturedImages = [];
-        _error = null;
-      });
+      _notifier.setSelectedFile(
+        File(path),
+        result.files.first.name,
+        ContentGeneratorService.getMimeType(path),
+      );
     } catch (e) {
-      setState(() {
-        _error = 'Dosya seçilemedi: $e';
-      });
+      _notifier.setError('Dosya seçilemedi: $e');
     }
   }
 
   /// Seçimi temizle
   void _clearSelection() {
-    setState(() {
-      _selectedFile = null;
-      _fileName = null;
-      _mimeType = null;
-      _capturedImages = [];
-      _error = null;
-    });
+    _notifier.clearSelection();
   }
 
   /// İçerik üretimi
   Future<void> _generateContent() async {
+    final state = ref.read(contentGeneratorStateProvider);
     // En az bir dosya veya görsel olmalı
-    if (_selectedFile == null && _capturedImages.isEmpty) return;
+    if (state.selectedFile == null && state.capturedImages.isEmpty) return;
 
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    _notifier.setLoading(true);
+    _notifier.setError(null);
 
     try {
       // Sınav türünü al
@@ -2594,73 +2562,51 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       final service = ref.read(contentGeneratorServiceProvider);
       GeneratedContent result;
 
-      if (_capturedImages.isNotEmpty) {
+      if (state.capturedImages.isNotEmpty) {
         // Çoklu görsel ile içerik üret
         result = await service.generateContentFromMultipleImages(
-          files: _capturedImages,
-          contentType: _selectedContentType,
+          files: state.capturedImages,
+          contentType: state.selectedContentType,
           examType: examType,
         );
       } else {
         // Tekli dosya ile içerik üret
         result = await service.generateContent(
-          file: _selectedFile!,
-          contentType: _selectedContentType,
-          mimeType: _mimeType!,
+          file: state.selectedFile!,
+          contentType: state.selectedContentType,
+          mimeType: state.mimeType!,
           examType: examType,
         );
       }
 
-      setState(() {
-        _result = result;
-        _isLoading = false;
-        _revealedAnswers.clear();
-        _selectedAnswers.clear();
-      });
+      _notifier.setResult(result);
     } catch (e) {
-      setState(() {
-        _error = e.toString().replaceAll('Exception: ', '');
-        _isLoading = false;
-      });
+      _notifier.setError(e.toString().replaceAll('Exception: ', ''));
+      _notifier.setLoading(false);
     }
   }
 
   /// Sıfırla
   void _reset() {
-    setState(() {
-      _selectedFile = null;
-      _fileName = null;
-      _mimeType = null;
-      _capturedImages = [];
-      _result = null;
-      _error = null;
-      _revealedAnswers.clear();
-      _selectedAnswers.clear();
-    });
+    _notifier.reset();
   }
 
   /// Yeni içerik oluştur - dosyayı koru
   void _createNewContent() {
-    setState(() {
-      _result = null;
-      _error = null;
-      _revealedAnswers.clear();
-      _selectedAnswers.clear();
-      // Dosya korunuyor, kullanıcı başka içerik türü seçebilir
-    });
+    _notifier.clearResult();
   }
 
   /// Dosya ikonu
-  IconData _getFileIcon() {
-    if (_mimeType == 'application/pdf') {
+  IconData _getFileIcon(String? mimeType) {
+    if (mimeType == 'application/pdf') {
       return Icons.picture_as_pdf_rounded;
     }
     return Icons.image_rounded;
   }
 
   /// Dosya ikon rengi
-  Color _getFileIconColor() {
-    if (_mimeType == 'application/pdf') {
+  Color _getFileIconColor(String? mimeType) {
+    if (mimeType == 'application/pdf') {
       return Colors.red;
     }
     return Colors.blue;
