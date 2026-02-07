@@ -105,6 +105,18 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
     }
   }
 
+  Widget _buildAppBarTitle(BuildContext context) {
+    return Text(
+      'Konu Netlerim',
+      style: TextStyle(
+        fontWeight: FontWeight.w900,
+        color: Theme.of(context).colorScheme.onSurface,
+        letterSpacing: -0.5,
+        fontSize: 20,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final userProfileAsync = ref.watch(userProfileProvider);
@@ -114,7 +126,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
       data: (user) {
         if (user == null || user.selectedExam == null) {
           return Scaffold(
-              appBar: AppBar(title: const Text('Konu Netlerim')),
+              appBar: AppBar(title: _buildAppBarTitle(context)),
               body: const Center(
                   child: Text('Lütfen önce profilden bir sınav seçin.')));
         }
@@ -126,19 +138,19 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Scaffold(
-                  appBar: AppBar(title: const Text('Konu Netlerim')),
+                  appBar: AppBar(title: _buildAppBarTitle(context)),
                   body: const LogoLoader());
             }
             if (snapshot.hasError) {
               return Scaffold(
-                  appBar: AppBar(title: const Text('Konu Netlerim')),
+                  appBar: AppBar(title: _buildAppBarTitle(context)),
                   body: Center(
                       child: Text(
                           'Sınav verileri yüklenemedi: ${snapshot.error}')));
             }
             if (!snapshot.hasData) {
               return Scaffold(
-                  appBar: AppBar(title: const Text('Konu Netlerim')),
+                  appBar: AppBar(title: _buildAppBarTitle(context)),
                   body:
                   const Center(child: Text('Sınav verisi bulunamadı.')));
             }
@@ -148,7 +160,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
 
             if (subjects.isEmpty) {
               return Scaffold(
-                  appBar: AppBar(title: const Text('Konu Netlerim')),
+                  appBar: AppBar(title: _buildAppBarTitle(context)),
                   body: const Center(
                       child: Text('Bu sınav için konu bulunamadı.')));
             }
@@ -163,15 +175,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
             return Scaffold(
                 resizeToAvoidBottomInset: false,
                 appBar: AppBar(
-                  title: Text(
-                    'Konu Netlerim',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      color: Theme.of(context).colorScheme.onSurface,
-                      letterSpacing: -0.5,
-                      fontSize: 20,
-                    ),
-                  ),
+                  title: _buildAppBarTitle(context),
                   bottom: TabBar(
                     controller: _tabController,
                     isScrollable: true,
@@ -213,10 +217,10 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
         );
       },
       loading: () => Scaffold(
-          appBar: AppBar(title: const Text('Konu Netlerim')),
+          appBar: AppBar(title: _buildAppBarTitle(context)),
           body: const LogoLoader()),
       error: (e, s) => Scaffold(
-          appBar: AppBar(title: const Text('Konu Netlerim')),
+          appBar: AppBar(title: _buildAppBarTitle(context)),
           body:
           Center(child: Text('Veriler yüklenirken bir hata oluştu: $e'))),
     );
