@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
+import 'package:taktik/data/providers/shared_prefs_provider.dart';
 import 'dart:convert';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:taktik/data/models/exam_model.dart';
@@ -282,7 +283,20 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     super.initState();
     // Ekran açıldığında önceki haritayı temizle
     ref.read(mindMapNodeProvider.notifier).state = null;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+
+    // İlk açılışta kaydedilmiş tema tercihini veya global tema ayarını kullan
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted) {
+        // Kaydedilmiş tercihi yükle
+        final prefs = await ref.read(sharedPreferencesProvider.future);
+        final savedLightMode = prefs.getBool('mindmap_light_mode');
+
+        final brightness = Theme.of(context).brightness;
+        setState(() {
+          // Eğer kaydedilmiş tercih varsa onu kullan, yoksa global temayı kullan
+          _isLightMode = savedLightMode ?? (brightness == Brightness.light);
+        });
+      }
       _centerCanvas();
       _loadTopics();
       // Otomatik kaydırmayı biraz daha geç başlat
@@ -343,6 +357,21 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     _cardsScrollController.dispose();
     _transformationController.dispose();
     super.dispose();
+  }
+
+  // Tema tercihini değiştir ve kaydet
+  Future<void> _toggleThemeMode() async {
+    setState(() {
+      _isLightMode = !_isLightMode;
+    });
+
+    // Tercihi kaydet
+    try {
+      final prefs = await ref.read(sharedPreferencesProvider.future);
+      await prefs.setBool('mindmap_light_mode', _isLightMode);
+    } catch (e) {
+      debugPrint('Tema tercihi kaydedilemedi: $e');
+    }
   }
 
   void _centerCanvas() {
@@ -977,9 +1006,9 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     }
 
     final theme = Theme.of(context);
-    final isDark = !_isLightMode;
+    final isDark = theme.brightness == Brightness.dark; // Global tema ayarını kullan
 
-    // Ekrana özel colorScheme
+    // Global tema colorScheme
     final colorScheme = isDark
         ? ColorScheme.dark(
             primary: theme.colorScheme.primary,
@@ -1164,6 +1193,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
 
   Widget _buildPreMadeMapsHorizontalList(ThemeData theme, ColorScheme colorScheme) {
     final preMadeMapsAsync = ref.watch(preMadeMapsProvider);
+    final isDark = theme.brightness == Brightness.dark; // Global tema ayarını kullan
 
     return preMadeMapsAsync.when(
       data: (maps) {
@@ -1211,6 +1241,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                   map: map,
                   theme: theme,
                   colorScheme: colorScheme,
+                  isDark: isDark,
                   onTap: () {
                     _autoScrollTimer?.cancel();
                     _userIsInteracting = true;
@@ -1287,9 +1318,26 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
 
     return PopScope(
       canPop: rootNode == null,
-      onPopInvokedWithResult: (didPop, result) {
+      onPopInvokedWithResult: (didPop, result) async {
         if (!didPop && rootNode != null) {
           ref.read(mindMapNodeProvider.notifier).state = null;
+
+          // Kaydedilmiş tema tercihini yeniden yükle
+          try {
+            final prefs = await ref.read(sharedPreferencesProvider.future);
+            final savedLightMode = prefs.getBool('mindmap_light_mode');
+            final brightness = Theme.of(context).brightness;
+
+            setState(() {
+              _isLightMode = savedLightMode ?? (brightness == Brightness.light);
+            });
+          } catch (e) {
+            // Hata durumunda global temayı kullan
+            setState(() {
+              _isLightMode = theme.brightness == Brightness.light;
+            });
+          }
+
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted && !_userIsInteracting) {
               _startAutoScroll();
@@ -1298,15 +1346,13 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
         }
       },
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
+        backgroundColor: rootNode != null
+            ? (isDark ? const Color(0xFF121212) : Colors.white)
+            : (theme.brightness == Brightness.dark ? const Color(0xFF121212) : Colors.white),
         appBar: AppBar(
           title: rootNode != null
               ? GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _isLightMode = !_isLightMode;
-                    });
-                  },
+                  onTap: _toggleThemeMode,
                   child: Transform.rotate(
                     angle: 3.14159,
                     child: Icon(
@@ -1320,16 +1366,37 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                 )
               : Text(
                   "Zihin Haritası",
-                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                  style: TextStyle(
+                    color: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+                  ),
                 ),
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
           leading: CustomBackButton(
-            color: isDark ? Colors.white : Colors.black,
-            onPressed: () {
+            color: rootNode != null
+                ? (isDark ? Colors.white : Colors.black)
+                : (theme.brightness == Brightness.dark ? Colors.white : Colors.black),
+            onPressed: () async {
               if (rootNode != null) {
                 ref.read(mindMapNodeProvider.notifier).state = null;
+
+                // Kaydedilmiş tema tercihini yeniden yükle
+                try {
+                  final prefs = await ref.read(sharedPreferencesProvider.future);
+                  final savedLightMode = prefs.getBool('mindmap_light_mode');
+                  final brightness = Theme.of(context).brightness;
+
+                  setState(() {
+                    _isLightMode = savedLightMode ?? (brightness == Brightness.light);
+                  });
+                } catch (e) {
+                  // Hata durumunda global temayı kullan
+                  setState(() {
+                    _isLightMode = theme.brightness == Brightness.light;
+                  });
+                }
+
                 Future.delayed(const Duration(milliseconds: 500), () {
                   if (mounted && !_userIsInteracting) {
                     _startAutoScroll();
@@ -1349,7 +1416,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
               IconButton(
                 icon: Icon(
                   Icons.folder_outlined,
-                  color: isDark ? Colors.white : Colors.black,
+                  color: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
                 ),
                 tooltip: 'Kaydedilenler',
                 onPressed: () {
@@ -1477,9 +1544,9 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
 
   Widget _buildEmptyState() {
     final theme = Theme.of(context);
-    final isDark = !_isLightMode;
+    final isDark = theme.brightness == Brightness.dark; // Global tema ayarını kullan
 
-    // Ekrana özel colorScheme
+    // Global tema colorScheme
     final colorScheme = isDark
         ? ColorScheme.dark(
             primary: theme.colorScheme.primary,
@@ -1787,12 +1854,14 @@ class _PreMadeMapCard extends StatelessWidget {
   final PreMadeMindMap map;
   final ThemeData theme;
   final ColorScheme colorScheme;
+  final bool isDark;
   final VoidCallback onTap;
 
   _PreMadeMapCard({
     required this.map,
     required this.theme,
     required this.colorScheme,
+    required this.isDark,
     required this.onTap,
   });
 
@@ -1873,7 +1942,6 @@ class _PreMadeMapCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = theme.brightness == Brightness.dark;
 
     // Scale oranı (Zoom etkisi)
     const double previewScale = 0.20;
