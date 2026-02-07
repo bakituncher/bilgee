@@ -77,7 +77,7 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
         gradient: LinearGradient(
           colors: [
             Theme.of(context).cardColor,
-            Theme.of(context).cardColor.withOpacity(0.95),
+            Theme.of(context).cardColor.withValues(alpha: 0.95),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -85,15 +85,15 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark
-              ? Theme.of(context).colorScheme.secondary.withOpacity(0.2)
-              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              ? Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2)
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Theme.of(context).colorScheme.primary.withOpacity(0.08)
-                : Colors.black.withOpacity(0.10),
+                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.10),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -114,7 +114,7 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
                   drawVerticalLine: false,
                   horizontalInterval: yInterval, // Hesaplanan interval
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.25),
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.25),
                     strokeWidth: 1,
                   ),
                 ),
@@ -210,10 +210,9 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
                     maxContentWidth: 200,
                     fitInsideHorizontally: true,
                     fitInsideVertically: true,
-                    tooltipRoundedRadius: 12,
                     tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     tooltipMargin: 8,
-                    getTooltipColor: (spot) => Theme.of(context).colorScheme.primary.withOpacity(0.96),
+                    getTooltipColor: (spot) => Theme.of(context).colorScheme.primary.withValues(alpha: 0.96),
                     getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
                       final test = widget.analysis.sortedTests[spot.spotIndex];
                       final total = (test.totalCorrect + test.totalWrong);
@@ -241,7 +240,7 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
                     gradient: LinearGradient(
                       colors: [
                         Theme.of(context).colorScheme.secondary,
-                        Theme.of(context).colorScheme.secondary.withOpacity(0.95),
+                        Theme.of(context).colorScheme.secondary.withValues(alpha: 0.95),
                       ],
                     ),
                     dotData: FlDotData(
@@ -281,8 +280,8 @@ class _NetEvolutionChartState extends State<NetEvolutionChart> {
                       show: true,
                       gradient: LinearGradient(
                         colors: [
-                          Theme.of(context).colorScheme.secondary.withOpacity(0.20),
-                          Theme.of(context).colorScheme.secondary.withOpacity(0.04),
+                          Theme.of(context).colorScheme.secondary.withValues(alpha: 0.20),
+                          Theme.of(context).colorScheme.secondary.withValues(alpha: 0.04),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -311,8 +310,8 @@ class _EmptyChartPlaceholder extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Theme.of(context).colorScheme.secondary.withOpacity(0.15),
-                Theme.of(context).colorScheme.secondary.withOpacity(0.05),
+                Theme.of(context).colorScheme.secondary.withValues(alpha: 0.15),
+                Theme.of(context).colorScheme.secondary.withValues(alpha: 0.05),
               ],
             ),
             shape: BoxShape.circle,

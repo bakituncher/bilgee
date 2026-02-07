@@ -172,7 +172,6 @@ class SubjectStatsScreen extends StatelessWidget {
                   maxContentWidth: 200,
                   fitInsideHorizontally: true,
                   fitInsideVertically: true,
-                  tooltipRoundedRadius: 12,
                   tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   getTooltipColor: (spot) => Theme.of(context).colorScheme.surface.withValues(alpha: 0.96),
                   getTooltipItems: (spots) => spots.map((spot) {

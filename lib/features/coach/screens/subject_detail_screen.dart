@@ -74,10 +74,7 @@ class SubjectDetailScreen extends ConsumerWidget {
                             final index = value.toInt();
                             if (index >= 0 && index < relevantTests.length) {
                               final date = relevantTests[index].date;
-                              return SideTitleWidget(
-                                axisSide: meta.axisSide,
-                                child: Text(DateFormat('d MMM').format(date)),
-                              );
+                              return Text(DateFormat('d MMM').format(date));
                             }
                             return const Text('');
                           },
