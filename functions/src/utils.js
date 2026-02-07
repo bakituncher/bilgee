@@ -189,13 +189,18 @@ function isBranchTest(scores, sectionName, examType) {
   // 2. İSTİSNALAR (Tek ders olsa bile Ana Sınav sayılanlar)
   const comprehensiveSubjectNames = [
     "YABANCI DİL", "YABANCI DIL",
-    "ALAN BİLGİSİ", "ALAN BILGISI", // Alan Bilgisi de burada olmalı
-    "YDT", "YDT (YABANCI DİL TESTİ)", "YDT (YABANCI DIL TESTI)" // AGS Yabancı Dil Öğretmenliği
+    "YABANCI DİL TESTİ", "YABANCI DIL TESTI",
+    "YABANCI DİL SINAVI", "YABANCI DIL SINAVI",
+    "ALAN BİLGİSİ", "ALAN BILGISI",
+    "YDT", "YDS",
+    "YDT (YABANCI DİL TESTİ)", "YDT (YABANCI DIL TESTI)",
+    "YDS (YABANCI DİL SINAVI)", "YDS (YABANCI DIL SINAVI)"
   ];
 
-  // Tam eşleşme veya YDT/Yabancı Dil içeren isimler için kontrol
+  // Tam eşleşme veya YDT/YDS/Yabancı Dil içeren isimler için kontrol
   if (comprehensiveSubjectNames.includes(subjectName) ||
       subjectName.startsWith("YDT") ||
+      subjectName.startsWith("YDS") ||
       subjectName.includes("YABANCI DİL") ||
       subjectName.includes("YABANCI DIL")) {
     return false; // Ana Sınav

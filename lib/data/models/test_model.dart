@@ -128,13 +128,17 @@ extension TestModelSummaryX on TestModel {
     final comprehensiveSubjectNames = [
       'YABANCI DİL',
       'YABANCI DİL TESTİ',
+      'YABANCI DİL SINAVI',
       'YDT',
-      'YDT (YABANCI DİL TESTİ)', // AGS Yabancı Dil Öğretmenliği
+      'YDS',
+      'YDT (YABANCI DİL TESTİ)', // YKS Yabancı Dil
+      'YDS (YABANCI DİL SINAVI)', // AGS Yabancı Dil Öğretmenliği
     ];
 
     // Tam eşleşme veya contains kontrolü (parantezli isimler için)
     if (comprehensiveSubjectNames.contains(subjectName) ||
         subjectName.startsWith('YDT') ||
+        subjectName.startsWith('YDS') ||
         subjectName.contains('YABANCI DİL')) {
       return false; // Ana Sınavdır
     }

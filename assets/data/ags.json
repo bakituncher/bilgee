@@ -456,7 +456,7 @@
       "name": "Yabancı Dil Öğretmenliği",
       "totalQuestionCount": 80,
       "subjects": {
-        "YDT (Yabancı Dil Testi)": {
+        "YDS (Yabancı Dil Sınavı)": {
           "questionCount": 80,
           "topics": [
             "Kelime ve Phrasal Verb",
