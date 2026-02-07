@@ -450,6 +450,28 @@
           ]
         }
       }
+    },
+    {
+      "id": "yabanci_dil",
+      "name": "Yabancı Dil Öğretmenliği",
+      "totalQuestionCount": 80,
+      "subjects": {
+        "YDT (Yabancı Dil Testi)": {
+          "questionCount": 80,
+          "topics": [
+            "Kelime ve Phrasal Verb",
+            "Tense, Preposition ve Dilbilgisi",
+            "Cloze Test",
+            "Cümle Tamamlama",
+            "Çeviri",
+            "Paragraf (Okuma Parçası)",
+            "Diyalog Tamamlama",
+            "Yakın Anlamlı Cümleler",
+            "Paragraf Tamamlama",
+            "Anlam Bütünlüğünü Bozan Cümle"
+          ]
+        }
+      }
     }
   ]
 }
