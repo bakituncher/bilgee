@@ -53,6 +53,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
+  /// Karakter sayacı - kalan karakter sayısını döndürür
+  String? _getCharacterCountText(TextEditingController controller, int maxLength) {
+    final currentLength = controller.text.length;
+    final threshold = (maxLength * 0.7).toInt();
+    if (currentLength < threshold) return null;
+    return '${maxLength - currentLength}';
+  }
+
+  Color _getCharacterCountColor(BuildContext context, TextEditingController controller, int maxLength) {
+    final remaining = maxLength - controller.text.length;
+    if (remaining <= 0) return Theme.of(context).colorScheme.error;
+    if (remaining <= 5) return Colors.orange;
+    return Theme.of(context).colorScheme.onSurfaceVariant;
+  }
+
   double _passwordStrength(String v) {
     int score = 0;
     if (v.length >= 6) score++;
@@ -528,12 +543,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 Expanded(
                   child: TextFormField(
                     controller: _firstNameController,
-                    decoration: const InputDecoration(labelText: 'Ad', prefixIcon: Icon(Icons.person_outline)),
+                    decoration: InputDecoration(
+                      labelText: 'Ad',
+                      prefixIcon: const Icon(Icons.person_outline),
+                      suffixText: _getCharacterCountText(_firstNameController, 50),
+                      suffixStyle: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: _getCharacterCountColor(context, _firstNameController, 50),
+                      ),
+                    ),
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.givenName],
+                    maxLength: 50,
+                    buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+                    onChanged: (_) => setState(() {}),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Lütfen adınızı girin.';
+                      }
+                      if (value.length > 50) {
+                        return 'Ad en fazla 50 karakter olabilir.';
                       }
                       return null;
                     },
@@ -544,12 +574,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 Expanded(
                   child: TextFormField(
                     controller: _lastNameController,
-                    decoration: const InputDecoration(labelText: 'Soyad', prefixIcon: Icon(Icons.person_outline)),
+                    decoration: InputDecoration(
+                      labelText: 'Soyad',
+                      prefixIcon: const Icon(Icons.person_outline),
+                      suffixText: _getCharacterCountText(_lastNameController, 50),
+                      suffixStyle: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: _getCharacterCountColor(context, _lastNameController, 50),
+                      ),
+                    ),
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.familyName],
+                    maxLength: 50,
+                    buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+                    onChanged: (_) => setState(() {}),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Lütfen soyadınızı girin.';
+                      }
+                      if (value.length > 50) {
+                        return 'Soyad en fazla 50 karakter olabilir.';
                       }
                       return null;
                     },
@@ -561,15 +606,30 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _usernameController,
-              decoration: const InputDecoration(labelText: 'Kullanıcı Adı', prefixIcon: Icon(Icons.alternate_email)),
+              decoration: InputDecoration(
+                labelText: 'Kullanıcı Adı',
+                prefixIcon: const Icon(Icons.alternate_email),
+                suffixText: _getCharacterCountText(_usernameController, 30),
+                suffixStyle: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: _getCharacterCountColor(context, _usernameController, 30),
+                ),
+              ),
               textInputAction: TextInputAction.next,
               autofillHints: const [AutofillHints.username],
+              maxLength: 30,
+              buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+              onChanged: (_) => setState(() {}),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Lütfen bir kullanıcı adı girin.';
                 }
                 if (value.length < 3) {
                   return 'Kullanıcı adı en az 3 karakter olmalıdır.';
+                }
+                if (value.length > 30) {
+                  return 'Kullanıcı adı en fazla 30 karakter olabilir.';
                 }
                 return null;
               },
@@ -633,12 +693,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(labelText: 'E-posta', prefixIcon: Icon(Icons.alternate_email_rounded)),
+              decoration: InputDecoration(
+                labelText: 'E-posta',
+                prefixIcon: const Icon(Icons.alternate_email_rounded),
+                suffixText: _getCharacterCountText(_emailController, 100),
+                suffixStyle: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: _getCharacterCountColor(context, _emailController, 100),
+                ),
+              ),
               textInputAction: TextInputAction.next,
               autofillHints: const [AutofillHints.email],
+              maxLength: 100,
+              buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+              onChanged: (_) => setState(() {}),
               validator: (value) {
                 if (value == null || !value.contains('@')) {
                   return 'Lütfen geçerli bir e-posta girin.';
+                }
+                if (value.length > 100) {
+                  return 'E-posta en fazla 100 karakter olabilir.';
                 }
                 return null;
               },

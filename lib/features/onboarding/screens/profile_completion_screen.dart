@@ -66,6 +66,21 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
     super.dispose();
   }
 
+  /// Karakter sayacı - kalan karakter sayısını döndürür
+  String? _getCharacterCountText(TextEditingController controller, int maxLength) {
+    final currentLength = controller.text.length;
+    final threshold = (maxLength * 0.7).toInt();
+    if (currentLength < threshold) return null;
+    return '${maxLength - currentLength}';
+  }
+
+  Color _getCharacterCountColor(BuildContext context, TextEditingController controller, int maxLength) {
+    final remaining = maxLength - controller.text.length;
+    if (remaining <= 0) return Theme.of(context).colorScheme.error;
+    if (remaining <= 5) return Colors.orange;
+    return Theme.of(context).colorScheme.onSurfaceVariant;
+  }
+
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
 
@@ -216,12 +231,21 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
                                 decoration: InputDecoration(
                                   labelText: 'Kullanıcı Adı',
                                   prefixIcon: const Icon(Icons.alternate_email_rounded),
+                                  suffixText: _getCharacterCountText(_usernameController, 30),
+                                  suffixStyle: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: _getCharacterCountColor(context, _usernameController, 30),
+                                  ),
                                   errorText: _usernameError,
                                   helperText: 'Benzersiz bir isim seçin',
                                 ),
+                                maxLength: 30,
+                                buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) return 'Lütfen bir kullanıcı adı girin.';
                                   if (value.length < 3) return 'Kullanıcı adı en az 3 karakter olmalı.';
+                                  if (value.length > 30) return 'Kullanıcı adı en fazla 30 karakter olabilir.';
                                   // Sadece harf, rakam ve alt çizgiye izin ver
                                   if (!RegExp(r'^[a-z0-9_]+$', caseSensitive: false).hasMatch(value)) {
                                     return 'Sadece harf, rakam ve alt çizgi kullanın.';
@@ -230,6 +254,7 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
                                   return null;
                                 },
                                 onChanged: (_) {
+                                  setState(() {});
                                   // Kullanıcı yazmaya başladığında hata mesajını temizle
                                   if (_usernameError != null) setState(() => _usernameError = null);
                                 },

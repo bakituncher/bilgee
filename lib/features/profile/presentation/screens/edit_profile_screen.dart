@@ -73,6 +73,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     super.dispose();
   }
 
+  /// Karakter sayacı - kalan karakter sayısını döndürür
+  String? _getCharacterCountText(TextEditingController controller, int maxLength) {
+    final currentLength = controller.text.length;
+    final threshold = (maxLength * 0.7).toInt();
+    if (currentLength < threshold) return null;
+    return '${maxLength - currentLength}';
+  }
+
+  Color _getCharacterCountColor(BuildContext context, TextEditingController controller, int maxLength) {
+    final remaining = maxLength - controller.text.length;
+    if (remaining <= 0) return Theme.of(context).colorScheme.error;
+    if (remaining <= 5) return Colors.orange;
+    return Theme.of(context).colorScheme.onSurfaceVariant;
+  }
+
   void _loadUserData(UserModel user) {
     _firstNameController.text = user.firstName;
     _lastNameController.text = user.lastName;
@@ -210,9 +225,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               ),
                             )
                           : null,
+                      suffixText: _isCheckingUsername ? null : _getCharacterCountText(_usernameController, 30),
+                      suffixStyle: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: _getCharacterCountColor(context, _usernameController, 30),
+                      ),
                       errorText: _usernameError,
                     ),
+                    maxLength: 30,
+                    buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
                     onChanged: (value) {
+                      setState(() {});
                       // Kullanıcı yazarken hatayı temizle
                       if (_usernameError != null) {
                         setState(() {
@@ -227,6 +251,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       if (value.length < 3) {
                         return 'Kullanıcı adı en az 3 karakter olmalıdır.';
                       }
+                      if (value.length > 30) {
+                        return 'Kullanıcı adı en fazla 30 karakter olabilir.';
+                      }
                       if (_usernameError != null) {
                         return _usernameError;
                       }
@@ -239,10 +266,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       Expanded(
                         child: TextFormField(
                           controller: _firstNameController,
-                          decoration: const InputDecoration(labelText: 'Ad', prefixIcon: Icon(Icons.person_outline)),
+                          decoration: InputDecoration(
+                            labelText: 'Ad',
+                            prefixIcon: const Icon(Icons.person_outline),
+                            suffixText: _getCharacterCountText(_firstNameController, 50),
+                            suffixStyle: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: _getCharacterCountColor(context, _firstNameController, 50),
+                            ),
+                          ),
+                          maxLength: 50,
+                          buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+                          onChanged: (_) => setState(() {}),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Lütfen adınızı girin.';
+                            }
+                            if (value.length > 50) {
+                              return 'Ad en fazla 50 karakter olabilir.';
                             }
                             return null;
                           },
@@ -252,10 +294,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       Expanded(
                         child: TextFormField(
                           controller: _lastNameController,
-                          decoration: const InputDecoration(labelText: 'Soyad', prefixIcon: Icon(Icons.person_outline)),
+                          decoration: InputDecoration(
+                            labelText: 'Soyad',
+                            prefixIcon: const Icon(Icons.person_outline),
+                            suffixText: _getCharacterCountText(_lastNameController, 50),
+                            suffixStyle: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: _getCharacterCountColor(context, _lastNameController, 50),
+                            ),
+                          ),
+                          maxLength: 50,
+                          buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+                          onChanged: (_) => setState(() {}),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Lütfen soyadınızı girin.';
+                            }
+                            if (value.length > 50) {
+                              return 'Soyad en fazla 50 karakter olabilir.';
                             }
                             return null;
                           },
