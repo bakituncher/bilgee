@@ -273,9 +273,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     return Icon(_sortOption.descending ? Icons.south_rounded : Icons.north_rounded, color: Theme.of(context).colorScheme.primary);
   }
 
-  static const Color _colDeepBlue = Color(0xFF2E3192);
-  static const Color _colCyan = Color(0xFF1BFFFF);
-
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -315,29 +312,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         ],
       ),
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: const Alignment(0, -0.8),
-                radius: 1.6,
-                colors: isDark
-                    ? [
-                  _colDeepBlue.withOpacity(0.12),
-                  theme.scaffoldBackgroundColor,
-                ]
-                    : [
-                  _colCyan.withOpacity(0.08),
-                  theme.scaffoldBackgroundColor,
-                ],
-                stops: const [0.0, 1.0],
-              ),
-            ),
-          ),
-          _buildBody(textTheme),
-        ],
-      ),
+      body: _buildBody(textTheme),
     );
   }
 
