@@ -187,21 +187,6 @@ class StrategicPlanningScreen extends ConsumerWidget {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Container(
           key: const ValueKey('loading'),
-          decoration: BoxDecoration(
-            gradient: RadialGradient(
-              center: const Alignment(0, -0.5),
-              radius: 1.5,
-              colors: isDark
-                  ? [
-                const Color(0xFF1A1F3A).withOpacity(0.4),
-                const Color(0xFF0A0E27),
-              ]
-                  : [
-                Theme.of(context).colorScheme.primary.withOpacity(0.05),
-                const Color(0xFFF8F9FE),
-              ],
-            ),
-          ),
           child: Center(
             child: Container(
               constraints: const BoxConstraints(maxWidth: 480),
@@ -220,23 +205,11 @@ class StrategicPlanningScreen extends ConsumerWidget {
                         duration: Duration(milliseconds: 600),
                       ),
                     ],
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
-                            Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
-                          ],
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Lottie.asset(
-                        'assets/lotties/Data Analysis.json',
-                        width: 200,
-                        height: 200,
-                        fit: BoxFit.contain,
-                      ),
+                    child: Lottie.asset(
+                      'assets/lotties/Data Analysis.json',
+                      width: 200,
+                      height: 200,
+                      fit: BoxFit.contain,
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -295,9 +268,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                       height: 4,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(2),
-                        color: isDark
-                            ? const Color(0xFF1E2147)
-                            : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(2),
@@ -329,7 +300,6 @@ class StrategicPlanningScreen extends ConsumerWidget {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0A0E27) : const Color(0xFFF8F9FE),
       appBar: AppBar(
         title: Text(
           "Stratejik Plan",
@@ -343,21 +313,6 @@ class StrategicPlanningScreen extends ConsumerWidget {
         leading: const CustomBackButton(),
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: const Alignment(0, -1.5),
-            radius: 2.0,
-            colors: isDark
-                ? [
-              const Color(0xFF1A1F3A).withOpacity(0.4),
-              const Color(0xFF0A0E27),
-            ]
-                : [
-              Theme.of(context).colorScheme.primary.withOpacity(0.04),
-              const Color(0xFFF8F9FE),
-            ],
-          ),
-        ),
         child: Column(
           children: [
             // AI güvenlik uyarısı
@@ -379,29 +334,13 @@ class StrategicPlanningScreen extends ConsumerWidget {
                         // Ana Kart - Modern Tasarım
                         Container(
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: isExpired
-                                  ? (isDark
-                                  ? [
-                                const Color(0xFF2D1F1F),
-                                const Color(0xFF1A1212),
-                              ]
-                                  : [
-                                const Color(0xFFFFF3E0),
-                                const Color(0xFFFFE0B2),
-                              ])
-                                  : (isDark
-                                  ? [
-                                const Color(0xFF1E2147),
-                                const Color(0xFF141729),
-                              ]
-                                  : [
-                                Colors.white,
-                                const Color(0xFFF5F7FF),
-                              ]),
-                            ),
+                            color: isExpired
+                                ? (isDark
+                                ? const Color(0xFF2D1F1F)
+                                : const Color(0xFFFFF3E0))
+                                : (isDark
+                                ? Theme.of(context).colorScheme.surface
+                                : Colors.white),
                             borderRadius: BorderRadius.circular(28),
                             border: Border.all(
                               color: isExpired
@@ -1024,21 +963,6 @@ class StrategicPlanningScreen extends ConsumerWidget {
     }
 
     return Container(
-      decoration: BoxDecoration(
-        gradient: RadialGradient(
-          center: const Alignment(0, -1.2),
-          radius: 2.0,
-          colors: isDark
-              ? [
-            const Color(0xFF1A1F3A).withOpacity(0.3),
-            const Color(0xFF0A0E27),
-          ]
-              : [
-            Theme.of(context).colorScheme.primary.withOpacity(0.03),
-            const Color(0xFFF8F9FE),
-          ],
-        ),
-      ),
       child: Column(
         children: [
           Expanded(
@@ -1145,21 +1069,6 @@ class StrategicPlanningScreen extends ConsumerWidget {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      decoration: BoxDecoration(
-        gradient: RadialGradient(
-          center: const Alignment(0, -1.2),
-          radius: 2.0,
-          colors: isDark
-              ? [
-            const Color(0xFF1A1F3A).withOpacity(0.3),
-            const Color(0xFF0A0E27),
-          ]
-              : [
-            Theme.of(context).colorScheme.primary.withOpacity(0.03),
-            const Color(0xFFF8F9FE),
-          ],
-        ),
-      ),
       child: Column(
         children: [
           Expanded(
@@ -1390,19 +1299,9 @@ class _ChecklistItemCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [
-            const Color(0xFF1E2147).withOpacity(0.6),
-            const Color(0xFF141729).withOpacity(0.4),
-          ]
-              : [
-            Colors.white,
-            const Color(0xFFF8F9FE),
-          ],
-        ),
+        color: isDark
+            ? Theme.of(context).colorScheme.surface
+            : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
