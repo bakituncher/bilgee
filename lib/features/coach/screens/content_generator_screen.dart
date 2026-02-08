@@ -1261,8 +1261,182 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             ),
           ).animate(delay: Duration(milliseconds: 80 * index)).fadeIn(duration: 350.ms).slideY(begin: 0.05, end: 0);
         }),
+
+        // Daha fazla soru üret butonu
+        const SizedBox(height: 16),
+        _buildGenerateMoreQuestionsButton(theme, isDark),
+        const SizedBox(height: 32),
       ],
     );
+  }
+
+  /// Daha fazla soru üret butonu
+  Widget _buildGenerateMoreQuestionsButton(ThemeData theme, bool isDark) {
+    final colorScheme = theme.colorScheme;
+    final state = ref.watch(contentGeneratorStateProvider);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.secondaryBrandColor.withOpacity(0.08),
+            AppTheme.secondaryBrandColor.withOpacity(0.03),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.secondaryBrandColor.withOpacity(0.15),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppTheme.secondaryBrandColor.withOpacity(0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.add_circle_outline_rounded,
+              color: AppTheme.secondaryBrandColor,
+              size: 32,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Daha fazla pratik yap!',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Aynı konudan yeni sorular üret ve sınavına daha iyi hazırlan.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: colorScheme.onSurface.withOpacity(0.6),
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: state.isLoading ? null : _regenerateQuiz,
+              icon: state.isLoading
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.refresh_rounded, size: 20),
+              label: Text(
+                state.isLoading ? 'Üretiliyor...' : 'Daha Fazla Soru Üret',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.secondaryBrandColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 400.ms, delay: 200.ms).slideY(begin: 0.1, end: 0);
+  }
+
+  /// Quiz'i yeniden üret
+  Future<void> _regenerateQuiz() async {
+    final state = ref.read(contentGeneratorStateProvider);
+
+    // Zaten yükleniyorsa tekrar tetikleme
+    if (state.isLoading) return;
+
+    // Dosya veya görsel olmalı
+    if (state.selectedFile == null && state.capturedImages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.info_rounded, color: Colors.white, size: 18),
+              SizedBox(width: 10),
+              Text('Yeni soru için dosya gerekli'),
+            ],
+          ),
+          backgroundColor: AppTheme.secondaryBrandColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      return;
+    }
+
+    // Bekleme ekranına geç - result'ı temizle ve loading'i true yap
+    _notifier.clearResultForRegenerate();
+    _notifier.setError(null);
+
+    try {
+      final user = ref.read(userProfileProvider).value;
+      final examType = user?.selectedExam;
+      final service = ref.read(contentGeneratorServiceProvider);
+
+      GeneratedContent result;
+
+      if (state.capturedImages.isNotEmpty) {
+        result = await service.generateContentFromMultipleImages(
+          files: state.capturedImages,
+          contentType: ContentType.quiz,
+          examType: examType,
+        );
+      } else {
+        result = await service.generateContent(
+          file: state.selectedFile!,
+          contentType: ContentType.quiz,
+          mimeType: state.mimeType!,
+          examType: examType,
+        );
+      }
+
+      _notifier.setResult(result);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                const SizedBox(width: 10),
+                Text('${result.cards?.length ?? 0} yeni soru üretildi!'),
+              ],
+            ),
+            backgroundColor: AppTheme.successBrandColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      _notifier.setError(e.toString().replaceAll('Exception: ', ''));
+      _notifier.setLoading(false);
+    }
   }
 
   /// Eski format soru kartı (şıksız)

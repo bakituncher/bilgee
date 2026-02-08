@@ -213,6 +213,16 @@ class ContentGeneratorNotifier extends StateNotifier<ContentGeneratorState> {
     );
   }
 
+  /// Yeniden üretim için sonucu temizle (isLoading'i değiştirmez)
+  void clearResultForRegenerate() {
+    state = state.copyWith(
+      clearResult: true,
+      revealedAnswers: {},
+      selectedAnswers: {},
+      isLoading: true,
+    );
+  }
+
   /// Cevap göster/gizle
   void toggleRevealedAnswer(int index, bool revealed) {
     final newMap = Map<int, bool>.from(state.revealedAnswers);
