@@ -14,8 +14,10 @@ final questionSolverServiceProvider = Provider<QuestionSolverService>((ref) {
 class QuestionSolverService {
   QuestionSolverService();
 
-  /// Maksimum yükleme boyutu (Firebase Functions limiti ~10MB olduğu için 7MB güvenli sınırdır)
-  static const int maxUploadSize = 7 * 1024 * 1024;
+  /// Maksimum yükleme boyutu (10MB)
+  static const int maxUploadSize = 10 * 1024 * 1024;
+  /// Firebase Functions için güvenli gönderim sınırı (~7MB payload)
+  static const int _safePayloadSize = 7 * 1024 * 1024;
 
   Future<String> solveQuestion(XFile imageFile, {String? examType}) async {
     try {
@@ -24,7 +26,7 @@ class QuestionSolverService {
 
       // Sıkıştırma sonrası kontrol
       if (bytes.lengthInBytes > maxUploadSize) {
-        throw Exception('Görsel çok büyük. Lütfen daha düşük çözünürlüklü bir fotoğraf çekin veya kırparak tekrar deneyin.');
+        throw Exception('Görsel çok büyük (Maksimum 10MB). Lütfen daha düşük çözünürlüklü bir fotoğraf çekin.');
       }
 
       // 2) Base64 encode (callable payload)
@@ -69,12 +71,12 @@ class QuestionSolverService {
     try {
       // Boyutu kontrol et, eğer çok büyükse daha agresif sıkıştır
       final int fileSize = await file.length();
-      int quality = 80;
-      int minDimension = 1024;
+      int quality = 85;
+      int minDimension = 1280;
 
       if (fileSize > 5 * 1024 * 1024) { // 5MB+ ise
-        quality = 60;
-        minDimension = 800;
+        quality = 75;
+        minDimension = 1024;
       }
 
       final result = await FlutterImageCompress.compressWithFile(
@@ -92,7 +94,7 @@ class QuestionSolverService {
     // OOM riskine karşı kontrol
     final int finalSize = await file.length();
     if (finalSize > maxUploadSize) {
-      throw Exception('Görsel boyutu çok büyük, uygulama belleği yetersiz kalabilir.');
+      throw Exception('Görsel boyutu çok büyük (Maksimum 10MB).');
     }
 
     return await file.readAsBytes();
