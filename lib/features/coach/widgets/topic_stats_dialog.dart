@@ -42,6 +42,9 @@ class TopicStatsDialog extends StatelessWidget {
             ScaleEffect(duration: Duration(milliseconds: 400), curve: Curves.elasticOut)
           ],
           child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
+            ),
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
                 color: Theme.of(context).cardColor.withOpacity(0.95),
@@ -52,24 +55,26 @@ class TopicStatsDialog extends StatelessWidget {
                       color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
                       blurRadius: 20)
                 ]),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildMasteryGauge(context, mastery),
-                const SizedBox(height: 16),
-                Text(topicName,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                    textAlign: TextAlign.center),
-                const SizedBox(height: 24),
-                _buildStatsRow(context),
-                const Divider(height: 32),
-                _buildAiVerdictCard(context),
-                const SizedBox(height: 24),
-                TextButton(
-                  child: const Text("Anlaşıldı"),
-                  onPressed: () => Navigator.of(context).pop(),
-                )
-              ],
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildMasteryGauge(context, mastery),
+                  const SizedBox(height: 16),
+                  Text(topicName,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                      textAlign: TextAlign.center),
+                  const SizedBox(height: 24),
+                  _buildStatsRow(context),
+                  const Divider(height: 32),
+                  _buildAiVerdictCard(context),
+                  const SizedBox(height: 24),
+                  TextButton(
+                    child: const Text("Anlaşıldı"),
+                    onPressed: () => Navigator.of(context).pop(),
+                  )
+                ],
+              ),
             ),
           ),
         ),
@@ -163,15 +168,20 @@ class TopicStatsDialog extends StatelessWidget {
         children: [
           Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary),
           const SizedBox(width: 12),
-          Expanded(
+              Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text("Taktik Tavşan Yorumu",
+                    maxLines: 1,
+                    overflow: TextOverflow.visible,
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
-                        ?.copyWith(color: Theme.of(context).colorScheme.primary)),
+                        ?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontSize: 14,
+                        )),
                 const SizedBox(height: 8),
                 Text(getAiVerdict(),
                     style: TextStyle(
