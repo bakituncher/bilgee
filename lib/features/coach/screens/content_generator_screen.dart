@@ -27,7 +27,7 @@ class ContentGeneratorScreen extends ConsumerStatefulWidget {
 
 class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen> {
   // Çoklu görsel seçimi için maksimum limit
-  static const int _maxCapturedImages = 5;
+  static const int _maxCapturedImages = 10;
 
   // Image picker
   final ImagePicker _picker = ImagePicker();
@@ -2293,14 +2293,14 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             const SizedBox(height: 28),
 
             // Seçenekler
-            Row(
+              Row(
               children: [
                 // Kamera seçeneği
                 Expanded(
                   child: _buildUploadOptionCard(
                     icon: Icons.camera_alt_rounded,
                     title: 'Kamera',
-                    subtitle: '5 sayfaya kadar',
+                    subtitle: '10 sayfaya kadar',
                     color: Colors.blue,
                     onTap: () {
                       Navigator.pop(context);
@@ -2311,22 +2311,39 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Dosya seçeneği
+                // Galeri seçeneği
                 Expanded(
                   child: _buildUploadOptionCard(
-                    icon: Icons.folder_rounded,
-                    title: 'Dosyalar',
-                    subtitle: 'PDF, PNG, JPG',
-                    color: Colors.orange,
+                    icon: Icons.photo_library_rounded,
+                    title: 'Galeri',
+                    subtitle: '10 görsele kadar',
+                    color: Colors.purple,
                     onTap: () {
                       Navigator.pop(context);
-                      _pickFromFiles();
+                      _pickFromGallery();
                     },
                     colorScheme: colorScheme,
                     isDark: isDark,
                   ),
                 ),
               ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Dosya seçeneği - tam genişlik
+            _buildUploadOptionCard(
+              icon: Icons.folder_rounded,
+              title: 'Dosyalar',
+              subtitle: 'PDF, Word (max 20 sayfa)',
+              color: Colors.orange,
+              onTap: () {
+                Navigator.pop(context);
+                _pickFromFiles();
+              },
+              colorScheme: colorScheme,
+              isDark: isDark,
+              fullWidth: true,
             ),
 
             const SizedBox(height: 16),
@@ -2345,6 +2362,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     required VoidCallback onTap,
     required ColorScheme colorScheme,
     required bool isDark,
+    bool fullWidth = false,
   }) {
     return Material(
       color: Colors.transparent,
@@ -2352,7 +2370,10 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+          padding: EdgeInsets.symmetric(
+            vertical: fullWidth ? 16 : 24,
+            horizontal: 16,
+          ),
           decoration: BoxDecoration(
             color: color.withOpacity(isDark ? 0.12 : 0.08),
             borderRadius: BorderRadius.circular(20),
@@ -2361,40 +2382,83 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
               width: 1.5,
             ),
           ),
-          child: Column(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(16),
+          child: fullWidth
+              ? Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(icon, size: 24, color: color),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colorScheme.onSurface.withOpacity(0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 16,
+                      color: colorScheme.onSurface.withOpacity(0.3),
+                    ),
+                  ],
+                )
+              : Column(
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        icon,
+                        size: 28,
+                        color: color,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurface.withOpacity(0.5),
+                      ),
+                    ),
+                  ],
                 ),
-                child: Icon(
-                  icon,
-                  size: 28,
-                  color: color,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colorScheme.onSurface.withOpacity(0.5),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -2830,7 +2894,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg', 'webp'],
+        allowedExtensions: ['pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg', 'webp'],
         withData: false,
       );
 
@@ -2846,6 +2910,28 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       );
     } catch (e) {
       _notifier.setError('Dosya seçilemedi: $e');
+    }
+  }
+
+  /// Galeriden görsel seç
+  Future<void> _pickFromGallery() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1920,
+        maxHeight: 1920,
+      );
+
+      if (image != null) {
+        _notifier.setSelectedFile(
+          File(image.path),
+          image.name,
+          ContentGeneratorService.getMimeType(image.path),
+        );
+      }
+    } catch (e) {
+      _notifier.setError('Görsel seçilemedi: $e');
     }
   }
 
@@ -2941,6 +3027,10 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     if (mimeType == 'application/pdf') {
       return Icons.picture_as_pdf_rounded;
     }
+    if (mimeType == 'application/msword' ||
+        mimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      return Icons.description_rounded;
+    }
     return Icons.image_rounded;
   }
 
@@ -2948,6 +3038,10 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
   Color _getFileIconColor(String? mimeType) {
     if (mimeType == 'application/pdf') {
       return Colors.red;
+    }
+    if (mimeType == 'application/msword' ||
+        mimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      return Colors.blue.shade700;
     }
     return Colors.blue;
   }
