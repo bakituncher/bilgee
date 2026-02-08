@@ -750,11 +750,13 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                     ),
                   )
                 else
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, i) {
-                        final p = filtered[i];
-                        final isAdmin = isAdminAsync.asData?.value ?? false;
+                  SliverPadding(
+                    padding: EdgeInsets.only(bottom: 16 + MediaQuery.of(context).padding.bottom),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, i) {
+                          final p = filtered[i];
+                          final isAdmin = isAdminAsync.asData?.value ?? false;
 
                         Future<void> deletePost() async {
                           final ok = await showDialog<bool>(
@@ -1037,6 +1039,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                       childCount: filtered.length,
                     ),
                   ),
+                ),
               ],
             ),
           );

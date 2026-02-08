@@ -101,7 +101,12 @@ class _SavedWorkshopsScreenState extends ConsumerState<SavedWorkshopsScreen> {
                   });
 
                 return ListView.builder(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.only(
+                    left: 16.0,
+                    right: 16.0,
+                    top: 16.0,
+                    bottom: 16.0 + MediaQuery.of(context).padding.bottom,
+                  ),
                   itemCount: sortedGroups.length,
                   itemBuilder: (context, index) {
                     final group = sortedGroups[index].value;
