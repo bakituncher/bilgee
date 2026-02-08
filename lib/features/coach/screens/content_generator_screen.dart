@@ -2316,7 +2316,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                   child: _buildUploadOptionCard(
                     icon: Icons.photo_library_rounded,
                     title: 'Galeri',
-                    subtitle: 'Görsel seç',
+                    subtitle: '10 sayfaya kadar',
                     color: Colors.purple,
                     onTap: () {
                       Navigator.pop(context);
@@ -2920,6 +2920,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         imageQuality: 85,
         maxWidth: 1920,
         maxHeight: 1920,
+        limit: _maxCapturedImages,
       );
 
       if (images.isEmpty) return;
