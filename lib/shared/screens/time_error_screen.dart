@@ -26,7 +26,7 @@ class TimeErrorScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
                 Text(
-                  'Cihaz Saati Yanlış',
+                  'Cihaz Tarihi Yanlış',
                   style: GoogleFonts.poppins(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -36,12 +36,11 @@ class TimeErrorScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Uygulamayı doğru şekilde kullanabilmeniz için cihaz tarih ve saatinizin güncel olması gerekmektedir. Lütfen ayarlardan otomatiğe alın.',
+                  'Uygulamayı doğru şekilde kullanabilmeniz için cihaz tarih ve saatinizin güncel olması gerekir. Lütfen ayarlardan otomatiğe alın.',
                   style: GoogleFonts.poppins(
                     fontSize: 16,
-                    color: isDark
-                        ? Colors.white.withOpacity(0.7)
-                        : Colors.black.withOpacity(0.6),
+                    color: isDark ? Colors.white.withValues(alpha: 0.7)
+                        : Colors.black.withValues(alpha: 0.6),
                     height: 1.5,
                   ),
                   textAlign: TextAlign.center,
@@ -52,7 +51,7 @@ class TimeErrorScreen extends StatelessWidget {
                     AppSettings.openAppSettings(type: AppSettingsType.date);
                   },
                   icon: const Icon(Icons.settings),
-                  label: const Text('Saat Ayarlarını Aç'),
+                  label: const Text('Hadi Düzeltelim!'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
