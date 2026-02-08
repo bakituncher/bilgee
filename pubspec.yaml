@@ -102,6 +102,8 @@ dependencies:
   path_provider: ^2.1.2
   flutter_image_compress: ^2.2.0
   google_generative_ai: ^0.4.3
+  ntp: ^2.0.0
+  app_settings: ^7.0.0
 
 dev_dependencies:
   flutter_test:
