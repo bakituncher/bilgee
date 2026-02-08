@@ -113,6 +113,9 @@ final contentGeneratorServiceProvider = Provider<ContentGeneratorService>((ref) 
 class ContentGeneratorService {
   ContentGeneratorService();
 
+  /// Maksimum yükleme boyutu (Firebase Functions limiti ~10MB olduğu için 7MB güvenli sınırdır)
+  static const int maxUploadSize = 7 * 1024 * 1024;
+
   /// PDF veya görsel dosyasından içerik üretir
   Future<GeneratedContent> generateContent({
     required File file,
@@ -121,8 +124,19 @@ class ContentGeneratorService {
     String? examType,
   }) async {
     try {
+      // Dosya boyutu kontrolü
+      final fileSize = await file.length();
+      if (fileSize > maxUploadSize && mimeType == 'application/pdf') {
+        throw Exception('PDF dosyası çok büyük (Maksimum 7MB). Lütfen daha küçük bir dosya seçin.');
+      }
+
       // Dosyayı oku ve sıkıştır (görsel ise)
       final Uint8List bytes = await _processFile(file, mimeType);
+
+      // Sıkıştırma sonrası kontrol
+      if (bytes.lengthInBytes > maxUploadSize) {
+        throw Exception('Dosya işlenemeyecek kadar büyük. Lütfen daha düşük çözünürlüklü bir görsel kullanın.');
+      }
 
       // Base64 encode
       final b64 = base64Encode(bytes);
@@ -176,10 +190,17 @@ class ContentGeneratorService {
     try {
       // Tüm görselleri işle ve base64'e çevir
       final List<Map<String, String>> images = [];
+      int totalSize = 0;
 
       for (final file in files) {
         final mimeType = getMimeType(file.path);
         final Uint8List bytes = await _processFile(file, mimeType);
+
+        totalSize += bytes.lengthInBytes;
+        if (totalSize > maxUploadSize) {
+          throw Exception('Toplam görsel boyutu çok fazla. Lütfen daha az veya daha küçük görseller seçin.');
+        }
+
         final b64 = base64Encode(bytes);
         images.add({
           'base64': b64,
@@ -241,24 +262,51 @@ $basePrompt
 
   /// Dosyayı işle - görsel ise sıkıştır
   Future<Uint8List> _processFile(File file, String mimeType) async {
-    // PDF dosyası doğrudan okunur
-    if (mimeType == 'application/pdf') {
-      return await file.readAsBytes();
+    // Önce dosya boyutunu disk üzerinden kontrol et (OOM önlemek için)
+    final int initialSize = await file.length();
+    if (initialSize > maxUploadSize * 2 && mimeType != 'application/pdf') {
+      // Çok büyük görselleri sıkıştırmadan önce bile reddedebiliriz veya
+      // sıkıştırma işlemi için devam edebiliriz. Ancak PDF ise ve limit aşılmışsa direkt hata.
+    }
+
+    if (mimeType == 'application/pdf' && initialSize > maxUploadSize) {
+      throw Exception('PDF dosyası çok büyük (Maksimum 7MB).');
     }
 
     // Görsel dosyaları sıkıştır
-    try {
-      final result = await FlutterImageCompress.compressWithFile(
-        file.absolute.path,
-        minWidth: 1024,
-        minHeight: 1024,
-        quality: 85,
-        format: CompressFormat.jpeg,
-      );
-      if (result != null && result.isNotEmpty) return result;
-    } catch (_) {
-      // fall through
+    if (mimeType.startsWith('image/')) {
+      try {
+        int quality = 80;
+        int minDimension = 1024;
+
+        if (initialSize > 5 * 1024 * 1024) { // 5MB+ ise
+          quality = 60;
+          minDimension = 800;
+        }
+
+        final result = await FlutterImageCompress.compressWithFile(
+          file.absolute.path,
+          minWidth: minDimension,
+          minHeight: minDimension,
+          quality: quality,
+          format: CompressFormat.jpeg,
+        );
+        if (result != null && result.isNotEmpty) {
+          if (result.lengthInBytes > maxUploadSize) {
+            throw Exception('Görsel sıkıştırılmasına rağmen çok büyük.');
+          }
+          return result;
+        }
+      } catch (e) {
+        print('Sıkıştırma hatası: $e');
+      }
     }
+
+    // Sıkıştırma başarısız olduysa veya PDF ise orijinalden devam et
+    if (initialSize > maxUploadSize) {
+      throw Exception('Dosya boyutu limitlerin üzerinde (Maksimum 7MB).');
+    }
+
     return await file.readAsBytes();
   }
 
