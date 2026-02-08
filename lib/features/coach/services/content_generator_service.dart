@@ -44,6 +44,7 @@ class GeneratedContent {
   final String rawContent;
   final List<ContentCard>? cards; // Kartlar için
   final String? summary; // Özet için
+  final String? topic; // Konu başlığı
   final DateTime generatedAt;
 
   GeneratedContent({
@@ -51,6 +52,7 @@ class GeneratedContent {
     required this.rawContent,
     this.cards,
     this.summary,
+    this.topic,
     DateTime? generatedAt,
   }) : generatedAt = generatedAt ?? DateTime.now();
 }
@@ -290,6 +292,7 @@ $basePrompt
           type: contentType,
           rawContent: rawResponse,
           summary: json['summary'] ?? json['ozet'] ?? '',
+          topic: json['topic'] ?? json['konu'],
         );
       } else {
         final List<dynamic> cardsJson = json['cards'] ?? json['kartlar'] ?? [];
@@ -301,6 +304,7 @@ $basePrompt
           type: contentType,
           rawContent: rawResponse,
           cards: cards,
+          topic: json['topic'] ?? json['konu'],
         );
       }
     } catch (e) {

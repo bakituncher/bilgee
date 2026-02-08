@@ -35,6 +35,7 @@ SADECE görsel/PDF içindeki konuya odaklan. Fotoğraftaki yazıları ve bilgile
 
 ÇIKTI FORMATI (SADECE JSON):
 {
+  "topic": "Çok Kısa Ana Konu Başlığı (Max 2-3 kelime, Örn: Hücre Bölünmesi)",
   "cards": [
     {
       "title": "Kavram Adı",
@@ -83,6 +84,7 @@ SADECE görsel/PDF içindeki konudan soru üret. İçerikte olmayan bilgiyi SORM
 
 ÇIKTI FORMATI (SADECE JSON):
 {
+  "topic": "Çok Kısa Ana Konu Başlığı (Max 2-3 kelime, Örn: Ekosistem Ekolojisi)",
   "cards": [
     {
       "title": "Soru 1",
@@ -126,14 +128,15 @@ FORMAT KURALLARI:
 • Akış mantıklı: genelden özele
 $examSpecificRules
 
-SADECE görsel/PDF içindeki konuyu özetle. Fotoğrafta olmayan bilgi EKLEME.
+SADECE görsel/PDF içindeki bilgiyi kullan. Kendinden bilgi ekleme.
 
 ÇIKTI FORMATI (SADECE JSON):
 {
-  "summary": "## Konu Başlığı\\n\\n**Temel Bilgiler:**\\n• Madde 1\\n• Madde 2\\n\\n**Önemli Detaylar:**\\n..."
+  "topic": "Çok Kısa Ana Konu Başlığı (Max 2-3 kelime)",
+  "summary": "### KONU BAŞLIĞI\n\n**Genel Bakış:** ...\n\n**Önemli Noktalar:**\n- ...\n\n**Sınav Tüyosu:** ..."
 }
 
-SADECE JSON döndür. Yorum veya açıklama YAZMA.
+SADECE JSON döndür. Başka hiçbir şey YAZMA.
 ''';
   }
 

@@ -1895,13 +1895,22 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     String content;
 
     // İçerikten anlamlı başlık çıkar
-    String extractTitle(List<ContentCard>? cards, String? summary) {
+    String extractTitle(List<ContentCard>? cards, String? summary, String? topic) {
+      // 1. Varsa AI tarafından üretilen konu başlığını kullan
+      if (topic != null && topic.isNotEmpty) {
+        if (topic.length > 25) {
+          return '${topic.substring(0, 22)}...';
+        }
+        return topic;
+      }
+
+      // 2. Yoksa kartlardan veya özetten çıkar
       if (cards != null && cards.isNotEmpty) {
         // İlk kartın başlığından konu adını al
         final firstTitle = cards.first.title;
         // Çok uzunsa kısalt
-        if (firstTitle.length > 40) {
-          return '${firstTitle.substring(0, 37)}...';
+        if (firstTitle.length > 25) {
+          return '${firstTitle.substring(0, 22)}...';
         }
         return firstTitle;
       }
@@ -1910,8 +1919,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         final lines = summary.split('\n').where((l) => l.trim().isNotEmpty);
         if (lines.isNotEmpty) {
           var firstLine = lines.first.replaceAll(RegExp(r'^#+\s*'), '').trim();
-          if (firstLine.length > 40) {
-            firstLine = '${firstLine.substring(0, 37)}...';
+          if (firstLine.length > 25) {
+            firstLine = '${firstLine.substring(0, 22)}...';
           }
           return firstLine;
         }
@@ -1921,7 +1930,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
     switch (contentType) {
       case SavedContentType.flashcard:
-        final topicName = extractTitle(result.cards, null);
+        final topicName = extractTitle(result.cards, null, result.topic);
         title = '$topicName (${result.cards?.length ?? 0} Kart)';
         // Kartları JSON olarak kaydet - parse edilebilir format
         if (result.cards != null && result.cards!.isNotEmpty) {
@@ -1937,7 +1946,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         }
         break;
       case SavedContentType.quiz:
-        final topicName = extractTitle(result.cards, null);
+        final topicName = extractTitle(result.cards, null, result.topic);
         title = '$topicName (${result.cards?.length ?? 0} Soru)';
         // Quiz kartlarını JSON olarak kaydet - şıklar ve doğru cevaplarla
         if (result.cards != null && result.cards!.isNotEmpty) {
@@ -1955,7 +1964,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         }
         break;
       case SavedContentType.summary:
-        title = extractTitle(null, result.summary ?? result.rawContent);
+        title = extractTitle(null, result.summary ?? result.rawContent, result.topic);
         content = result.summary ?? result.rawContent;
         break;
     }
