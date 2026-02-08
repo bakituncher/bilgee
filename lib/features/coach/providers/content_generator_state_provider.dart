@@ -167,7 +167,7 @@ class ContentGeneratorNotifier extends StateNotifier<ContentGeneratorState> {
 
   /// Çoklu görsel ekleme
   void addCapturedImage(File image) {
-    if (state.capturedImages.length >= 5) return;
+    if (state.capturedImages.length >= 10) return;
     state = state.copyWith(
       capturedImages: [...state.capturedImages, image],
       clearSelectedFile: true,

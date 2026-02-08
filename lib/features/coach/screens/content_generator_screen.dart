@@ -2316,7 +2316,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                   child: _buildUploadOptionCard(
                     icon: Icons.photo_library_rounded,
                     title: 'Galeri',
-                    subtitle: '10 görsele kadar',
+                    subtitle: 'Görsel seç',
                     color: Colors.purple,
                     onTap: () {
                       Navigator.pop(context);
@@ -2335,7 +2335,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             _buildUploadOptionCard(
               icon: Icons.folder_rounded,
               title: 'Dosyalar',
-              subtitle: 'PDF, Word (max 20 sayfa)',
+              subtitle: 'PDF, Word, PNG, JPG',
               color: Colors.orange,
               onTap: () {
                 Navigator.pop(context);
@@ -2541,7 +2541,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             _buildCameraOptionTile(
               icon: Icons.auto_awesome_motion_rounded,
               title: 'Çoklu Sayfa',
-              subtitle: '5 sayfaya kadar çek ve birleştir',
+              subtitle: '10 sayfaya kadar çek ve birleştir',
               onTap: () {
                 Navigator.pop(context);
                 _startMultiPageCapture();
@@ -2878,7 +2878,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             const Icon(Icons.info_rounded, color: Colors.white, size: 20),
             const SizedBox(width: 10),
             const Expanded(
-              child: Text('Maksimum 5 sayfa ekleyebilirsiniz.'),
+              child: Text('Maksimum 10 sayfa ekleyebilirsiniz.'),
             ),
           ],
         ),
@@ -2913,22 +2913,50 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     }
   }
 
-  /// Galeriden görsel seç
+  /// Galeriden görsel seç (çoklu seçim - 10 adete kadar)
   Future<void> _pickFromGallery() async {
     try {
-      final XFile? image = await _picker.pickImage(
-        source: ImageSource.gallery,
+      final List<XFile> images = await _picker.pickMultiImage(
         imageQuality: 85,
         maxWidth: 1920,
         maxHeight: 1920,
       );
 
-      if (image != null) {
+      if (images.isEmpty) return;
+
+      // Maksimum 10 görsel
+      final selectedImages = images.take(_maxCapturedImages).toList();
+
+      if (selectedImages.length == 1) {
+        // Tek görsel seçildiyse normal dosya olarak ekle
         _notifier.setSelectedFile(
-          File(image.path),
-          image.name,
-          ContentGeneratorService.getMimeType(image.path),
+          File(selectedImages.first.path),
+          selectedImages.first.name,
+          ContentGeneratorService.getMimeType(selectedImages.first.path),
         );
+      } else {
+        // Birden fazla görsel seçildiyse çoklu görsel olarak ekle
+        _notifier.clearSelection();
+        for (final image in selectedImages) {
+          _notifier.addCapturedImage(File(image.path));
+        }
+
+        if (mounted && images.length > _maxCapturedImages) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.info_rounded, color: Colors.white, size: 18),
+                  const SizedBox(width: 10),
+                  Text('Maksimum $_maxCapturedImages görsel seçildi'),
+                ],
+              ),
+              backgroundColor: AppTheme.secondaryBrandColor,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          );
+        }
       }
     } catch (e) {
       _notifier.setError('Görsel seçilemedi: $e');
