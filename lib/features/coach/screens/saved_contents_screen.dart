@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/coach/models/saved_content_model.dart';
 import 'package:taktik/features/coach/providers/saved_content_provider.dart';
+import 'package:taktik/features/coach/widgets/flashcard_widget.dart';
 
 class SavedContentsScreen extends ConsumerStatefulWidget {
   const SavedContentsScreen({super.key});
@@ -631,10 +632,10 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
                   ),
                 ),
                 const Spacer(),
-                Icon(Icons.swipe_rounded, size: 16, color: colorScheme.onSurface.withOpacity(0.4)),
+                Icon(Icons.touch_app_rounded, size: 16, color: colorScheme.onSurface.withOpacity(0.4)),
                 const SizedBox(width: 4),
                 Text(
-                  'Kaydır',
+                  'Dokunarak çevir',
                   style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurface.withOpacity(0.4),
@@ -647,108 +648,27 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
         // Kartlar
         Expanded(
           child: PageView.builder(
-            controller: PageController(viewportFraction: 0.9),
+            controller: PageController(viewportFraction: 0.85),
             itemCount: cards.length,
+            physics: const BouncingScrollPhysics(),
             itemBuilder: (context, index) {
               final card = cards[index];
               final cardColor = cardColors[index % cardColors.length];
 
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: theme.cardColor,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: cardColor.withOpacity(0.15),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      // Header
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [cardColor, cardColor.withOpacity(0.8)],
-                          ),
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    'Kart ${index + 1}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                Text(
-                                  '${index + 1}/${cards.length}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white.withOpacity(0.8),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              card['title'] ?? '',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // İçerik
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(20),
-                          child: MarkdownBody(
-                            data: card['content'] ?? '',
-                            styleSheet: MarkdownStyleSheet(
-                              p: TextStyle(
-                                fontSize: 15,
-                                height: 1.7,
-                                color: colorScheme.onSurface.withOpacity(0.85),
-                              ),
-                              strong: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: cardColor,
-                              ),
-                              listBullet: TextStyle(color: cardColor),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                child: FlashcardWidget(
+                  index: index,
+                  total: cards.length,
+                  title: card['title'] ?? '',
+                  content: card['content'] ?? '',
+                  color: cardColor,
                 ),
               );
             },
           ),
         ),
+        const SizedBox(height: 20),
       ],
     );
   }

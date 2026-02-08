@@ -17,6 +17,7 @@ import 'package:taktik/features/coach/models/saved_content_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/features/coach/widgets/flashcard_widget.dart';
 
 class ContentGeneratorScreen extends ConsumerStatefulWidget {
   const ContentGeneratorScreen({super.key});
@@ -1634,7 +1635,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                       ),
                     ),
                     Text(
-                      'Yatay kaydırarak kartları incele',
+                      'Kartın üzerine dokunarak çevir',
                       style: TextStyle(
                         fontSize: 12,
                         color: colorScheme.onSurface.withOpacity(0.5),
@@ -1653,188 +1654,23 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
         // Kartlar - PageView
         SizedBox(
-          height: 420,
+          height: 520,
           child: PageView.builder(
-            controller: PageController(viewportFraction: 0.88),
+            controller: PageController(viewportFraction: 0.85),
             itemCount: cards.length,
+            physics: const BouncingScrollPhysics(),
             itemBuilder: (context, index) {
               final card = cards[index];
               final cardColor = cardColors[index % cardColors.length];
 
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: theme.cardColor,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: cardColor.withOpacity(0.15),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Kart üst kısım - Gradient header
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              cardColor,
-                              cardColor.withOpacity(0.8),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Üst satır - numara ve sayfa
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                // Kart numarası
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.auto_awesome_rounded,
-                                        size: 14,
-                                        color: Colors.white,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'Kart ${index + 1}',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                // Sayfa göstergesi
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    '${index + 1} / ${cards.length}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white.withOpacity(0.9),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            // Başlık
-                            Text(
-                              card.title,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                height: 1.3,
-                                letterSpacing: -0.3,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Kart içeriği
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(20),
-                          physics: const BouncingScrollPhysics(),
-                          child: MarkdownBody(
-                            data: card.content,
-                            styleSheet: MarkdownStyleSheet(
-                              p: TextStyle(
-                                fontSize: 15,
-                                height: 1.7,
-                                color: colorScheme.onSurface.withOpacity(0.85),
-                              ),
-                              strong: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: cardColor,
-                              ),
-                              listBullet: TextStyle(
-                                color: cardColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              listIndent: 16,
-                              h3: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                            builders: {
-                              'latex': _LatexElementBuilder(
-                                textStyle: TextStyle(color: colorScheme.onSurface),
-                              ),
-                            },
-                            extensionSet: md.ExtensionSet(
-                              [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
-                              [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, _LatexInlineSyntax()],
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Alt kısım - mini indicator
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: colorScheme.onSurface.withOpacity(0.03),
-                          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(
-                            cards.length,
-                            (i) => Container(
-                              width: i == index ? 20 : 6,
-                              height: 6,
-                              margin: const EdgeInsets.symmetric(horizontal: 3),
-                              decoration: BoxDecoration(
-                                color: i == index
-                                    ? cardColor
-                                    : colorScheme.onSurface.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                child: FlashcardWidget(
+                   index: index,
+                   total: cards.length,
+                   title: card.title,
+                   content: card.content,
+                   color: cardColor,
                 ),
               );
             },
