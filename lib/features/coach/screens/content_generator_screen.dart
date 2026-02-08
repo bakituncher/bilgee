@@ -7,11 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:lottie/lottie.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:taktik/features/coach/services/content_generator_service.dart';
 import 'package:taktik/features/coach/providers/content_generator_state_provider.dart';
+import 'package:taktik/features/coach/providers/saved_content_provider.dart';
+import 'package:taktik/features/coach/models/saved_content_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/core/theme/app_theme.dart';
@@ -88,6 +89,25 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         ),
         centerTitle: true,
         actions: [
+          // Kaydedilenler butonu
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.successBrandColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.bookmark_rounded,
+                  color: AppTheme.successBrandColor,
+                  size: 18,
+                ),
+              ),
+              tooltip: 'Kaydedilenler',
+              onPressed: () => context.push('/saved-contents'),
+            ),
+          ),
           if (state.result != null)
             Padding(
               padding: const EdgeInsets.only(right: 8),
@@ -690,9 +710,9 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
   /// İçerik türüne göre ikon döndürür
   IconData _getContentTypeIcon(ContentType type) {
     switch (type) {
-      case ContentType.infoCards:
+      case ContentType.flashcard:
         return Icons.style_rounded;
-      case ContentType.questionCards:
+      case ContentType.quiz:
         return Icons.quiz_rounded;
       case ContentType.summary:
         return Icons.summarize_rounded;
@@ -701,10 +721,10 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   String _getContentTypeShortName(ContentType type) {
     switch (type) {
-      case ContentType.infoCards:
-        return 'Bilgi';
-      case ContentType.questionCards:
-        return 'Test';
+      case ContentType.flashcard:
+        return 'Flashcard';
+      case ContentType.quiz:
+        return 'Quiz';
       case ContentType.summary:
         return 'Özet';
     }
@@ -712,9 +732,9 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   String _getContentTypeDescription(ContentType type) {
     switch (type) {
-      case ContentType.infoCards:
-        return 'Konuyu öğrenmek için kartlar';
-      case ContentType.questionCards:
+      case ContentType.flashcard:
+        return 'UNO tarzı swipe kartlar';
+      case ContentType.quiz:
         return 'Çoktan seçmeli test';
       case ContentType.summary:
         return 'Hızlı tekrar için özet';
@@ -834,10 +854,10 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
           // İçerik görüntüleme
           if (state.result!.type == ContentType.summary)
             _buildSummaryView(theme, isDark)
-          else if (state.result!.type == ContentType.questionCards)
+          else if (state.result!.type == ContentType.quiz)
             _buildQuizView(theme, isDark)
           else
-            _buildCardsView(theme, isDark),
+            _buildFlashcardView(theme, isDark),
         ],
       ),
     );
@@ -903,7 +923,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${cards.length} Test Sorusu',
+                          '${cards.length} Quiz Sorusu',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -936,6 +956,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                         ),
                       ),
                     ),
+                  const SizedBox(width: 8),
+                  _buildSaveButton(SavedContentType.quiz),
                 ],
               ),
               const SizedBox(height: 12),
@@ -1365,6 +1387,412 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     ).animate(delay: Duration(milliseconds: 80 * index)).fadeIn(duration: 350.ms).slideY(begin: 0.05, end: 0);
   }
 
+  /// Flashcard görünümü - Şık ve sade tasarım
+  Widget _buildFlashcardView(ThemeData theme, bool isDark) {
+    final state = ref.watch(contentGeneratorStateProvider);
+    final cards = state.result!.cards ?? [];
+    final colorScheme = theme.colorScheme;
+
+    if (cards.isEmpty) {
+      return Center(
+        child: Text(
+          'Flashcard oluşturulamadı.',
+          style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6)),
+        ),
+      );
+    }
+
+    // Kartlar için renk paleti
+    final cardColors = [
+      const Color(0xFF6366F1), // Indigo
+      const Color(0xFF8B5CF6), // Violet
+      const Color(0xFFEC4899), // Pink
+      const Color(0xFF14B8A6), // Teal
+      const Color(0xFFF59E0B), // Amber
+      const Color(0xFF10B981), // Emerald
+      const Color(0xFF3B82F6), // Blue
+      const Color(0xFFEF4444), // Red
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Üst başlık alanı
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.secondaryBrandColor.withOpacity(0.12),
+                AppTheme.secondaryBrandColor.withOpacity(0.04),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.secondaryBrandColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.style_rounded,
+                  color: AppTheme.secondaryBrandColor,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${cards.length} Flashcard',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    Text(
+                      'Yatay kaydırarak kartları incele',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurface.withOpacity(0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Kaydet butonu
+              _buildSaveButton(SavedContentType.flashcard),
+            ],
+          ),
+        ).animate().fadeIn(duration: 300.ms),
+
+        const SizedBox(height: 16),
+
+        // Kartlar - PageView
+        SizedBox(
+          height: 420,
+          child: PageView.builder(
+            controller: PageController(viewportFraction: 0.88),
+            itemCount: cards.length,
+            itemBuilder: (context, index) {
+              final card = cards[index];
+              final cardColor = cardColors[index % cardColors.length];
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: cardColor.withOpacity(0.15),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Kart üst kısım - Gradient header
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              cardColor,
+                              cardColor.withOpacity(0.8),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Üst satır - numara ve sayfa
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // Kart numarası
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.auto_awesome_rounded,
+                                        size: 14,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Kart ${index + 1}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Sayfa göstergesi
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    '${index + 1} / ${cards.length}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white.withOpacity(0.9),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            // Başlık
+                            Text(
+                              card.title,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                height: 1.3,
+                                letterSpacing: -0.3,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Kart içeriği
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(20),
+                          physics: const BouncingScrollPhysics(),
+                          child: MarkdownBody(
+                            data: card.content,
+                            styleSheet: MarkdownStyleSheet(
+                              p: TextStyle(
+                                fontSize: 15,
+                                height: 1.7,
+                                color: colorScheme.onSurface.withOpacity(0.85),
+                              ),
+                              strong: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: cardColor,
+                              ),
+                              listBullet: TextStyle(
+                                color: cardColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              listIndent: 16,
+                              h3: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            builders: {
+                              'latex': _LatexElementBuilder(
+                                textStyle: TextStyle(color: colorScheme.onSurface),
+                              ),
+                            },
+                            extensionSet: md.ExtensionSet(
+                              [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
+                              [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, _LatexInlineSyntax()],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Alt kısım - mini indicator
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: colorScheme.onSurface.withOpacity(0.03),
+                          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            cards.length,
+                            (i) => Container(
+                              width: i == index ? 20 : 6,
+                              height: 6,
+                              margin: const EdgeInsets.symmetric(horizontal: 3),
+                              decoration: BoxDecoration(
+                                color: i == index
+                                    ? cardColor
+                                    : colorScheme.onSurface.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1)),
+      ],
+    );
+  }
+
+  /// Kaydet butonu widget'ı
+  Widget _buildSaveButton(SavedContentType contentType) {
+    return GestureDetector(
+      onTap: () => _saveContent(contentType),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.successBrandColor,
+              AppTheme.successBrandColor.withOpacity(0.8),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.successBrandColor.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.bookmark_add_rounded, size: 18, color: Colors.white),
+            SizedBox(width: 6),
+            Text(
+              'Kaydet',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// İçerik kaydetme fonksiyonu
+  Future<void> _saveContent(SavedContentType contentType) async {
+    final state = ref.read(contentGeneratorStateProvider);
+    if (state.result == null) return;
+
+    final result = state.result!;
+    String title;
+    String content;
+
+    // İçerikten anlamlı başlık çıkar
+    String extractTitle(List<ContentCard>? cards, String? summary) {
+      if (cards != null && cards.isNotEmpty) {
+        // İlk kartın başlığından konu adını al
+        final firstTitle = cards.first.title;
+        // Çok uzunsa kısalt
+        if (firstTitle.length > 40) {
+          return '${firstTitle.substring(0, 37)}...';
+        }
+        return firstTitle;
+      }
+      if (summary != null && summary.isNotEmpty) {
+        // Özetten ilk satırı veya başlığı al
+        final lines = summary.split('\n').where((l) => l.trim().isNotEmpty);
+        if (lines.isNotEmpty) {
+          var firstLine = lines.first.replaceAll(RegExp(r'^#+\s*'), '').trim();
+          if (firstLine.length > 40) {
+            firstLine = '${firstLine.substring(0, 37)}...';
+          }
+          return firstLine;
+        }
+      }
+      return 'İçerik';
+    }
+
+    switch (contentType) {
+      case SavedContentType.flashcard:
+        final topicName = extractTitle(result.cards, null);
+        title = '$topicName (${result.cards?.length ?? 0} Kart)';
+        content = result.rawContent;
+        break;
+      case SavedContentType.quiz:
+        final topicName = extractTitle(result.cards, null);
+        title = '$topicName (${result.cards?.length ?? 0} Soru)';
+        content = result.rawContent;
+        break;
+      case SavedContentType.summary:
+        title = extractTitle(null, result.summary ?? result.rawContent);
+        content = result.summary ?? result.rawContent;
+        break;
+    }
+
+    final user = ref.read(userProfileProvider).value;
+    final examType = user?.selectedExam;
+
+    final saveResult = await ref.read(savedContentProvider.notifier).saveContent(
+      type: contentType,
+      title: title,
+      content: content,
+      examType: examType,
+    );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              saveResult.success ? Icons.check_circle_rounded : Icons.error_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(child: Text(saveResult.message)),
+          ],
+        ),
+        backgroundColor: saveResult.success ? AppTheme.successBrandColor : AppTheme.accentBrandColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
   /// Özet görünümü - Sektör seviyesi tasarım
   Widget _buildSummaryView(ThemeData theme, bool isDark) {
     final state = ref.watch(contentGeneratorStateProvider);
@@ -1425,32 +1853,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: colorScheme.onSurface.withOpacity(0.06),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 14,
-                      color: const Color(0xFF8B5CF6),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'AI Özet',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF8B5CF6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              const SizedBox(width: 8),
+              _buildSaveButton(SavedContentType.summary),
             ],
           ),
         ).animate().fadeIn(duration: 300.ms),
@@ -1599,300 +2003,6 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             ),
           ),
         ).animate().fadeIn(delay: 150.ms, duration: 350.ms),
-      ],
-    );
-  }
-
-  /// Kartlar görünümü (Bilgi kartları için) - Sektör seviyesi tasarım
-  Widget _buildCardsView(ThemeData theme, bool isDark) {
-    final state = ref.watch(contentGeneratorStateProvider);
-    final cards = state.result!.cards ?? [];
-    final colorScheme = theme.colorScheme;
-
-    if (cards.isEmpty) {
-      return Center(
-        child: Text(
-          'Kart oluşturulamadı.',
-          style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6)),
-        ),
-      );
-    }
-
-    // Kartlar için renk paleti
-    final cardColors = [
-      const Color(0xFF6366F1), // Indigo
-      const Color(0xFF8B5CF6), // Violet
-      const Color(0xFFEC4899), // Pink
-      const Color(0xFF14B8A6), // Teal
-      const Color(0xFFF59E0B), // Amber
-      const Color(0xFF10B981), // Emerald
-      const Color(0xFF3B82F6), // Blue
-      const Color(0xFFEF4444), // Red
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Üst başlık alanı
-        Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.secondaryBrandColor.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.style_rounded,
-                  color: AppTheme.secondaryBrandColor,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${cards.length} Bilgi Kartı',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                    Text(
-                      'Yatay kaydırarak kartları incele',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colorScheme.onSurface.withOpacity(0.5),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Swipe ikonu
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: colorScheme.onSurface.withOpacity(0.06),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.swipe_rounded,
-                      size: 14,
-                      color: colorScheme.onSurface.withOpacity(0.5),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Kaydır',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurface.withOpacity(0.5),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Kartlar - Tam genişlik PageView
-        SizedBox(
-          height: 420,
-          child: PageView.builder(
-            controller: PageController(viewportFraction: 0.88),
-            itemCount: cards.length,
-            itemBuilder: (context, index) {
-              final card = cards[index];
-              final cardColor = cardColors[index % cardColors.length];
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: theme.cardColor,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: cardColor.withOpacity(0.15),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Kart üst kısım - Gradient header
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              cardColor,
-                              cardColor.withOpacity(0.8),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Üst satır - numara ve sayfa
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                // Kart numarası
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.auto_awesome_rounded,
-                                        size: 14,
-                                        color: Colors.white,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'Kart ${index + 1}',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                // Sayfa göstergesi
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    '${index + 1} / ${cards.length}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white.withOpacity(0.9),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            // Başlık
-                            Text(
-                              card.title,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                height: 1.3,
-                                letterSpacing: -0.3,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Kart içeriği
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(20),
-                          physics: const BouncingScrollPhysics(),
-                          child: MarkdownBody(
-                            data: card.content,
-                            styleSheet: MarkdownStyleSheet(
-                              p: TextStyle(
-                                fontSize: 15,
-                                height: 1.7,
-                                color: colorScheme.onSurface.withOpacity(0.85),
-                              ),
-                              strong: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: cardColor,
-                              ),
-                              listBullet: TextStyle(
-                                color: cardColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              listIndent: 16,
-                              h3: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                            builders: {
-                              'latex': _LatexElementBuilder(
-                                textStyle: TextStyle(color: colorScheme.onSurface),
-                              ),
-                            },
-                            extensionSet: md.ExtensionSet(
-                              [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
-                              [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, _LatexInlineSyntax()],
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Alt kısım - mini indicator
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: colorScheme.onSurface.withOpacity(0.03),
-                          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(
-                            cards.length,
-                            (i) => Container(
-                              width: i == index ? 20 : 6,
-                              height: 6,
-                              margin: const EdgeInsets.symmetric(horizontal: 3),
-                              decoration: BoxDecoration(
-                                color: i == index
-                                    ? cardColor
-                                    : colorScheme.onSurface.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1)),
       ],
     );
   }
@@ -2545,11 +2655,40 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     _notifier.clearSelection();
   }
 
-  /// İçerik üretimi
+  /// İçerik üretimi - Cache destekli
   Future<void> _generateContent() async {
     final state = ref.read(contentGeneratorStateProvider);
     // En az bir dosya veya görsel olmalı
     if (state.selectedFile == null && state.capturedImages.isEmpty) return;
+
+    // Cache kontrolü - aynı dosya ve içerik türü için daha önce üretilmiş mi?
+    final cacheKey = state.capturedImages.isNotEmpty
+        ? state.capturedImages.map((f) => f.path).join('_')
+        : state.selectedFile!.path;
+
+    final cachedContent = _notifier.getCachedContent(cacheKey, state.selectedContentType);
+    if (cachedContent != null) {
+      // Cache'den al, tekrar üretme
+      _notifier.setResult(cachedContent);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.cached_rounded, color: Colors.white, size: 18),
+                SizedBox(width: 8),
+                Text('Önbellekten yüklendi'),
+              ],
+            ),
+            backgroundColor: AppTheme.successBrandColor,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+      return;
+    }
 
     _notifier.setLoading(true);
     _notifier.setError(null);
@@ -2579,6 +2718,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         );
       }
 
+      // Sonucu cache'e ekle
+      _notifier.addToCache(cacheKey, state.selectedContentType, result);
       _notifier.setResult(result);
     } catch (e) {
       _notifier.setError(e.toString().replaceAll('Exception: ', ''));

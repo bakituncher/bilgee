@@ -37,6 +37,7 @@ import 'transition_utils.dart';
 import 'package:taktik/features/home/screens/user_guide_screen.dart';
 import 'package:taktik/features/coach/screens/question_solver_screen.dart';
 import 'package:taktik/features/coach/screens/saved_solutions_screen.dart'; // YENİ EKLENEN IMPORT
+import 'package:taktik/features/coach/screens/saved_contents_screen.dart'; // Kaydedilen İçerikler
 import 'package:shared_preferences/shared_preferences.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -176,6 +177,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           context: context,
           state: state,
           child: const SavedSolutionsScreen(),
+        ),
+      ),
+      // ------------------------------------
+      // --- KAYDEDILEN İÇERİKLER ---
+      GoRoute(
+        path: AppRoutes.savedContents,
+        name: 'SavedContents',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const SavedContentsScreen(),
         ),
       ),
       // ------------------------------------

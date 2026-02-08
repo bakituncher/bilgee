@@ -8,18 +8,18 @@ import 'package:taktik/core/prompts/content_generator_prompts.dart';
 
 /// İçerik üretici türleri
 enum ContentType {
-  infoCards,    // Bilgi Kartları
-  questionCards, // Soru Kartları
+  flashcard,    // Flashcard Kartları (eski infoCards)
+  quiz,         // Quiz Soruları (eski questionCards)
   summary,      // Özet
 }
 
 extension ContentTypeExtension on ContentType {
   String get displayName {
     switch (this) {
-      case ContentType.infoCards:
-        return 'Bilgi Kartları';
-      case ContentType.questionCards:
-        return 'Soru Kartları';
+      case ContentType.flashcard:
+        return 'Flashcard';
+      case ContentType.quiz:
+        return 'Quiz';
       case ContentType.summary:
         return 'Özet';
     }
@@ -28,10 +28,10 @@ extension ContentTypeExtension on ContentType {
   /// Kısa isim (UI için)
   String get shortName {
     switch (this) {
-      case ContentType.infoCards:
-        return 'Bilgi';
-      case ContentType.questionCards:
-        return 'Test';
+      case ContentType.flashcard:
+        return 'Flashcard';
+      case ContentType.quiz:
+        return 'Quiz';
       case ContentType.summary:
         return 'Özet';
     }
@@ -263,9 +263,9 @@ $basePrompt
   /// İçerik türüne göre prompt oluştur
   String _buildPrompt(ContentType contentType, String? examType) {
     switch (contentType) {
-      case ContentType.infoCards:
+      case ContentType.flashcard:
         return ContentGeneratorPrompts.getInfoCardsPrompt(examType);
-      case ContentType.questionCards:
+      case ContentType.quiz:
         return ContentGeneratorPrompts.getQuestionCardsPrompt(examType);
       case ContentType.summary:
         return ContentGeneratorPrompts.getSummaryPrompt(examType);

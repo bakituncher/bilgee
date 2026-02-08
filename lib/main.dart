@@ -37,6 +37,7 @@ import 'package:taktik/shared/notifications/notification_service.dart';
 import 'package:taktik/shared/screens/no_internet_screen.dart';
 import 'package:taktik/shared/screens/force_update_screen.dart';
 import 'package:taktik/features/coach/models/saved_solution_model.dart';
+import 'package:taktik/features/coach/models/saved_content_model.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/data/providers/version_check_provider.dart';
 
@@ -73,9 +74,12 @@ void main() async {
     // 3. HIVE Veritabanını Başlat (Firebase'den önce)
     try {
       await Hive.initFlutter();
-      // Adapter'ı kaydet (TypeID çakışmalarına dikkat edin)
-      Hive.registerAdapter(SavedSolutionAdapter());
+      // Adapter'ları kaydet (TypeID çakışmalarına dikkat edin)
+      Hive.registerAdapter(SavedSolutionAdapter());     // TypeId: 0
+      Hive.registerAdapter(SavedContentAdapter());      // TypeId: 1
+      Hive.registerAdapter(SavedContentTypeAdapter()); // TypeId: 2
       await Hive.openBox<SavedSolutionModel>('saved_solutions_box');
+      await Hive.openBox<SavedContentModel>('saved_content_box');
       if (kDebugMode) debugPrint('[Hive] ✅ Başarıyla başlatıldı');
     } catch (e, st) {
       if (kDebugMode) {

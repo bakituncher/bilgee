@@ -2,6 +2,24 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/features/coach/services/content_generator_service.dart';
 
+/// Üretilen içerik cache'i - dosya hash'i ve içerik türüne göre
+class ContentCache {
+  final String fileHash;
+  final ContentType contentType;
+  final GeneratedContent content;
+  final DateTime createdAt;
+
+  ContentCache({
+    required this.fileHash,
+    required this.contentType,
+    required this.content,
+    required this.createdAt,
+  });
+
+  /// Cache süresi doldu mu? (30 dakika)
+  bool get isExpired => DateTime.now().difference(createdAt).inMinutes > 30;
+}
+
 /// Content Generator ekranı için state modeli
 class ContentGeneratorState {
   final File? selectedFile;
@@ -14,18 +32,20 @@ class ContentGeneratorState {
   final GeneratedContent? result;
   final Map<int, bool> revealedAnswers;
   final Map<int, int> selectedAnswers;
+  final Map<String, ContentCache> contentCache; // Üretilen içerik cache'i
 
   const ContentGeneratorState({
     this.selectedFile,
     this.fileName,
     this.mimeType,
     this.capturedImages = const [],
-    this.selectedContentType = ContentType.infoCards,
+    this.selectedContentType = ContentType.flashcard,
     this.isLoading = false,
     this.error,
     this.result,
     this.revealedAnswers = const {},
     this.selectedAnswers = const {},
+    this.contentCache = const {},
   });
 
   /// Initial state factory
@@ -51,6 +71,7 @@ class ContentGeneratorState {
     GeneratedContent? result,
     Map<int, bool>? revealedAnswers,
     Map<int, int>? selectedAnswers,
+    Map<String, ContentCache>? contentCache,
     bool clearSelectedFile = false,
     bool clearFileName = false,
     bool clearMimeType = false,
@@ -68,6 +89,7 @@ class ContentGeneratorState {
       result: clearResult ? null : (result ?? this.result),
       revealedAnswers: revealedAnswers ?? this.revealedAnswers,
       selectedAnswers: selectedAnswers ?? this.selectedAnswers,
+      contentCache: contentCache ?? this.contentCache,
     );
   }
 }
@@ -75,6 +97,62 @@ class ContentGeneratorState {
 /// Content Generator State Notifier
 class ContentGeneratorNotifier extends StateNotifier<ContentGeneratorState> {
   ContentGeneratorNotifier() : super(ContentGeneratorState.initial());
+
+  /// Cache key oluştur (dosya yolu + içerik türü)
+  String _getCacheKey(String filePath, ContentType type) {
+    return '${filePath}_${type.name}';
+  }
+
+  /// Cache'den içerik al
+  GeneratedContent? getCachedContent(String filePath, ContentType type) {
+    final key = _getCacheKey(filePath, type);
+    final cached = state.contentCache[key];
+    if (cached != null && !cached.isExpired) {
+      return cached.content;
+    }
+    // Süresi dolmuşsa cache'den kaldır
+    if (cached != null) {
+      _removeCacheEntry(key);
+    }
+    return null;
+  }
+
+  /// Cache'e içerik ekle
+  void addToCache(String filePath, ContentType type, GeneratedContent content) {
+    final key = _getCacheKey(filePath, type);
+    final newCache = Map<String, ContentCache>.from(state.contentCache);
+
+    // Eski cache'leri temizle (max 10 entry)
+    if (newCache.length >= 10) {
+      final expiredKeys = newCache.entries
+          .where((e) => e.value.isExpired)
+          .map((e) => e.key)
+          .toList();
+      for (final k in expiredKeys) {
+        newCache.remove(k);
+      }
+      // Hala çoksa en eskiyi sil
+      if (newCache.length >= 10) {
+        final oldest = newCache.entries
+            .reduce((a, b) => a.value.createdAt.isBefore(b.value.createdAt) ? a : b);
+        newCache.remove(oldest.key);
+      }
+    }
+
+    newCache[key] = ContentCache(
+      fileHash: filePath,
+      contentType: type,
+      content: content,
+      createdAt: DateTime.now(),
+    );
+    state = state.copyWith(contentCache: newCache);
+  }
+
+  void _removeCacheEntry(String key) {
+    final newCache = Map<String, ContentCache>.from(state.contentCache);
+    newCache.remove(key);
+    state = state.copyWith(contentCache: newCache);
+  }
 
   /// Dosya seçimi (tek dosya)
   void setSelectedFile(File file, String name, String mimeType) {
