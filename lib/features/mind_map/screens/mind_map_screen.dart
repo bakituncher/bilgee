@@ -854,68 +854,71 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          border: Border(top: BorderSide(color: node.color, width: 3)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-              blurRadius: 16,
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            MarkdownBody(
-              data: node.label,
-              selectable: true,
-              styleSheet: MarkdownStyleSheet(
-                p: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: node.color,
-                ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            border: Border(top: BorderSide(color: node.color, width: 3)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+                blurRadius: 16,
               ),
-              builders: {
-                'latex': LatexElementBuilder(
-                  textStyle: theme.textTheme.headlineSmall?.copyWith(
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              MarkdownBody(
+                data: node.label,
+                selectable: true,
+                styleSheet: MarkdownStyleSheet(
+                  p: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: node.color,
                   ),
                 ),
-              },
-              extensionSet: md.ExtensionSet(
-                [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
-                [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, LatexInlineSyntax()],
-              ),
-            ),
-            const SizedBox(height: 8),
-            MarkdownBody(
-              data: node.description.isEmpty ? "Ek açıklama yok." : node.description,
-              selectable: true,
-              styleSheet: MarkdownStyleSheet(
-                p: theme.textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+                builders: {
+                  'latex': LatexElementBuilder(
+                    textStyle: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: node.color,
+                    ),
+                  ),
+                },
+                extensionSet: md.ExtensionSet(
+                  [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
+                  [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, LatexInlineSyntax()],
                 ),
               ),
-              builders: {
-                'latex': LatexElementBuilder(
-                  textStyle: theme.textTheme.bodyLarge?.copyWith(
+              const SizedBox(height: 8),
+              MarkdownBody(
+                data: node.description.isEmpty ? "Ek açıklama yok." : node.description,
+                selectable: true,
+                styleSheet: MarkdownStyleSheet(
+                  p: theme.textTheme.bodyLarge?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
                 ),
-              },
-              extensionSet: md.ExtensionSet(
-                [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
-                [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, LatexInlineSyntax()],
+                builders: {
+                  'latex': LatexElementBuilder(
+                    textStyle: theme.textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                },
+                extensionSet: md.ExtensionSet(
+                  [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
+                  [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, LatexInlineSyntax()],
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -1063,29 +1066,31 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
         builder: (context, setModalState) {
           final filteredTopics = _filterTopics(_topicsBySubject);
 
-          return Container(
-            height: MediaQuery.of(context).size.height * 0.75,
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-                  blurRadius: 20,
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                // Header
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
-                    ),
+          return Padding(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.75,
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+                    blurRadius: 20,
                   ),
-                  child: Column(
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
+                      ),
+                    ),
+                    child: Column(
                     children: [
                       Row(
                         children: [
@@ -1212,6 +1217,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                   ),
                 ),
               ],
+            ),
             ),
           );
         },
