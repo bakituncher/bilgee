@@ -421,13 +421,19 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
       // Raw content'ten kartları parse etmeye çalış
       final content = widget.content.content;
 
-      // JSON formatında mı kontrol et
+      // JSON formatında mı kontrol et (yeni kaydetme formatı)
       if (content.trim().startsWith('[')) {
         final List<dynamic> parsed = jsonDecode(content);
-        return parsed.cast<Map<String, dynamic>>();
+        // Her bir item'ı Map<String, dynamic>'e dönüştür
+        return parsed.map((item) {
+          if (item is Map) {
+            return Map<String, dynamic>.from(item);
+          }
+          return <String, dynamic>{};
+        }).where((m) => m.isNotEmpty).toList();
       }
 
-      // Markdown formatından kartları çıkar
+      // Eski format - Markdown formatından kartları çıkar
       final cards = <Map<String, dynamic>>[];
       final lines = content.split('\n');
 
@@ -743,7 +749,11 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
       itemCount: cards.length,
       itemBuilder: (context, index) {
         final card = cards[index];
-        final options = card['options'] as List<String>? ?? [];
+        // options'ı List<String>'e dönüştür
+        final rawOptions = card['options'];
+        final List<String> options = rawOptions != null
+            ? (rawOptions as List).map((e) => e.toString()).toList()
+            : [];
         final correctIndex = card['correctIndex'] as int?;
         final selectedAnswer = _selectedAnswers[index];
         final isAnswered = selectedAnswer != null;

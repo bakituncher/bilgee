@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -1748,12 +1749,36 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       case SavedContentType.flashcard:
         final topicName = extractTitle(result.cards, null);
         title = '$topicName (${result.cards?.length ?? 0} Kart)';
-        content = result.rawContent;
+        // Kartları JSON olarak kaydet - parse edilebilir format
+        if (result.cards != null && result.cards!.isNotEmpty) {
+          final cardsJson = result.cards!.map((card) => {
+            'title': card.title,
+            'content': card.content,
+            if (card.hint != null) 'hint': card.hint,
+            if (card.answer != null) 'answer': card.answer,
+          }).toList();
+          content = jsonEncode(cardsJson);
+        } else {
+          content = result.rawContent;
+        }
         break;
       case SavedContentType.quiz:
         final topicName = extractTitle(result.cards, null);
         title = '$topicName (${result.cards?.length ?? 0} Soru)';
-        content = result.rawContent;
+        // Quiz kartlarını JSON olarak kaydet - şıklar ve doğru cevaplarla
+        if (result.cards != null && result.cards!.isNotEmpty) {
+          final cardsJson = result.cards!.map((card) => {
+            'title': card.title,
+            'content': card.content,
+            if (card.options != null) 'options': card.options,
+            if (card.correctIndex != null) 'correctIndex': card.correctIndex,
+            if (card.answer != null) 'answer': card.answer,
+            if (card.hint != null) 'hint': card.hint,
+          }).toList();
+          content = jsonEncode(cardsJson);
+        } else {
+          content = result.rawContent;
+        }
         break;
       case SavedContentType.summary:
         title = extractTitle(null, result.summary ?? result.rawContent);
