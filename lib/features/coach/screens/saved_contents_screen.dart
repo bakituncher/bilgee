@@ -239,6 +239,23 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
             color: Colors.transparent,
             child: InkWell(
               onTap: () => _showContentDetail(content),
+              onLongPress: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        Icon(Icons.swipe_left_rounded, color: Colors.white, size: 20),
+                        const SizedBox(width: 10),
+                        const Text('Silmek için sola kaydır'),
+                      ],
+                    ),
+                    backgroundColor: AppTheme.secondaryBrandColor,
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 2),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                );
+              },
               borderRadius: BorderRadius.circular(16),
               child: Padding(
                 padding: const EdgeInsets.all(16),
