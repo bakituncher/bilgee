@@ -8,18 +8,18 @@ import 'package:taktik/core/prompts/content_generator_prompts.dart';
 
 /// İçerik üretici türleri
 enum ContentType {
-  infoCards,    // Bilgi Kartları
-  questionCards, // Soru Kartları
+  flashcard,    // Flashcard Kartları (eski infoCards)
+  quiz,         // Quiz Soruları (eski questionCards)
   summary,      // Özet
 }
 
 extension ContentTypeExtension on ContentType {
   String get displayName {
     switch (this) {
-      case ContentType.infoCards:
-        return 'Bilgi Kartları';
-      case ContentType.questionCards:
-        return 'Soru Kartları';
+      case ContentType.flashcard:
+        return 'Flashcard';
+      case ContentType.quiz:
+        return 'Quiz';
       case ContentType.summary:
         return 'Özet';
     }
@@ -28,10 +28,10 @@ extension ContentTypeExtension on ContentType {
   /// Kısa isim (UI için)
   String get shortName {
     switch (this) {
-      case ContentType.infoCards:
-        return 'Bilgi';
-      case ContentType.questionCards:
-        return 'Test';
+      case ContentType.flashcard:
+        return 'Flashcard';
+      case ContentType.quiz:
+        return 'Quiz';
       case ContentType.summary:
         return 'Özet';
     }
@@ -44,6 +44,7 @@ class GeneratedContent {
   final String rawContent;
   final List<ContentCard>? cards; // Kartlar için
   final String? summary; // Özet için
+  final String? topic; // Konu başlığı
   final DateTime generatedAt;
 
   GeneratedContent({
@@ -51,6 +52,7 @@ class GeneratedContent {
     required this.rawContent,
     this.cards,
     this.summary,
+    this.topic,
     DateTime? generatedAt,
   }) : generatedAt = generatedAt ?? DateTime.now();
 }
@@ -111,6 +113,11 @@ final contentGeneratorServiceProvider = Provider<ContentGeneratorService>((ref) 
 class ContentGeneratorService {
   ContentGeneratorService();
 
+  /// Maksimum yükleme boyutu (10MB)
+  static const int maxUploadSize = 10 * 1024 * 1024;
+  /// Firebase Functions için güvenli gönderim sınırı (~7MB payload)
+  static const int _safePayloadSize = 7 * 1024 * 1024;
+
   /// PDF veya görsel dosyasından içerik üretir
   Future<GeneratedContent> generateContent({
     required File file,
@@ -119,8 +126,19 @@ class ContentGeneratorService {
     String? examType,
   }) async {
     try {
+      // Dosya boyutu kontrolü
+      final fileSize = await file.length();
+      if (fileSize > maxUploadSize) {
+        throw Exception('Dosya çok büyük (Maksimum 10MB). Lütfen daha küçük bir dosya seçin.');
+      }
+
       // Dosyayı oku ve sıkıştır (görsel ise)
       final Uint8List bytes = await _processFile(file, mimeType);
+
+      // Sıkıştırma sonrası kontrol
+      if (bytes.lengthInBytes > maxUploadSize) {
+        throw Exception('Dosya işlenemeyecek kadar büyük. Lütfen daha düşük çözünürlüklü bir görsel kullanın.');
+      }
 
       // Base64 encode
       final b64 = base64Encode(bytes);
@@ -174,10 +192,17 @@ class ContentGeneratorService {
     try {
       // Tüm görselleri işle ve base64'e çevir
       final List<Map<String, String>> images = [];
+      int totalSize = 0;
 
       for (final file in files) {
         final mimeType = getMimeType(file.path);
         final Uint8List bytes = await _processFile(file, mimeType);
+
+        totalSize += bytes.lengthInBytes;
+        if (totalSize > maxUploadSize) {
+          throw Exception('Toplam görsel boyutu çok fazla. Lütfen daha az veya daha küçük görseller seçin.');
+        }
+
         final b64 = base64Encode(bytes);
         images.add({
           'base64': b64,
@@ -239,33 +264,59 @@ $basePrompt
 
   /// Dosyayı işle - görsel ise sıkıştır
   Future<Uint8List> _processFile(File file, String mimeType) async {
-    // PDF dosyası doğrudan okunur
-    if (mimeType == 'application/pdf') {
-      return await file.readAsBytes();
+    // Önce dosya boyutunu disk üzerinden kontrol et (OOM önlemek için)
+    final int initialSize = await file.length();
+
+    if (initialSize > maxUploadSize) {
+      throw Exception('Dosya boyutu limitlerin üzerinde (Maksimum 10MB).');
+    }
+
+    if (mimeType == 'application/pdf' && initialSize > _safePayloadSize) {
+      // 7MB - 10MB arası PDF'ler için uyarı
+      print('Uyarı: Büyük PDF dosyası gönderiliyor (${(initialSize / 1024 / 1024).toStringAsFixed(1)} MB)');
     }
 
     // Görsel dosyaları sıkıştır
-    try {
-      final result = await FlutterImageCompress.compressWithFile(
-        file.absolute.path,
-        minWidth: 1024,
-        minHeight: 1024,
-        quality: 85,
-        format: CompressFormat.jpeg,
-      );
-      if (result != null && result.isNotEmpty) return result;
-    } catch (_) {
-      // fall through
+    if (mimeType.startsWith('image/')) {
+      try {
+        int quality = 85;
+        int minDimension = 1280;
+
+        // Boyut kademelendirmesi
+        if (initialSize > 5 * 1024 * 1024) { // 5MB+ ise
+          quality = 75;
+          minDimension = 1024;
+        }
+
+        final result = await FlutterImageCompress.compressWithFile(
+          file.absolute.path,
+          minWidth: minDimension,
+          minHeight: minDimension,
+          quality: quality,
+          format: CompressFormat.jpeg,
+        );
+        if (result != null && result.isNotEmpty) {
+          return result;
+        }
+      } catch (e) {
+        print('Sıkıştırma hatası: $e');
+      }
     }
+
+    // Sıkıştırma başarısız olduysa veya PDF ise orijinalden devam et
+    if (initialSize > maxUploadSize) {
+      throw Exception('Dosya boyutu çok büyük (Maksimum 50MB).');
+    }
+
     return await file.readAsBytes();
   }
 
   /// İçerik türüne göre prompt oluştur
   String _buildPrompt(ContentType contentType, String? examType) {
     switch (contentType) {
-      case ContentType.infoCards:
+      case ContentType.flashcard:
         return ContentGeneratorPrompts.getInfoCardsPrompt(examType);
-      case ContentType.questionCards:
+      case ContentType.quiz:
         return ContentGeneratorPrompts.getQuestionCardsPrompt(examType);
       case ContentType.summary:
         return ContentGeneratorPrompts.getSummaryPrompt(examType);
@@ -290,6 +341,7 @@ $basePrompt
           type: contentType,
           rawContent: rawResponse,
           summary: json['summary'] ?? json['ozet'] ?? '',
+          topic: json['topic'] ?? json['konu'],
         );
       } else {
         final List<dynamic> cardsJson = json['cards'] ?? json['kartlar'] ?? [];
@@ -301,6 +353,7 @@ $basePrompt
           type: contentType,
           rawContent: rawResponse,
           cards: cards,
+          topic: json['topic'] ?? json['konu'],
         );
       }
     } catch (e) {
@@ -319,6 +372,10 @@ $basePrompt
     switch (ext) {
       case 'pdf':
         return 'application/pdf';
+      case 'doc':
+        return 'application/msword';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
       case 'png':
         return 'image/png';
       case 'webp':

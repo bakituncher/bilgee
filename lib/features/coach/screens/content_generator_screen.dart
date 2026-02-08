@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -7,13 +8,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:lottie/lottie.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:taktik/features/coach/services/content_generator_service.dart';
+import 'package:taktik/features/coach/providers/content_generator_state_provider.dart';
+import 'package:taktik/features/coach/providers/saved_content_provider.dart';
+import 'package:taktik/features/coach/models/saved_content_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/core/theme/app_theme.dart';
+import 'package:taktik/features/coach/widgets/flashcard_widget.dart';
 
 class ContentGeneratorScreen extends ConsumerStatefulWidget {
   const ContentGeneratorScreen({super.key});
@@ -23,34 +27,19 @@ class ContentGeneratorScreen extends ConsumerStatefulWidget {
 }
 
 class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen> {
-  // Seçili dosya (tekli seçim için)
-  File? _selectedFile;
-  String? _fileName;
-  String? _mimeType;
-
-  // Çoklu görsel seçimi (kamera ile)
-  List<File> _capturedImages = [];
-  static const int _maxCapturedImages = 5;
-
-  // Seçili içerik türü
-  ContentType _selectedContentType = ContentType.infoCards;
-
-  // State değişkenleri
-  bool _isLoading = false;
-  String? _error;
-  GeneratedContent? _result;
-
-  // Soru kartları için görünürlük kontrolü
-  final Map<int, bool> _revealedAnswers = {};
-
-  // Test soruları için kullanıcı cevapları
-  final Map<int, int> _selectedAnswers = {};
+  // Çoklu görsel seçimi için maksimum limit
+  static const int _maxCapturedImages = 10;
 
   // Image picker
   final ImagePicker _picker = ImagePicker();
 
+  // Provider notifier getter
+  ContentGeneratorNotifier get _notifier => ref.read(contentGeneratorStateProvider.notifier);
+
   @override
   Widget build(BuildContext context) {
+    // Provider'ı watch et - değişikliklerde rebuild olsun
+    final state = ref.watch(contentGeneratorStateProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isPremium = ref.watch(premiumStatusProvider);
@@ -102,7 +91,26 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         ),
         centerTitle: true,
         actions: [
-          if (_result != null)
+          // Kaydedilenler butonu
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.successBrandColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.bookmark_rounded,
+                  color: AppTheme.successBrandColor,
+                  size: 18,
+                ),
+              ),
+              tooltip: 'Kaydedilenler',
+              onPressed: () => context.push('/saved-contents'),
+            ),
+          ),
+          if (state.result != null)
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: IconButton(
@@ -124,9 +132,9 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         ],
       ),
       body: SafeArea(
-        child: _isLoading
+        child: state.isLoading
             ? _buildLoadingState(theme, isDark)
-            : _result != null
+            : state.result != null
                 ? _buildResultState(theme, isDark)
                 : _buildInitialState(theme, isDark, isPremium),
       ),
@@ -135,6 +143,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Başlangıç ekranı - dosya seçimi ve içerik türü
   Widget _buildInitialState(ThemeData theme, bool isDark, bool isPremium) {
+    final state = ref.watch(contentGeneratorStateProvider);
     final colorScheme = theme.colorScheme;
 
     return SingleChildScrollView(
@@ -257,7 +266,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
           _buildContentTypeSelector(theme, isDark),
 
           // Hata mesajı
-          if (_error != null) ...[
+          if (state.error != null) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(14),
@@ -274,7 +283,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      _error!,
+                      state.error!,
                       style: TextStyle(
                         color: AppTheme.accentBrandColor,
                         fontSize: 13,
@@ -292,7 +301,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
           // Üret butonu - Gradient style
           Builder(
             builder: (context) {
-              final hasContent = _selectedFile != null || _capturedImages.isNotEmpty;
+              final hasContent = state.selectedFile != null || state.capturedImages.isNotEmpty;
 
               return Container(
                 width: double.infinity,
@@ -337,8 +346,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          _capturedImages.isNotEmpty
-                              ? '${_capturedImages.length} Sayfadan Üret'
+                          state.capturedImages.isNotEmpty
+                              ? '${state.capturedImages.length} Sayfadan Üret'
                               : 'İçerik Üret',
                           style: TextStyle(
                             fontSize: 16,
@@ -365,9 +374,10 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Dosya seçici widget
   Widget _buildFileSelector(ThemeData theme, bool isDark) {
+    final state = ref.watch(contentGeneratorStateProvider);
     final colorScheme = theme.colorScheme;
-    final hasFile = _selectedFile != null || _capturedImages.isNotEmpty;
-    final fileCount = _capturedImages.isNotEmpty ? _capturedImages.length : (_selectedFile != null ? 1 : 0);
+    final hasFile = state.selectedFile != null || state.capturedImages.isNotEmpty;
+    final fileCount = state.capturedImages.isNotEmpty ? state.capturedImages.length : (state.selectedFile != null ? 1 : 0);
 
     return GestureDetector(
       onTap: hasFile ? null : _showUploadOptions,
@@ -398,7 +408,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Dosya seçildikten sonraki görünüm
   Widget _buildSelectedFileContent(ColorScheme colorScheme, int fileCount) {
-    final isCaptured = _capturedImages.isNotEmpty;
+    final state = ref.watch(contentGeneratorStateProvider);
+    final isCaptured = state.capturedImages.isNotEmpty;
 
     return Row(
       children: [
@@ -407,20 +418,20 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: _getFileIconColor().withOpacity(0.12),
+            color: _getFileIconColor(state.mimeType).withOpacity(0.12),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: isCaptured && _capturedImages.isNotEmpty
+          child: isCaptured && state.capturedImages.isNotEmpty
               ? ClipRRect(
                   borderRadius: BorderRadius.circular(14),
                   child: Image.file(
-                    _capturedImages.first,
+                    state.capturedImages.first,
                     fit: BoxFit.cover,
                   ),
                 )
               : Icon(
-                  _getFileIcon(),
-                  color: _getFileIconColor(),
+                  _getFileIcon(state.mimeType),
+                  color: _getFileIconColor(state.mimeType),
                   size: 26,
                 ),
         ),
@@ -433,7 +444,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
               Text(
                 isCaptured
                     ? '$fileCount Sayfa Çekildi'
-                    : _fileName ?? 'Dosya',
+                    : state.fileName ?? 'Dosya',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -448,7 +459,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: _getFileIconColor().withOpacity(0.1),
+                      color: _getFileIconColor(state.mimeType).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
@@ -457,15 +468,15 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                         Icon(
                           isCaptured ? Icons.photo_library_rounded : Icons.insert_drive_file_rounded,
                           size: 12,
-                          color: _getFileIconColor(),
+                          color: _getFileIconColor(state.mimeType),
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          isCaptured ? 'GÖRSEL' : _mimeType?.split('/').last.toUpperCase() ?? 'DOSYA',
+                          isCaptured ? 'GÖRSEL' : state.mimeType?.split('/').last.toUpperCase() ?? 'DOSYA',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: _getFileIconColor(),
+                            color: _getFileIconColor(state.mimeType),
                           ),
                         ),
                       ],
@@ -597,11 +608,12 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// İçerik türü seçici
   Widget _buildContentTypeSelector(ThemeData theme, bool isDark) {
+    final state = ref.watch(contentGeneratorStateProvider);
     final colorScheme = theme.colorScheme;
 
     return Row(
       children: ContentType.values.map((type) {
-        final isSelected = _selectedContentType == type;
+        final isSelected = state.selectedContentType == type;
         final index = ContentType.values.indexOf(type);
 
         return Expanded(
@@ -611,7 +623,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
               right: index < ContentType.values.length - 1 ? 6 : 0,
             ),
             child: GestureDetector(
-              onTap: () => setState(() => _selectedContentType = type),
+              onTap: () => _notifier.setContentType(type),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
@@ -700,9 +712,9 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
   /// İçerik türüne göre ikon döndürür
   IconData _getContentTypeIcon(ContentType type) {
     switch (type) {
-      case ContentType.infoCards:
+      case ContentType.flashcard:
         return Icons.style_rounded;
-      case ContentType.questionCards:
+      case ContentType.quiz:
         return Icons.quiz_rounded;
       case ContentType.summary:
         return Icons.summarize_rounded;
@@ -711,10 +723,10 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   String _getContentTypeShortName(ContentType type) {
     switch (type) {
-      case ContentType.infoCards:
-        return 'Bilgi';
-      case ContentType.questionCards:
-        return 'Test';
+      case ContentType.flashcard:
+        return 'Flashcard';
+      case ContentType.quiz:
+        return 'Quiz';
       case ContentType.summary:
         return 'Özet';
     }
@@ -722,9 +734,9 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   String _getContentTypeDescription(ContentType type) {
     switch (type) {
-      case ContentType.infoCards:
-        return 'Konuyu öğrenmek için kartlar';
-      case ContentType.questionCards:
+      case ContentType.flashcard:
+        return 'UNO tarzı swipe kartlar';
+      case ContentType.quiz:
         return 'Çoktan seçmeli test';
       case ContentType.summary:
         return 'Hızlı tekrar için özet';
@@ -733,6 +745,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Yükleniyor ekranı
   Widget _buildLoadingState(ThemeData theme, bool isDark) {
+    final state = ref.watch(contentGeneratorStateProvider);
     final colorScheme = theme.colorScheme;
 
     return Center(
@@ -796,13 +809,13 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                _getContentTypeIcon(_selectedContentType),
+                _getContentTypeIcon(state.selectedContentType),
                 size: 18,
                 color: colorScheme.onSurface.withOpacity(0.6),
               ),
               const SizedBox(width: 6),
               Text(
-                '${_selectedContentType.displayName} üretiliyor',
+                '${state.selectedContentType.displayName} üretiliyor',
                 style: TextStyle(
                   fontSize: 14,
                   color: colorScheme.onSurface.withOpacity(0.5),
@@ -831,7 +844,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Sonuç ekranı
   Widget _buildResultState(ThemeData theme, bool isDark) {
-    if (_result == null) return const SizedBox.shrink();
+    final state = ref.watch(contentGeneratorStateProvider);
+    if (state.result == null) return const SizedBox.shrink();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -840,12 +854,12 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         children: [
 
           // İçerik görüntüleme
-          if (_result!.type == ContentType.summary)
+          if (state.result!.type == ContentType.summary)
             _buildSummaryView(theme, isDark)
-          else if (_result!.type == ContentType.questionCards)
+          else if (state.result!.type == ContentType.quiz)
             _buildQuizView(theme, isDark)
           else
-            _buildCardsView(theme, isDark),
+            _buildFlashcardView(theme, isDark),
         ],
       ),
     );
@@ -853,7 +867,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// Quiz görünümü (çoktan seçmeli test) - Sektör seviyesi tasarım
   Widget _buildQuizView(ThemeData theme, bool isDark) {
-    final cards = _result!.cards ?? [];
+    final state = ref.watch(contentGeneratorStateProvider);
+    final cards = state.result!.cards ?? [];
     final colorScheme = theme.colorScheme;
 
     if (cards.isEmpty) {
@@ -866,8 +881,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     }
 
     // İlerleme hesapla
-    final answeredCount = _selectedAnswers.length;
-    final correctCount = _selectedAnswers.entries
+    final answeredCount = state.selectedAnswers.length;
+    final correctCount = state.selectedAnswers.entries
         .where((e) => cards.length > e.key && cards[e.key].correctIndex == e.value)
         .length;
 
@@ -910,7 +925,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${cards.length} Test Sorusu',
+                          '${cards.length} Quiz Sorusu',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -943,6 +958,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                         ),
                       ),
                     ),
+                  const SizedBox(width: 8),
+                  _buildSaveButton(SavedContentType.quiz),
                 ],
               ),
               const SizedBox(height: 12),
@@ -966,7 +983,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         ...cards.asMap().entries.map((entry) {
           final index = entry.key;
           final card = entry.value;
-          final selectedAnswer = _selectedAnswers[index];
+          final selectedAnswer = state.selectedAnswers[index];
           final isAnswered = selectedAnswer != null;
           final hasOptions = card.options != null && card.options!.isNotEmpty;
 
@@ -1125,9 +1142,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                           padding: const EdgeInsets.only(bottom: 10),
                           child: GestureDetector(
                             onTap: isAnswered ? null : () {
-                              setState(() {
-                                _selectedAnswers[index] = optIndex;
-                              });
+                              _notifier.setSelectedAnswer(index, optIndex);
                             },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
@@ -1247,13 +1262,188 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             ),
           ).animate(delay: Duration(milliseconds: 80 * index)).fadeIn(duration: 350.ms).slideY(begin: 0.05, end: 0);
         }),
+
+        // Daha fazla soru üret butonu
+        const SizedBox(height: 16),
+        _buildGenerateMoreQuestionsButton(theme, isDark),
+        const SizedBox(height: 32),
       ],
     );
   }
 
+  /// Daha fazla soru üret butonu
+  Widget _buildGenerateMoreQuestionsButton(ThemeData theme, bool isDark) {
+    final colorScheme = theme.colorScheme;
+    final state = ref.watch(contentGeneratorStateProvider);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.secondaryBrandColor.withOpacity(0.08),
+            AppTheme.secondaryBrandColor.withOpacity(0.03),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.secondaryBrandColor.withOpacity(0.15),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppTheme.secondaryBrandColor.withOpacity(0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.add_circle_outline_rounded,
+              color: AppTheme.secondaryBrandColor,
+              size: 32,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Daha fazla pratik yap!',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Aynı konudan yeni sorular üret ve sınavına daha iyi hazırlan.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: colorScheme.onSurface.withOpacity(0.6),
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: state.isLoading ? null : _regenerateQuiz,
+              icon: state.isLoading
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.refresh_rounded, size: 20),
+              label: Text(
+                state.isLoading ? 'Üretiliyor...' : 'Daha Fazla Soru Üret',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.secondaryBrandColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 400.ms, delay: 200.ms).slideY(begin: 0.1, end: 0);
+  }
+
+  /// Quiz'i yeniden üret
+  Future<void> _regenerateQuiz() async {
+    final state = ref.read(contentGeneratorStateProvider);
+
+    // Zaten yükleniyorsa tekrar tetikleme
+    if (state.isLoading) return;
+
+    // Dosya veya görsel olmalı
+    if (state.selectedFile == null && state.capturedImages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.info_rounded, color: Colors.white, size: 18),
+              SizedBox(width: 10),
+              Text('Yeni soru için dosya gerekli'),
+            ],
+          ),
+          backgroundColor: AppTheme.secondaryBrandColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      return;
+    }
+
+    // Bekleme ekranına geç - result'ı temizle ve loading'i true yap
+    _notifier.clearResultForRegenerate();
+    _notifier.setError(null);
+
+    try {
+      final user = ref.read(userProfileProvider).value;
+      final examType = user?.selectedExam;
+      final service = ref.read(contentGeneratorServiceProvider);
+
+      GeneratedContent result;
+
+      if (state.capturedImages.isNotEmpty) {
+        result = await service.generateContentFromMultipleImages(
+          files: state.capturedImages,
+          contentType: ContentType.quiz,
+          examType: examType,
+        );
+      } else {
+        result = await service.generateContent(
+          file: state.selectedFile!,
+          contentType: ContentType.quiz,
+          mimeType: state.mimeType!,
+          examType: examType,
+        );
+      }
+
+      _notifier.setResult(result);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                const SizedBox(width: 10),
+                Text('${result.cards?.length ?? 0} yeni soru üretildi!'),
+              ],
+            ),
+            backgroundColor: AppTheme.successBrandColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      _notifier.setError(e.toString().replaceAll('Exception: ', ''));
+      _notifier.setLoading(false);
+    }
+  }
+
   /// Eski format soru kartı (şıksız)
   Widget _buildOldQuestionCard(ThemeData theme, bool isDark, int index, ContentCard card) {
-    final isRevealed = _revealedAnswers[index] ?? false;
+    final state = ref.watch(contentGeneratorStateProvider);
+    final isRevealed = state.revealedAnswers[index] ?? false;
     final colorScheme = theme.colorScheme;
 
     return Padding(
@@ -1330,9 +1520,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                         width: double.infinity,
                         child: TextButton(
                           onPressed: () {
-                            setState(() {
-                              _revealedAnswers[index] = true;
-                            });
+                            _notifier.toggleRevealedAnswer(index, true);
                           },
                           style: TextButton.styleFrom(
                             foregroundColor: AppTheme.secondaryBrandColor,
@@ -1375,10 +1563,285 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     ).animate(delay: Duration(milliseconds: 80 * index)).fadeIn(duration: 350.ms).slideY(begin: 0.05, end: 0);
   }
 
+  /// Flashcard görünümü - Şık ve sade tasarım
+  Widget _buildFlashcardView(ThemeData theme, bool isDark) {
+    final state = ref.watch(contentGeneratorStateProvider);
+    final cards = state.result!.cards ?? [];
+    final colorScheme = theme.colorScheme;
+
+    if (cards.isEmpty) {
+      return Center(
+        child: Text(
+          'Flashcard oluşturulamadı.',
+          style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6)),
+        ),
+      );
+    }
+
+    // Kartlar için renk paleti
+    final cardColors = [
+      const Color(0xFF6366F1), // Indigo
+      const Color(0xFF8B5CF6), // Violet
+      const Color(0xFFEC4899), // Pink
+      const Color(0xFF14B8A6), // Teal
+      const Color(0xFFF59E0B), // Amber
+      const Color(0xFF10B981), // Emerald
+      const Color(0xFF3B82F6), // Blue
+      const Color(0xFFEF4444), // Red
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Üst başlık alanı
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.secondaryBrandColor.withOpacity(0.12),
+                AppTheme.secondaryBrandColor.withOpacity(0.04),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.secondaryBrandColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.style_rounded,
+                  color: AppTheme.secondaryBrandColor,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${cards.length} Flashcard',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    Text(
+                      'Kartın üzerine dokunarak çevir',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurface.withOpacity(0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Kaydet butonu
+              _buildSaveButton(SavedContentType.flashcard),
+            ],
+          ),
+        ).animate().fadeIn(duration: 300.ms),
+
+        const SizedBox(height: 16),
+
+        // Kartlar - PageView
+        SizedBox(
+          height: 520,
+          child: PageView.builder(
+            controller: PageController(viewportFraction: 0.85),
+            itemCount: cards.length,
+            physics: const BouncingScrollPhysics(),
+            itemBuilder: (context, index) {
+              final card = cards[index];
+              final cardColor = cardColors[index % cardColors.length];
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                child: FlashcardWidget(
+                   index: index,
+                   total: cards.length,
+                   title: card.title,
+                   content: card.content,
+                   color: cardColor,
+                ),
+              );
+            },
+          ),
+        ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1)),
+      ],
+    );
+  }
+
+  /// Kaydet butonu widget'ı
+  Widget _buildSaveButton(SavedContentType contentType) {
+    return GestureDetector(
+      onTap: () => _saveContent(contentType),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.successBrandColor,
+              AppTheme.successBrandColor.withOpacity(0.8),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.successBrandColor.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.bookmark_add_rounded, size: 18, color: Colors.white),
+            SizedBox(width: 6),
+            Text(
+              'Kaydet',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// İçerik kaydetme fonksiyonu
+  Future<void> _saveContent(SavedContentType contentType) async {
+    final state = ref.read(contentGeneratorStateProvider);
+    if (state.result == null) return;
+
+    final result = state.result!;
+    String title;
+    String content;
+
+    // İçerikten anlamlı başlık çıkar
+    String extractTitle(List<ContentCard>? cards, String? summary, String? topic) {
+      // 1. Varsa AI tarafından üretilen konu başlığını kullan
+      if (topic != null && topic.isNotEmpty) {
+        if (topic.length > 25) {
+          return '${topic.substring(0, 22)}...';
+        }
+        return topic;
+      }
+
+      // 2. Yoksa kartlardan veya özetten çıkar
+      if (cards != null && cards.isNotEmpty) {
+        // İlk kartın başlığından konu adını al
+        final firstTitle = cards.first.title;
+        // Çok uzunsa kısalt
+        if (firstTitle.length > 25) {
+          return '${firstTitle.substring(0, 22)}...';
+        }
+        return firstTitle;
+      }
+      if (summary != null && summary.isNotEmpty) {
+        // Özetten ilk satırı veya başlığı al
+        final lines = summary.split('\n').where((l) => l.trim().isNotEmpty);
+        if (lines.isNotEmpty) {
+          var firstLine = lines.first.replaceAll(RegExp(r'^#+\s*'), '').trim();
+          if (firstLine.length > 25) {
+            firstLine = '${firstLine.substring(0, 22)}...';
+          }
+          return firstLine;
+        }
+      }
+      return 'İçerik';
+    }
+
+    switch (contentType) {
+      case SavedContentType.flashcard:
+        final topicName = extractTitle(result.cards, null, result.topic);
+        title = '$topicName (${result.cards?.length ?? 0} Kart)';
+        // Kartları JSON olarak kaydet - parse edilebilir format
+        if (result.cards != null && result.cards!.isNotEmpty) {
+          final cardsJson = result.cards!.map((card) => {
+            'title': card.title,
+            'content': card.content,
+            if (card.hint != null) 'hint': card.hint,
+            if (card.answer != null) 'answer': card.answer,
+          }).toList();
+          content = jsonEncode(cardsJson);
+        } else {
+          content = result.rawContent;
+        }
+        break;
+      case SavedContentType.quiz:
+        final topicName = extractTitle(result.cards, null, result.topic);
+        title = '$topicName (${result.cards?.length ?? 0} Soru)';
+        // Quiz kartlarını JSON olarak kaydet - şıklar ve doğru cevaplarla
+        if (result.cards != null && result.cards!.isNotEmpty) {
+          final cardsJson = result.cards!.map((card) => {
+            'title': card.title,
+            'content': card.content,
+            if (card.options != null) 'options': card.options,
+            if (card.correctIndex != null) 'correctIndex': card.correctIndex,
+            if (card.answer != null) 'answer': card.answer,
+            if (card.hint != null) 'hint': card.hint,
+          }).toList();
+          content = jsonEncode(cardsJson);
+        } else {
+          content = result.rawContent;
+        }
+        break;
+      case SavedContentType.summary:
+        title = extractTitle(null, result.summary ?? result.rawContent, result.topic);
+        content = result.summary ?? result.rawContent;
+        break;
+    }
+
+    final user = ref.read(userProfileProvider).value;
+    final examType = user?.selectedExam;
+
+    final saveResult = await ref.read(savedContentProvider.notifier).saveContent(
+      type: contentType,
+      title: title,
+      content: content,
+      examType: examType,
+    );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              saveResult.success ? Icons.check_circle_rounded : Icons.error_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(child: Text(saveResult.message)),
+          ],
+        ),
+        backgroundColor: saveResult.success ? AppTheme.successBrandColor : AppTheme.accentBrandColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
   /// Özet görünümü - Sektör seviyesi tasarım
   Widget _buildSummaryView(ThemeData theme, bool isDark) {
+    final state = ref.watch(contentGeneratorStateProvider);
     final colorScheme = theme.colorScheme;
-    final summaryText = _result!.summary ?? _result!.rawContent;
+    final summaryText = state.result!.summary ?? state.result!.rawContent;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1434,32 +1897,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: colorScheme.onSurface.withOpacity(0.06),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 14,
-                      color: const Color(0xFF8B5CF6),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'AI Özet',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF8B5CF6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              const SizedBox(width: 8),
+              _buildSaveButton(SavedContentType.summary),
             ],
           ),
         ).animate().fadeIn(duration: 300.ms),
@@ -1612,299 +2051,6 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     );
   }
 
-  /// Kartlar görünümü (Bilgi kartları için) - Sektör seviyesi tasarım
-  Widget _buildCardsView(ThemeData theme, bool isDark) {
-    final cards = _result!.cards ?? [];
-    final colorScheme = theme.colorScheme;
-
-    if (cards.isEmpty) {
-      return Center(
-        child: Text(
-          'Kart oluşturulamadı.',
-          style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6)),
-        ),
-      );
-    }
-
-    // Kartlar için renk paleti
-    final cardColors = [
-      const Color(0xFF6366F1), // Indigo
-      const Color(0xFF8B5CF6), // Violet
-      const Color(0xFFEC4899), // Pink
-      const Color(0xFF14B8A6), // Teal
-      const Color(0xFFF59E0B), // Amber
-      const Color(0xFF10B981), // Emerald
-      const Color(0xFF3B82F6), // Blue
-      const Color(0xFFEF4444), // Red
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Üst başlık alanı
-        Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.secondaryBrandColor.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.style_rounded,
-                  color: AppTheme.secondaryBrandColor,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${cards.length} Bilgi Kartı',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                    Text(
-                      'Yatay kaydırarak kartları incele',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colorScheme.onSurface.withOpacity(0.5),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Swipe ikonu
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: colorScheme.onSurface.withOpacity(0.06),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.swipe_rounded,
-                      size: 14,
-                      color: colorScheme.onSurface.withOpacity(0.5),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Kaydır',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurface.withOpacity(0.5),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Kartlar - Tam genişlik PageView
-        SizedBox(
-          height: 420,
-          child: PageView.builder(
-            controller: PageController(viewportFraction: 0.88),
-            itemCount: cards.length,
-            itemBuilder: (context, index) {
-              final card = cards[index];
-              final cardColor = cardColors[index % cardColors.length];
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: theme.cardColor,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: cardColor.withOpacity(0.15),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Kart üst kısım - Gradient header
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              cardColor,
-                              cardColor.withOpacity(0.8),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Üst satır - numara ve sayfa
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                // Kart numarası
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.auto_awesome_rounded,
-                                        size: 14,
-                                        color: Colors.white,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'Kart ${index + 1}',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                // Sayfa göstergesi
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    '${index + 1} / ${cards.length}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white.withOpacity(0.9),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            // Başlık
-                            Text(
-                              card.title,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                height: 1.3,
-                                letterSpacing: -0.3,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Kart içeriği
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(20),
-                          physics: const BouncingScrollPhysics(),
-                          child: MarkdownBody(
-                            data: card.content,
-                            styleSheet: MarkdownStyleSheet(
-                              p: TextStyle(
-                                fontSize: 15,
-                                height: 1.7,
-                                color: colorScheme.onSurface.withOpacity(0.85),
-                              ),
-                              strong: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: cardColor,
-                              ),
-                              listBullet: TextStyle(
-                                color: cardColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              listIndent: 16,
-                              h3: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                            builders: {
-                              'latex': _LatexElementBuilder(
-                                textStyle: TextStyle(color: colorScheme.onSurface),
-                              ),
-                            },
-                            extensionSet: md.ExtensionSet(
-                              [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
-                              [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, _LatexInlineSyntax()],
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Alt kısım - mini indicator
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: colorScheme.onSurface.withOpacity(0.03),
-                          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(
-                            cards.length,
-                            (i) => Container(
-                              width: i == index ? 20 : 6,
-                              height: 6,
-                              margin: const EdgeInsets.symmetric(horizontal: 3),
-                              decoration: BoxDecoration(
-                                color: i == index
-                                    ? cardColor
-                                    : colorScheme.onSurface.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1)),
-      ],
-    );
-  }
-
 
   // --- İşlevler ---
 
@@ -1992,14 +2138,14 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             const SizedBox(height: 28),
 
             // Seçenekler
-            Row(
+              Row(
               children: [
                 // Kamera seçeneği
                 Expanded(
                   child: _buildUploadOptionCard(
                     icon: Icons.camera_alt_rounded,
                     title: 'Kamera',
-                    subtitle: '5 sayfaya kadar',
+                    subtitle: '10 sayfaya kadar',
                     color: Colors.blue,
                     onTap: () {
                       Navigator.pop(context);
@@ -2010,22 +2156,39 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Dosya seçeneği
+                // Galeri seçeneği
                 Expanded(
                   child: _buildUploadOptionCard(
-                    icon: Icons.folder_rounded,
-                    title: 'Dosyalar',
-                    subtitle: 'PDF, PNG, JPG',
-                    color: Colors.orange,
+                    icon: Icons.photo_library_rounded,
+                    title: 'Galeri',
+                    subtitle: '10 sayfaya kadar',
+                    color: Colors.purple,
                     onTap: () {
                       Navigator.pop(context);
-                      _pickFromFiles();
+                      _pickFromGallery();
                     },
                     colorScheme: colorScheme,
                     isDark: isDark,
                   ),
                 ),
               ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Dosya seçeneği - tam genişlik
+            _buildUploadOptionCard(
+              icon: Icons.folder_rounded,
+              title: 'Dosyalar',
+              subtitle: 'PDF, Word, PNG, JPG',
+              color: Colors.orange,
+              onTap: () {
+                Navigator.pop(context);
+                _pickFromFiles();
+              },
+              colorScheme: colorScheme,
+              isDark: isDark,
+              fullWidth: true,
             ),
 
             const SizedBox(height: 16),
@@ -2044,6 +2207,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     required VoidCallback onTap,
     required ColorScheme colorScheme,
     required bool isDark,
+    bool fullWidth = false,
   }) {
     return Material(
       color: Colors.transparent,
@@ -2051,7 +2215,10 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+          padding: EdgeInsets.symmetric(
+            vertical: fullWidth ? 16 : 24,
+            horizontal: 16,
+          ),
           decoration: BoxDecoration(
             color: color.withOpacity(isDark ? 0.12 : 0.08),
             borderRadius: BorderRadius.circular(20),
@@ -2060,40 +2227,83 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
               width: 1.5,
             ),
           ),
-          child: Column(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(16),
+          child: fullWidth
+              ? Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(icon, size: 24, color: color),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colorScheme.onSurface.withOpacity(0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 16,
+                      color: colorScheme.onSurface.withOpacity(0.3),
+                    ),
+                  ],
+                )
+              : Column(
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        icon,
+                        size: 28,
+                        color: color,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurface.withOpacity(0.5),
+                      ),
+                    ),
+                  ],
                 ),
-                child: Icon(
-                  icon,
-                  size: 28,
-                  color: color,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colorScheme.onSurface.withOpacity(0.5),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -2176,7 +2386,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             _buildCameraOptionTile(
               icon: Icons.auto_awesome_motion_rounded,
               title: 'Çoklu Sayfa',
-              subtitle: '5 sayfaya kadar çek ve birleştir',
+              subtitle: '10 sayfaya kadar çek ve birleştir',
               onTap: () {
                 Navigator.pop(context);
                 _startMultiPageCapture();
@@ -2285,36 +2495,27 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       );
 
       if (image != null) {
-        setState(() {
-          _selectedFile = File(image.path);
-          _fileName = 'Kamera Görseli';
-          _mimeType = ContentGeneratorService.getMimeType(image.path);
-          _capturedImages.clear();
-          _error = null;
-        });
+        _notifier.setSelectedFile(
+          File(image.path),
+          'Kamera Görseli',
+          ContentGeneratorService.getMimeType(image.path),
+        );
       }
     } catch (e) {
-      setState(() {
-        _error = 'Görsel çekilemedi: $e';
-      });
+      _notifier.setError('Görsel çekilemedi: $e');
     }
   }
 
   /// Çoklu sayfa çekme başlat
   Future<void> _startMultiPageCapture() async {
-    setState(() {
-      _capturedImages = [];
-      _selectedFile = null;
-      _fileName = null;
-      _mimeType = null;
-    });
-
+    _notifier.clearSelection();
     await _captureNextPage();
   }
 
   /// Sonraki sayfayı çek
   Future<void> _captureNextPage() async {
-    if (_capturedImages.length >= _maxCapturedImages) {
+    final currentImages = ref.read(contentGeneratorStateProvider).capturedImages;
+    if (currentImages.length >= _maxCapturedImages) {
       _showMaxPagesReached();
       return;
     }
@@ -2328,22 +2529,17 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       );
 
       if (image != null && mounted) {
-        // Yeni liste oluşturarak Flutter'ın değişikliği algılamasını sağla
-        setState(() {
-          _capturedImages = [..._capturedImages, File(image.path)];
-          _error = null;
-        });
+        _notifier.addCapturedImage(File(image.path));
 
         // Devam etmek isteyip istemediğini sor
-        if (_capturedImages.length < _maxCapturedImages && mounted) {
+        final updatedImages = ref.read(contentGeneratorStateProvider).capturedImages;
+        if (updatedImages.length < _maxCapturedImages && mounted) {
           _showContinueCaptureDialog();
         }
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _error = 'Görsel çekilemedi: $e';
-        });
+        _notifier.setError('Görsel çekilemedi: $e');
       }
     }
   }
@@ -2354,11 +2550,12 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final remaining = _maxCapturedImages - _capturedImages.length;
-    final capturedCount = _capturedImages.length;
+    final currentState = ref.read(contentGeneratorStateProvider);
+    final remaining = _maxCapturedImages - currentState.capturedImages.length;
+    final capturedCount = currentState.capturedImages.length;
 
     // Güvenli kopya oluştur
-    final imagesCopy = List<File>.from(_capturedImages);
+    final imagesCopy = List<File>.from(currentState.capturedImages);
 
     showDialog(
       context: context,
@@ -2526,7 +2723,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             const Icon(Icons.info_rounded, color: Colors.white, size: 20),
             const SizedBox(width: 10),
             const Expanded(
-              child: Text('Maksimum 5 sayfa ekleyebilirsiniz.'),
+              child: Text('Maksimum 10 sayfa ekleyebilirsiniz.'),
             ),
           ],
         ),
@@ -2542,7 +2739,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg', 'webp'],
+        allowedExtensions: ['pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg', 'webp'],
         withData: false,
       );
 
@@ -2551,40 +2748,109 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       final path = result.files.first.path;
       if (path == null) return;
 
-      setState(() {
-        _selectedFile = File(path);
-        _fileName = result.files.first.name;
-        _mimeType = ContentGeneratorService.getMimeType(path);
-        _capturedImages = [];
-        _error = null;
-      });
+      _notifier.setSelectedFile(
+        File(path),
+        result.files.first.name,
+        ContentGeneratorService.getMimeType(path),
+      );
     } catch (e) {
-      setState(() {
-        _error = 'Dosya seçilemedi: $e';
-      });
+      _notifier.setError('Dosya seçilemedi: $e');
+    }
+  }
+
+  /// Galeriden görsel seç (çoklu seçim - 10 adete kadar)
+  Future<void> _pickFromGallery() async {
+    try {
+      final List<XFile> images = await _picker.pickMultiImage(
+        imageQuality: 85,
+        maxWidth: 1920,
+        maxHeight: 1920,
+        limit: _maxCapturedImages,
+      );
+
+      if (images.isEmpty) return;
+
+      // Maksimum 10 görsel
+      final selectedImages = images.take(_maxCapturedImages).toList();
+
+      if (selectedImages.length == 1) {
+        // Tek görsel seçildiyse normal dosya olarak ekle
+        _notifier.setSelectedFile(
+          File(selectedImages.first.path),
+          selectedImages.first.name,
+          ContentGeneratorService.getMimeType(selectedImages.first.path),
+        );
+      } else {
+        // Birden fazla görsel seçildiyse çoklu görsel olarak ekle
+        _notifier.clearSelection();
+        for (final image in selectedImages) {
+          _notifier.addCapturedImage(File(image.path));
+        }
+
+        if (mounted && images.length > _maxCapturedImages) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.info_rounded, color: Colors.white, size: 18),
+                  const SizedBox(width: 10),
+                  Text('Maksimum $_maxCapturedImages görsel seçildi'),
+                ],
+              ),
+              backgroundColor: AppTheme.secondaryBrandColor,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      _notifier.setError('Görsel seçilemedi: $e');
     }
   }
 
   /// Seçimi temizle
   void _clearSelection() {
-    setState(() {
-      _selectedFile = null;
-      _fileName = null;
-      _mimeType = null;
-      _capturedImages = [];
-      _error = null;
-    });
+    _notifier.clearSelection();
   }
 
-  /// İçerik üretimi
+  /// İçerik üretimi - Cache destekli
   Future<void> _generateContent() async {
+    final state = ref.read(contentGeneratorStateProvider);
     // En az bir dosya veya görsel olmalı
-    if (_selectedFile == null && _capturedImages.isEmpty) return;
+    if (state.selectedFile == null && state.capturedImages.isEmpty) return;
 
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    // Cache kontrolü - aynı dosya ve içerik türü için daha önce üretilmiş mi?
+    final cacheKey = state.capturedImages.isNotEmpty
+        ? state.capturedImages.map((f) => f.path).join('_')
+        : state.selectedFile!.path;
+
+    final cachedContent = _notifier.getCachedContent(cacheKey, state.selectedContentType);
+    if (cachedContent != null) {
+      // Cache'den al, tekrar üretme
+      _notifier.setResult(cachedContent);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.cached_rounded, color: Colors.white, size: 18),
+                SizedBox(width: 8),
+                Text('Önbellekten yüklendi'),
+              ],
+            ),
+            backgroundColor: AppTheme.successBrandColor,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+      return;
+    }
+
+    _notifier.setLoading(true);
+    _notifier.setError(null);
 
     try {
       // Sınav türünü al
@@ -2594,74 +2860,62 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       final service = ref.read(contentGeneratorServiceProvider);
       GeneratedContent result;
 
-      if (_capturedImages.isNotEmpty) {
+      if (state.capturedImages.isNotEmpty) {
         // Çoklu görsel ile içerik üret
         result = await service.generateContentFromMultipleImages(
-          files: _capturedImages,
-          contentType: _selectedContentType,
+          files: state.capturedImages,
+          contentType: state.selectedContentType,
           examType: examType,
         );
       } else {
         // Tekli dosya ile içerik üret
         result = await service.generateContent(
-          file: _selectedFile!,
-          contentType: _selectedContentType,
-          mimeType: _mimeType!,
+          file: state.selectedFile!,
+          contentType: state.selectedContentType,
+          mimeType: state.mimeType!,
           examType: examType,
         );
       }
 
-      setState(() {
-        _result = result;
-        _isLoading = false;
-        _revealedAnswers.clear();
-        _selectedAnswers.clear();
-      });
+      // Sonucu cache'e ekle
+      _notifier.addToCache(cacheKey, state.selectedContentType, result);
+      _notifier.setResult(result);
     } catch (e) {
-      setState(() {
-        _error = e.toString().replaceAll('Exception: ', '');
-        _isLoading = false;
-      });
+      _notifier.setError(e.toString().replaceAll('Exception: ', ''));
+      _notifier.setLoading(false);
     }
   }
 
   /// Sıfırla
   void _reset() {
-    setState(() {
-      _selectedFile = null;
-      _fileName = null;
-      _mimeType = null;
-      _capturedImages = [];
-      _result = null;
-      _error = null;
-      _revealedAnswers.clear();
-      _selectedAnswers.clear();
-    });
+    _notifier.reset();
   }
 
   /// Yeni içerik oluştur - dosyayı koru
   void _createNewContent() {
-    setState(() {
-      _result = null;
-      _error = null;
-      _revealedAnswers.clear();
-      _selectedAnswers.clear();
-      // Dosya korunuyor, kullanıcı başka içerik türü seçebilir
-    });
+    _notifier.clearResult();
   }
 
   /// Dosya ikonu
-  IconData _getFileIcon() {
-    if (_mimeType == 'application/pdf') {
+  IconData _getFileIcon(String? mimeType) {
+    if (mimeType == 'application/pdf') {
       return Icons.picture_as_pdf_rounded;
+    }
+    if (mimeType == 'application/msword' ||
+        mimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      return Icons.description_rounded;
     }
     return Icons.image_rounded;
   }
 
   /// Dosya ikon rengi
-  Color _getFileIconColor() {
-    if (_mimeType == 'application/pdf') {
+  Color _getFileIconColor(String? mimeType) {
+    if (mimeType == 'application/pdf') {
       return Colors.red;
+    }
+    if (mimeType == 'application/msword' ||
+        mimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      return Colors.blue.shade700;
     }
     return Colors.blue;
   }

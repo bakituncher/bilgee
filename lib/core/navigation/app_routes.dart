@@ -31,6 +31,7 @@ class AppRoutes {
   static const String strategyReview = 'strategy-review';
   static const String mindMap = 'mind-map';
   static const String contentGenerator = 'content-generator'; // İçerik Üretici
+  static const String savedContents = '/saved-contents'; // Kaydedilen İçerikler
 
   // Yeni eklenen rota: Soru Kutusu
   static const String questionBox = '/question-box';

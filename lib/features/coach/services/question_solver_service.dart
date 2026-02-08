@@ -14,10 +14,20 @@ final questionSolverServiceProvider = Provider<QuestionSolverService>((ref) {
 class QuestionSolverService {
   QuestionSolverService();
 
+  /// Maksimum yükleme boyutu (10MB)
+  static const int maxUploadSize = 10 * 1024 * 1024;
+  /// Firebase Functions için güvenli gönderim sınırı (~7MB payload)
+  static const int _safePayloadSize = 7 * 1024 * 1024;
+
   Future<String> solveQuestion(XFile imageFile, {String? examType}) async {
     try {
       // 1) Compress image (bandwidth + callable payload)
       final Uint8List bytes = await _compressImage(File(imageFile.path));
+
+      // Sıkıştırma sonrası kontrol
+      if (bytes.lengthInBytes > maxUploadSize) {
+        throw Exception('Görsel çok büyük (Maksimum 10MB). Lütfen daha düşük çözünürlüklü bir fotoğraf çekin.');
+      }
 
       // 2) Base64 encode (callable payload)
       final b64 = base64Encode(bytes);
@@ -59,17 +69,34 @@ class QuestionSolverService {
 
   Future<Uint8List> _compressImage(File file) async {
     try {
+      // Boyutu kontrol et, eğer çok büyükse daha agresif sıkıştır
+      final int fileSize = await file.length();
+      int quality = 85;
+      int minDimension = 1280;
+
+      if (fileSize > 5 * 1024 * 1024) { // 5MB+ ise
+        quality = 75;
+        minDimension = 1024;
+      }
+
       final result = await FlutterImageCompress.compressWithFile(
         file.absolute.path,
-        minWidth: 1024,
-        minHeight: 1024,
-        quality: 80,
+        minWidth: minDimension,
+        minHeight: minDimension,
+        quality: quality,
         format: CompressFormat.jpeg,
       );
       if (result != null && result.isNotEmpty) return result;
-    } catch (_) {
-      // fall through
+    } catch (e) {
+      print('Sıkıştırma hatası: $e');
     }
+
+    // OOM riskine karşı kontrol
+    final int finalSize = await file.length();
+    if (finalSize > maxUploadSize) {
+      throw Exception('Görsel boyutu çok büyük (Maksimum 10MB).');
+    }
+
     return await file.readAsBytes();
   }
 
