@@ -92,7 +92,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                   top: false,
                   child: BottomAppBar(
                     padding: EdgeInsets.zero,
-                    height: 48, // 52'den 48'e düşürülerek boşluk azaltıldı
+                    height: 48,
                     elevation: 0,
                     color: Colors.transparent,
                     child: Row(
@@ -137,7 +137,6 @@ class ScaffoldWithNavBar extends ConsumerWidget {
       child: SizedBox(
         width: 60,
         height: 48,
-        // Aligment ile ikonu dikeyde merkezin biraz yukarısına alarak üst boşluğu sildik
         child: Align(
           alignment: const Alignment(0, -0.2),
           child: Icon(
@@ -204,7 +203,8 @@ class _AnimatedBunnyButtonState extends State<_AnimatedBunnyButton> with TickerP
     final cardColor = Theme.of(context).cardColor;
     const double buttonSize = 60.0;
 
-    Widget content = Container(
+    // 1. Gölgeyi buradan ayırdık. Sadece görsel içeriği (Gradient, Border, Resim) burada tanımlıyoruz.
+    Widget innerContent = Container(
       width: buttonSize,
       height: buttonSize,
       decoration: BoxDecoration(
@@ -216,13 +216,7 @@ class _AnimatedBunnyButtonState extends State<_AnimatedBunnyButton> with TickerP
               : [colorScheme.primary.withOpacity(0.9), colorScheme.primary.withOpacity(0.75)],
         ),
         shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-              color: colorScheme.primary.withOpacity(widget.isActive ? 0.4 : 0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 3)
-          ),
-        ],
+        // Border burada kalmalı
         border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
       ),
       padding: const EdgeInsets.all(2),
@@ -242,9 +236,25 @@ class _AnimatedBunnyButtonState extends State<_AnimatedBunnyButton> with TickerP
       onTapCancel: () => _scaleController.reverse(),
       child: ScaleTransition(
         scale: _scaleAnimation,
-        child: _showShimmer
-            ? content.animate().shimmer(duration: 600.ms, color: Colors.white.withOpacity(0.6))
-            : content,
+        // 2. Gölgeyi taşıyan dış container
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                  color: colorScheme.primary.withOpacity(widget.isActive ? 0.4 : 0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3)
+              ),
+            ],
+          ),
+          // 3. İçeriği ClipOval ile sarmalayarak shimmer efektinin yuvarlak olmasını sağladık
+          child: ClipOval(
+            child: _showShimmer
+                ? innerContent.animate().shimmer(duration: 600.ms, color: Colors.white.withOpacity(0.6))
+                : innerContent,
+          ),
+        ),
       ),
     );
   }

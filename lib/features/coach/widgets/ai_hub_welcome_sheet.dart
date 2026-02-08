@@ -315,7 +315,7 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: const Text(
-              'Avantajı Kaybet',
+              'Daha Sonra',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w400,

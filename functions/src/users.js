@@ -347,8 +347,21 @@ const deleteUserAccount = onCall({ region: "us-central1", timeoutSeconds: 540, e
   }
 });
 
+// Sunucu zamanını ve İstanbul tarihini döndüren fonksiyon (Bypass engelleme için)
+const getServerTime = onCall({ region: "us-central1" }, async (request) => {
+  const now = nowIstanbul();
+  const dayKey = dayKeyIstanbul(now); // 'YYYY-MM-DD'
+
+  return {
+    timestamp: now.getTime(),
+    istanbulDay: dayKey,
+    timezone: "Europe/Istanbul"
+  };
+});
+
 module.exports = {
   computeInactivityHours,
   processAudienceInBatches,
   deleteUserAccount,
+  getServerTime,
 };

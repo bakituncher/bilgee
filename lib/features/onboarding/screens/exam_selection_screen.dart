@@ -12,42 +12,42 @@ class ExamSelectionScreen extends ConsumerWidget {
   const ExamSelectionScreen({super.key});
 
   Future<bool> _confirmInitialExamSelection(
-    BuildContext context, {
-    required String examDisplayName,
-    String? sectionDisplayName,
-  }) async {
+      BuildContext context, {
+        required String examDisplayName,
+        String? sectionDisplayName,
+      }) async {
     final theme = Theme.of(context);
     final fullName =
-        sectionDisplayName == null ? examDisplayName : '$examDisplayName - $sectionDisplayName';
+    sectionDisplayName == null ? examDisplayName : '$examDisplayName - $sectionDisplayName';
 
     return await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: Row(
-              children: [
-                Icon(Icons.help_outline, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                const Text('Seçimini Onayla'),
-              ],
-            ),
-            content: Text(
-              '$fullName sınavını seçmek üzeresin. Emin misin?',
-              style: theme.textTheme.bodyMedium,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Vazgeç'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Evet, Devam Et'),
-              ),
-            ],
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.help_outline, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            const Text('Seçimini Onayla'),
+          ],
+        ),
+        content: Text(
+          '$fullName sınavını seçmek üzeresin. Emin misin?',
+          style: theme.textTheme.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Vazgeç'),
           ),
-        ) ??
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Evet, Devam Et'),
+          ),
+        ],
+      ),
+    ) ??
         false;
   }
 
@@ -79,8 +79,11 @@ class ExamSelectionScreen extends ConsumerWidget {
     // 1. Veritabanına kaydet.
     await saveData();
 
+    // Widget dispose edilmediyse devam et
+    if (!context.mounted) return;
+
     // Profil verisini yenile ve okunmasını bekle.
-    ref.refresh(userProfileProvider);
+    final _ = ref.refresh(userProfileProvider);
     await ref.read(userProfileProvider.future);
 
     // 2. Artık güncel veriyle navigasyonu güvenle kontrol et.
@@ -160,14 +163,14 @@ class ExamSelectionScreen extends ConsumerWidget {
   }
 
   void _showLanguageSelection(
-    BuildContext context,
-    WidgetRef ref,
-    Exam exam,
-    ExamSection section,
-    ExamType examType,
-    String userId,
-    dynamic firestoreService,
-  ) {
+      BuildContext context,
+      WidgetRef ref,
+      Exam exam,
+      ExamSection section,
+      ExamType examType,
+      String userId,
+      dynamic firestoreService,
+      ) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -191,7 +194,7 @@ class ExamSelectionScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   ...section.availableLanguages!.map(
-                    (language) => Padding(
+                        (language) => Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
                       child: ElevatedButton(
                         onPressed: () async {
@@ -207,7 +210,7 @@ class ExamSelectionScreen extends ConsumerWidget {
                           await _handleSelection(
                             context,
                             ref,
-                            () => firestoreService.saveExamSelection(
+                                () => firestoreService.saveExamSelection(
                               userId: userId,
                               examType: examType,
                               sectionName: section.name,
@@ -248,7 +251,7 @@ class ExamSelectionScreen extends ConsumerWidget {
       await _handleSelection(
         context,
         ref,
-        () => firestoreService.saveExamSelection(
+            () => firestoreService.saveExamSelection(
           userId: userId,
           examType: examType,
           sectionName: exam.sections.first.name,
@@ -287,40 +290,40 @@ class ExamSelectionScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
                   ...sectionsToShow.map(
                         (section) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              Navigator.pop(ctx);
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
 
-                              // YDT seçildiyse önce dil seçimi yap
-                              if (section.name == 'YDT' && section.availableLanguages != null) {
-                                _showLanguageSelection(context, ref, exam, section, examType, userId, firestoreService);
-                                return;
-                              }
+                          // YDT seçildiyse önce dil seçimi yap
+                          if (section.name == 'YDT' && section.availableLanguages != null) {
+                            _showLanguageSelection(context, ref, exam, section, examType, userId, firestoreService);
+                            return;
+                          }
 
-                              final ok = await _confirmInitialExamSelection(
-                                context,
-                                examDisplayName: exam.name,
-                                sectionDisplayName: section.name,
-                              );
-                              if (!ok) return;
+                          final ok = await _confirmInitialExamSelection(
+                            context,
+                            examDisplayName: exam.name,
+                            sectionDisplayName: section.name,
+                          );
+                          if (!ok) return;
 
-                              await _handleSelection(
-                                context,
-                                ref,
+                          await _handleSelection(
+                            context,
+                            ref,
                                 () => firestoreService.saveExamSelection(
-                                  userId: userId,
-                                  examType: examType,
-                                  sectionName: section.name,
-                                  // YDT dışı seçimlerde dil bilgisini sıfırla
-                                  language: null,
-                                ),
-                              );
-                            },
-                            child: Text(section.name),
-                          ),
-                        ),
+                              userId: userId,
+                              examType: examType,
+                              sectionName: section.name,
+                              // YDT dışı seçimlerde dil bilgisini sıfırla
+                              language: null,
+                            ),
+                          );
+                        },
+                        child: Text(section.name),
                       ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -408,3 +411,4 @@ class ExamSelectionScreen extends ConsumerWidget {
     );
   }
 }
+

@@ -44,7 +44,7 @@ class TestDetailScreen extends StatelessWidget {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         leading: const CustomBackButton(),
-        title: Text("Detayli Analiz", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, fontSize: 17, letterSpacing: 0.5)),
+        title: Text("Detaylı Analiz", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, fontSize: 17, letterSpacing: 0.5)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -153,11 +153,11 @@ class _StatsCard extends StatelessWidget {
         children: [
           Expanded(child: _StatItem(label: "Toplam Net", value: test.totalNet.toStringAsFixed(1), color: const Color(0xFF2E3192), isDark: isDark, isHighlighted: true)),
           _divider(),
-          Expanded(child: _StatItem(label: "Dogru", value: test.totalCorrect.toString(), color: const Color(0xFF00C853), isDark: isDark)),
+          Expanded(child: _StatItem(label: "Doğru", value: test.totalCorrect.toString(), color: const Color(0xFF00C853), isDark: isDark)),
           _divider(),
-          Expanded(child: _StatItem(label: "Yanlis", value: test.totalWrong.toString(), color: const Color(0xFFFF5252), isDark: isDark)),
+          Expanded(child: _StatItem(label: "Yanlış", value: test.totalWrong.toString(), color: const Color(0xFFFF5252), isDark: isDark)),
           _divider(),
-          Expanded(child: _StatItem(label: "Bos", value: test.totalBlank.toString(), color: isDark ? Colors.white54 : Colors.grey, isDark: isDark)),
+          Expanded(child: _StatItem(label: "Boş", value: test.totalBlank.toString(), color: isDark ? Colors.white54 : Colors.grey, isDark: isDark)),
         ],
       ),
     );
@@ -219,11 +219,11 @@ class _InsightCard extends StatelessWidget {
                   text: TextSpan(
                     style: TextStyle(fontSize: 13, height: 1.5, color: isDark ? Colors.white70 : Colors.black54),
                     children: [
-                      const TextSpan(text: 'En guclu alanin '),
+                      const TextSpan(text: 'En güçlü alanın '),
                       TextSpan(text: strongestSubject.key, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF00C853))),
-                      const TextSpan(text: ', devam et! En cok gelisim firsati ise '),
+                      const TextSpan(text: ', devam et! En cok gelişim fırsatı ise '),
                       TextSpan(text: weakestSubject.key, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFFF9800))),
-                      const TextSpan(text: ' dersinde. Bu derse odaklanarak netlerini hizla artirabilirsin!'),
+                      const TextSpan(text: ' dersinde. Bu derse odaklanarak netlerini hızla artırabilirsin!'),
                     ],
                   ),
                 ),
@@ -310,7 +310,7 @@ class _SubjectDetailsList extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 12),
-          child: Text("Ders Bazli Sonuclar", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : Colors.black87)),
+          child: Text("Ders Bazlı Sonuclar", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : Colors.black87)),
         ),
         Container(
           decoration: BoxDecoration(

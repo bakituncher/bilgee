@@ -98,7 +98,6 @@ class MiniPerformanceChart extends StatelessWidget {
           enabled: true,
           touchTooltipData: LineTouchTooltipData(
             getTooltipColor: (touchedSpot) => color.withAlpha(230),
-            tooltipRoundedRadius: 8,
             tooltipPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
