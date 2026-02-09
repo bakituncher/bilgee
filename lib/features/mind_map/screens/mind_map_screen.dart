@@ -1659,86 +1659,88 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
         ),
 
         // Alt kısım - Sabit
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 2. Hazır Haritalar Listesi - Sabit
-            _buildPreMadeMapsHorizontalList(theme, colorScheme),
+        SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 2. Hazır Haritalar Listesi - Sabit
+              _buildPreMadeMapsHorizontalList(theme, colorScheme),
 
-            // Modern Ayırıcı
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 44.0, vertical: 20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 1,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.transparent,
-                            colorScheme.outline.withValues(alpha: 0.3),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Text(
-                      'veya',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                        letterSpacing: 1.2,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Container(
-                      height: 1,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            colorScheme.outline.withValues(alpha: 0.3),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // 3. Konu Seçme Butonu - Sabit
-            if (_topicsBySubject.isNotEmpty)
+              // Modern Ayırıcı
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28.0),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: FilledButton.icon(
-                    onPressed: _showTopicSelectionSheet,
-                    icon: const Icon(Icons.school_rounded),
-                    label: const Text(
-                      'Yeni Zihin Haritası Oluştur',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                padding: const EdgeInsets.symmetric(horizontal: 44.0, vertical: 20),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 1,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.transparent,
+                              colorScheme.outline.withValues(alpha: 0.3),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      elevation: 3,
-                      shadowColor: Colors.black.withValues(alpha: 0.4),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Text(
+                        'veya',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                          letterSpacing: 1.2,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        height: 1,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              colorScheme.outline.withValues(alpha: 0.3),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // 3. Konu Seçme Butonu - Sabit
+              if (_topicsBySubject.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 28.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: FilledButton.icon(
+                      onPressed: _showTopicSelectionSheet,
+                      icon: const Icon(Icons.school_rounded),
+                      label: const Text(
+                        'Yeni Zihin Haritası Oluştur',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        elevation: 3,
+                        shadowColor: Colors.black.withValues(alpha: 0.4),
+                      ),
                     ),
                   ),
-                ),
-              )
-            else
-              CircularProgressIndicator(color: colorScheme.primary),
+                )
+              else
+                CircularProgressIndicator(color: colorScheme.primary),
 
-            const SizedBox(height: 24), // Alt boşluk
-          ],
+              const SizedBox(height: 24), // Alt boşluk
+            ],
+          ),
         ),
       ],
     );
