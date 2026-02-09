@@ -1621,35 +1621,48 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
             surfaceContainerHighest: const Color(0xFFF5F5F5),
           );
 
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 32), // Üst boşluk
+    return Column(
+      children: [
+        // Üst kısım - Scrollable
+        Expanded(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 32), // Üst boşluk
 
-            // 1. Tanıtım Alanı (En üstte)
-            Lottie.asset(
-              'assets/lotties/Brain.json',
-              width: 110,
-              height: 110,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28.0),
-              child: Text(
-                "Karmaşık konuları görselleştir. Listeden bir konu seç, Taktik senin için dallara ayırsın.",
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                  // 1. Tanıtım Alanı (En üstte)
+                  Lottie.asset(
+                    'assets/lotties/Brain.json',
+                    width: 110,
+                    height: 110,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 28.0),
+                    child: Text(
+                      "Karmaşık konuları görselleştir. Listeden bir konu seç, Taktik senin için dallara ayırsın.",
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
+          ),
+        ),
 
-            // 2. Hazır Haritalar Listesi (Önce bu gösterilecek)
+        // Alt kısım - Sabit
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 2. Hazır Haritalar Listesi - Sabit
             _buildPreMadeMapsHorizontalList(theme, colorScheme),
 
             // Modern Ayırıcı
@@ -1698,7 +1711,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
               ),
             ),
 
-            // 3. Konu Seçme Butonu (Sonra bu gösterilecek)
+            // 3. Konu Seçme Butonu - Sabit
             if (_topicsBySubject.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 28.0),
@@ -1724,11 +1737,10 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
             else
               CircularProgressIndicator(color: colorScheme.primary),
 
-
             const SizedBox(height: 24), // Alt boşluk
           ],
         ),
-      ),
+      ],
     );
   }
 
