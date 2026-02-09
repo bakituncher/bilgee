@@ -452,15 +452,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
               color: const Color(0xFF0EA5E9),
               isPremium: true, // Herkes erişebilir - kilit simgesi yok
               height: 120,
-              onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/content-generator', offerData: {
-                'title': 'Not Defteri',
-                'subtitle': 'PDF ve görsellerden akıllı içerik.',
-                'iconName': 'auto_awesome',
-                'color': const Color(0xFF0EA5E9),
-                'marketingTitle': 'Notlarını Dönüştür!',
-                'marketingSubtitle': 'PDF veya görsel yükle, yapay zeka sana bilgi kartları, soru kartları veya özet üretsin.',
-                'redirectRoute': '/ai-hub/content-generator',
-              }),
+              onTap: () => context.push('/ai-hub/content-generator'),
             ),
 
 
