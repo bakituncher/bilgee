@@ -2816,6 +2816,13 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// İçerik üretimi - Cache destekli
   Future<void> _generateContent() async {
+    // Premium kontrolü
+    final isPremium = ref.read(premiumStatusProvider);
+    if (!isPremium) {
+      _showPremiumDialog();
+      return;
+    }
+
     final state = ref.read(contentGeneratorStateProvider);
     // En az bir dosya veya görsel olmalı
     if (state.selectedFile == null && state.capturedImages.isEmpty) return;
@@ -2918,6 +2925,110 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       return Colors.blue.shade700;
     }
     return Colors.blue;
+  }
+
+  /// Premium dialog - İçerik üretimi için
+  void _showPremiumDialog() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        contentPadding: const EdgeInsets.all(32),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF0EA5E9).withValues(alpha: 0.15),
+                    const Color(0xFF06B6D4).withValues(alpha: 0.15),
+                  ],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.auto_awesome_rounded,
+                size: 56,
+                color: const Color(0xFF0EA5E9),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Sınırsız İçerik Üret',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+                letterSpacing: -0.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'PDF veya görsellerden sınırsız bilgi kartları, soru kartları ve özet üret.\nTaktik Pro ile öğrenmeyi hızlandır!',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      'Daha Sonra',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      context.push('/premium');
+                    },
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: const Color(0xFF0EA5E9),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Pro\'ya Geç',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
