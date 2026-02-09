@@ -1,7 +1,7 @@
 [
   {
     "id": "daily_con_01_tri_sync",
-    "title": "Günlük Senkronizasyon",
+    "title": "Günü Planla",
     "description": "Günün üç farklı zaman diliminde (sabah, öğlen, akşam) sisteme bağlanarak operasyonel farkındalığınızı koruyun.",
     "type": "daily",
     "category": "consistency",
@@ -12,7 +12,7 @@
   },
   {
     "id": "daily_eng_01_strategy_overview",
-    "title": "Strateji Gözden Geçirme",
+    "title": "Stratejini İncele",
     "description": "Mevcut stratejik planınızı gözden geçirin ve bugünkü hedeflerinizi netleştirin.",
     "type": "daily",
     "category": "engagement",
@@ -24,7 +24,7 @@
   },
   {
     "id": "daily_eng_02_strategy_initiation",
-    "title": "İlk Strateji Oluşturma",
+    "title": "Strateji Oluştur",
     "description": "Henüz bir stratejik planınız yok. AI destekli planlama aracını kullanarak kişisel stratejinizi oluşturun.",
     "type": "daily",
     "category": "engagement",
@@ -37,7 +37,7 @@
   },
   {
     "id": "daily_eng_03_workshop_intro",
-    "title": "Etüt Odası Keşfi",
+    "title": "Etüt Odasını Keşfet",
     "description": "Henüz Etüt Odası'nı denemediniz. Bu güçlü öğrenme aracını keşfederek zayıf noktalarınızı güçlendirin.",
     "type": "daily",
     "category": "engagement",
@@ -49,7 +49,7 @@
   },
   {
     "id": "daily_eng_04_pomodoro_intro",
-    "title": "Pomodoro Tekniği Deneyimi",
+    "title": "Pomodoro Başlat",
     "description": "Odaklanma problemleri yaşıyorsunuz. Pomodoro tekniğini deneyerek konsantrasyonunuzu artırın.",
     "type": "daily",
     "category": "engagement",
@@ -61,7 +61,7 @@
   },
   {
     "id": "daily_pra_01_cognitive_warmup",
-    "title": "Bilişsel Isınma",
+    "title": "Isınma Turu",
     "description": "Serbest modda 25 soruluk bir antrenman yaparak güne zihinsel olarak hazırlanın.",
     "type": "daily",
     "category": "practice",
@@ -72,7 +72,7 @@
   },
   {
     "id": "daily_pra_02_weak_point_drill",
-    "title": "Adaptif Matkap: {subject}",
+    "title": "Eksik Konu Çalışması: {subject}",
     "description": "Sistemin en zayıf halkanız olarak belirlediği {subject} konusunda 40 soru çözerek açığı kapatmaya başlayın.",
     "type": "daily",
     "category": "practice",
@@ -84,7 +84,7 @@
   },
   {
     "id": "daily_pra_03_strong_point_drill",
-    "title": "Güçlü Alan Hız Testi: {subject}",
+    "title": "Hız Testi: {subject}",
     "description": "En yetkin olduğunuz {subject} alanında 50 soru çözerek hız ve doğruluk oranınızı test edin.",
     "type": "daily",
     "category": "practice",
@@ -96,7 +96,7 @@
   },
   {
     "id": "daily_pra_04_paragraph_sprint",
-    "title": "Paragraf Sprinti",
+    "title": "Paragraf Denemesi",
     "description": "Okuma hızınızı ve anlama yeteneğinizi geliştirmek için 20 paragraf sorusu çözün.",
     "type": "daily",
     "category": "practice",
@@ -108,7 +108,7 @@
   },
   {
     "id": "daily_pra_05_problem_solving",
-    "title": "Problem Çözme Atağı",
+    "title": "Problem Çözme",
     "description": "Analitik düşünme kaslarınızı geliştirmek için 15 problem sorusu çözün.",
     "type": "daily",
     "category": "practice",
@@ -120,7 +120,7 @@
   },
   {
     "id": "daily_stu_01_comprehensive_study",
-    "title": "Kapsamlı Çalışma Seansı",
+    "title": "90 Dk. Derin Çalışma",
     "description": "90 dakikalık derin çalışma seansı tamamlayarak günlük çalışma hedefinizi büyük ölçüde karşılayın.",
     "type": "daily",
     "category": "study",
@@ -131,7 +131,7 @@
   },
   {
     "id": "daily_stu_02_topic_mastery_push",
-    "title": "Konu Hakimiyeti İtişi",
+    "title": "Konu Tekrarı",
     "description": "Konu Netlerim'nde kırmızı renkteki bir konuyu sarı seviyeye çıkarın.",
     "type": "daily",
     "category": "study",
@@ -142,7 +142,7 @@
   },
   {
     "id": "daily_foc_01_pomodoro_double",
-    "title": "İkili Pomodoro",
+    "title": "2 Tur Pomodoro",
     "description": "Konsantrasyonunuzu artırmak için art arda 2 Pomodoro seansı (50 dakika) tamamlayın.",
     "type": "daily",
     "category": "focus",
@@ -153,7 +153,7 @@
   },
   {
     "id": "daily_foc_02_early_bird_focus",
-    "title": "Sabah Kartalı",
+    "title": "Erken Başlangıç",
     "description": "Günü verimli başlatmak için saat 09:00'dan önce bir Pomodoro seansı tamamlayın.",
     "type": "daily",
     "category": "focus",
@@ -165,7 +165,7 @@
   },
   {
     "id": "daily_tes_01_result_entry",
-    "title": "Sonuç Kayıt Uzmanı",
+    "title": "Deneme Sonucu Gir",
     "description": "Yeni bir deneme sonucu girerek gelişiminizi takip altında tutun.",
     "type": "daily",
     "category": "test_submission",
@@ -176,7 +176,7 @@
   },
   {
     "id": "daily_tes_02_analysis_pro",
-    "title": "Analiz Profesyoneli",
+    "title": "Analizini İncele",
     "description": "Taktik Tavşan ile deneme sonuçlarınızı detaylı analiz ettirin ve zayıf noktalarınızı belirleyin.",
     "type": "daily",
     "category": "study",
@@ -188,7 +188,7 @@
   },
   {
     "id": "daily_eng_05_feature_explorer",
-    "title": "Özellik Kaşifi",
+    "title": "Yeni Özellik Dene",
     "description": "Henüz kullanmadığınız platform özelliklerinden birini keşfedin ve deneyin.",
     "type": "daily",
     "category": "engagement",
@@ -198,7 +198,7 @@
   },
   {
     "id": "daily_eng_06_arena_check",
-    "title": "Arena Kontrolü",
+    "title": "Sıralamanı Gör",
     "description": "Arena'daki durumunuzu kontrol edin ve gerekirse çalışma planınızı ona göre ayarlayın.",
     "type": "daily",
     "category": "engagement",
@@ -209,8 +209,8 @@
   },
   {
     "id": "daily_combo_01_dual_session",
-    "title": "İkili Kombo",
-    "description": "30 dakika içinde hem Pomodoro hem de soru çözme seansı tamamlayarak verimlilik kombosunu yakalayın.",
+    "title": "Konu ve Test",
+    "description": "30 dakika içinde hem Pomodoro hem de soru çözme seansı tamamlayarak verimlilik yakalayın.",
     "type": "daily",
     "category": "study",
     "reward": 110,
@@ -219,7 +219,7 @@
   },
   {
     "id": "daily_combo_02_plan_action",
-    "title": "Plan ve Eylem",
+    "title": "Planlarını Tamamla",
     "description": "30 dakika içinde iki farklı plan görevini tamamlayarak temponuzu gösterin.",
     "type": "daily",
     "category": "study",
@@ -230,7 +230,7 @@
   },
   {
     "id": "daily_con_02_streak_keeper",
-    "title": "Seriyi Sürdür",
+    "title": "Seriyi Bozma",
     "description": "Alevinizi canlı tutun! Bugün en az bir görev tamamlayarak günlük serinizi devam ettirin.",
     "type": "daily",
     "category": "consistency",
@@ -240,7 +240,7 @@
   },
   {
     "id": "daily_con_03_night_owl",
-    "title": "Gece Kuşu",
+    "title": "Gece Çalışması",
     "description": "Gecenin sessizliğinde zihninizi parlatın. Saat 22:00'dan sonra 30 dakikalık bir çalışma yapın.",
     "type": "daily",
     "category": "consistency",
@@ -251,7 +251,7 @@
   },
   {
     "id": "daily_con_04_weekend_warrior",
-    "title": "Hafta Sonu Savaşçısı",
+    "title": "Hafta Sonu Kampı",
     "description": "Hafta sonu temposunu avantaja çevirin. Cumartesi veya Pazar günü 50 soru çözerek gücünüzü gösterin.",
     "type": "daily",
     "category": "practice",
@@ -263,7 +263,7 @@
   },
   {
     "id": "daily_eng_07_avatar_customization",
-    "title": "Kimlik Yarat",
+    "title": "Avatar Seç",
     "description": "Sizi yansıtan bir kimlik oluşturun. Profilinize girip size özel bir avatar seçin.",
     "type": "daily",
     "category": "engagement",
@@ -275,7 +275,7 @@
   },
   {
     "id": "daily_eng_08_leaderboard_scout",
-    "title": "Liderlik Tablosu Keşfi",
+    "title": "Liderlere Bak",
     "description": "Rakipleriniz ne durumda? Liderlik tablosuna göz atarak sıralamanızı ve hedeflerinizi kontrol edin.",
     "type": "daily",
     "category": "engagement",
@@ -286,7 +286,7 @@
   },
   {
     "id": "daily_eng_09_ai_motivation",
-    "title": "Moral Takviyesi",
+    "title": "Motivasyon Sohbeti",
     "description": "Motivasyonunuz mu düştü? Taktik koçunuzla sohbet ederek enerjinizi yenileyin.",
     "type": "daily",
     "category": "engagement",
@@ -297,7 +297,7 @@
   },
   {
     "id": "daily_pra_06_accuracy_focus",
-    "title": "Hassasiyet Ayarı",
+    "title": "Dikkat Çalışması",
     "description": "Hız kadar doğruluk da önemlidir. 20 soruluk bir antrenmanda %85'in üzerinde doğruluk oranına ulaşın.",
     "type": "daily",
     "category": "practice",
@@ -308,7 +308,7 @@
   },
   {
     "id": "daily_pra_07_speed_run",
-    "title": "Hız Turu",
+    "title": "Hız Denemesi",
     "description": "Zamana karşı yarışın. 15 soruyu 15 dakikanın altında çözerek reflekslerinizi test edin.",
     "type": "daily",
     "category": "practice",
@@ -319,7 +319,7 @@
   },
   {
     "id": "daily_pra_08_mixed_grill",
-    "title": "Karışık Izgara",
+    "title": "Karışık Test",
     "description": "Zihinsel esnekliğinizi artırın. 3 farklı dersten 10'ar soru çözerek beyninizi şaşırtın.",
     "type": "daily",
     "category": "practice",
@@ -330,7 +330,7 @@
   },
   {
     "id": "daily_pra_09_revisit_mistakes",
-    "title": "Hata Avcısı",
+    "title": "Hatalarını Çöz",
     "description": "Geçmiş hatalar geleceğin doğrularıdır. Etüt Odası'nda daha önce yanlış yaptığınız 5 soruyu tekrar çözün.",
     "type": "daily",
     "category": "practice",
@@ -342,7 +342,7 @@
   },
   {
     "id": "daily_foc_03_uninterrupted_hour",
-    "title": "Kesintisiz Saat",
+    "title": "60 Dk. Odaklanma",
     "description": "Derinlere dalma zamanı. Dış dünyayı kapatıp 60 dakikalık kesintisiz bir odaklanma seansı tamamlayın.",
     "type": "daily",
     "category": "focus",
@@ -353,7 +353,7 @@
   },
   {
     "id": "daily_foc_04_pomodoro_trio",
-    "title": "Üçlü Pomodoro",
+    "title": "3 Tur Pomodoro",
     "description": "Gün içine yayılmış 3 Pomodoro seansı (toplam 75 dakika) tamamlayarak istikrarlı odaklanma sağlayın.",
     "type": "daily",
     "category": "focus",
@@ -375,7 +375,7 @@
   },
   {
     "id": "daily_are_02_climb_ranks",
-    "title": "Sıralama Tırmanışı",
+    "title": "Sıralamada Yüksel",
     "description": "Arenada yükselme zamanı! Haftalık liderlik tablosundaki sıralamanızı yükseltin.",
     "type": "daily",
     "category": "engagement",
@@ -386,7 +386,7 @@
   },
   {
     "id": "daily_meta_01_set_goal",
-    "title": "Hedef Belirle",
+    "title": "Hedefini Güncelle",
     "description": "Rotanızı çizin. Profilinize girerek haftalık çalışma hedefinizi belirleyin veya güncelleyin.",
     "type": "daily",
     "category": "engagement",
@@ -397,7 +397,7 @@
   },
   {
     "id": "daily_pra_10_marathon_session",
-    "title": "Soru Maratonu",
+    "title": "100 Soru Maratonu",
     "description": "Dayanıklılığınızı test edin. Tek bir oturumda 100 soru çözerek sınırlarınızı zorlayın.",
     "type": "daily",
     "category": "practice",
@@ -408,7 +408,7 @@
   },
   {
     "id": "daily_eng_10_blog_reader",
-    "title": "Bilgi Köşesi",
+    "title": "Blog Oku",
     "description": "Öğrenmenin bir yolu da okumaktır. Blog bölümünden ilginizi çeken bir makaleyi okuyun.",
     "type": "daily",
     "category": "engagement",
@@ -419,7 +419,7 @@
   },
   {
     "id": "daily_con_05_consistency_check",
-    "title": "İstikrar Kontrolü",
+    "title": "İstikrarı Koru",
     "description": "Dün de buradaydınız, harika! Bugün de bir çalışma yaparak istikrarınızı koruyun.",
     "type": "daily",
     "category": "consistency",
@@ -430,7 +430,7 @@
   },
   {
     "id": "daily_pra_11_error_correction",
-    "title": "Hata Düzeltme Uzmanı",
+    "title": "Yanlışlarını İncele",
     "description": "Yanlış yaptığınız bir soruyu analiz ederek doğrusunu öğrenin ve bir daha hata yapmayın.",
     "type": "daily",
     "category": "study",
@@ -441,7 +441,7 @@
   },
   {
     "id": "daily_foc_05_focused_reading",
-    "title": "Odaklı Okuma",
+    "title": "Okuma Saati",
     "description": "Anlama gücünüzü artırın. Bir Pomodoro seansı boyunca sadece konu anlatımı okuyun.",
     "type": "daily",
     "category": "focus",
@@ -463,7 +463,7 @@
   },
   {
     "id": "daily_pra_12_quick_ten",
-    "title": "Hızlı Onluk",
+    "title": "10 Soru Çöz",
     "description": "Vaktiniz mi kısıtlı? Sadece 10 soru çözerek bile gününüzü verimli kılabilirsiniz.",
     "type": "daily",
     "category": "practice",
@@ -474,7 +474,7 @@
   },
   {
     "id": "daily_tes_06_review_analysis",
-    "title": "Analizi İncele",
+    "title": "Sonuç Analizi",
     "description": "Taktik'nin sizin için yaptığı deneme analizini detaylıca inceleyin ve bir sonraki adımlarınızı planlayın.",
     "type": "daily",
     "category": "study",
@@ -486,7 +486,7 @@
   },
   {
     "id": "daily_pra_13_vocabulary_builder",
-    "title": "Kelime Avcısı",
+    "title": "Kelime Çalış",
     "description": "Kelime dağarcığınızı genişletin. 25 yeni kelime öğrenin veya kelime sorusu çözün.",
     "type": "daily",
     "category": "practice",
@@ -498,7 +498,7 @@
   },
   {
     "id": "daily_foc_07_flow_state",
-    "title": "Akışa Geçiş",
+    "title": "45 Dk. Odaklanma",
     "description": "Bugün akışa geçmeyi hedefleyin. 45 dakikalık bir Pomodoro seansı tamamlayın.",
     "type": "daily",
     "category": "focus",
@@ -509,7 +509,7 @@
   },
   {
     "id": "daily_are_03_top_player_scout",
-    "title": "Zirve Gözlemi",
+    "title": "En İyileri İncele",
     "description": "En iyilerden ilham alın. Liderlik tablosundaki ilk 10 oyuncudan birinin profilini inceleyin.",
     "type": "daily",
     "category": "engagement",
@@ -520,7 +520,7 @@
   },
   {
     "id": "daily_pra_14_comeback_king",
-    "title": "Geri Dönüş Kralı",
+    "title": "Telafi Zamanı",
     "description": "Dünkü düşük plan uyumunu telafi et. Bugün en az 3 plan görevini tamamla.",
     "type": "daily",
     "category": "consistency",
@@ -532,7 +532,7 @@
   },
   {
     "id": "daily_pra_15_momentum_master",
-    "title": "Momentum Ustası",
+    "title": "Temponu Koru",
     "description": "Dünkü yüksek temponu koru! Bugün de en az 3 plan görevini tamamlayarak ivmeyi sürdür.",
     "type": "daily",
     "category": "consistency",
