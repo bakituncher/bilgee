@@ -21,6 +21,7 @@ import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/coach/widgets/flashcard_widget.dart';
 import 'package:taktik/features/coach/widgets/daily_limit_dialog.dart';
 import 'package:taktik/shared/widgets/custom_back_button.dart';
+import 'package:lottie/lottie.dart';
 
 class ContentGeneratorScreen extends ConsumerStatefulWidget {
   const ContentGeneratorScreen({super.key});
@@ -111,102 +112,14 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
     return Column(
       children: [
-        // Scrollable content - Sadece Hero Card
+        // Scrollable content - Lottie Animasyonu
         Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Hero Card - Taktik Tavşan tanıtımı
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: isDark
-                          ? [AppTheme.primaryBrandColor, const Color(0xFF1E293B)]
-                          : [const Color(0xFFF8FAFC), const Color(0xFFE2E8F0)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppTheme.secondaryBrandColor.withOpacity(isDark ? 0.2 : 0.15),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      // Tavşan emoji/avatar
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: AppTheme.secondaryBrandColor.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Center(
-                          child: Image.asset(
-                            'assets/images/bunnyy.png',
-                            width: 40,
-                            height: 40,
-                            errorBuilder: (_, __, ___) => Text(
-                              '🐰',
-                              style: const TextStyle(fontSize: 28),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  'Taktik Tavşan',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    color: colorScheme.onSurface,
-                                    letterSpacing: -0.3,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.secondaryBrandColor,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: const Text(
-                                    'AI',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Dosyanı yükle, sana özel içerik üreteyim!',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: colorScheme.onSurface.withOpacity(0.6),
-                                height: 1.3,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
-              ],
+          child: Center(
+            child: Lottie.asset(
+              'assets/lotties/Rabbit In A Hat.json',
+              width: 250,
+              height: 250,
+              fit: BoxFit.contain,
             ),
           ),
         ),
@@ -361,7 +274,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         duration: const Duration(milliseconds: 200),
         padding: hasFile
             ? const EdgeInsets.all(16)
-            : const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+            : const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
         decoration: BoxDecoration(
           color: hasFile
               ? (isDark ? AppTheme.secondaryBrandColor.withOpacity(0.08) : AppTheme.secondaryBrandColor.withOpacity(0.05))
@@ -495,8 +408,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       children: [
         // İkon container
         Container(
-          width: 72,
-          height: 72,
+          width: 50,
+          height: 50,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -506,49 +419,49 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: AppTheme.secondaryBrandColor.withOpacity(0.2),
-              width: 2,
+              width: 1.5,
             ),
           ),
           child: Icon(
             Icons.add_photo_alternate_rounded,
-            size: 32,
+            size: 24,
             color: AppTheme.secondaryBrandColor,
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         Text(
           'İçerik Yükle',
           style: TextStyle(
-            fontSize: 17,
+            fontSize: 14,
             fontWeight: FontWeight.w700,
             color: colorScheme.onSurface,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 5),
         Text(
           'Kamera ile çek veya dosyalardan seç',
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             color: colorScheme.onSurface.withOpacity(0.5),
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.touch_app_rounded,
-              size: 14,
+              size: 12,
               color: AppTheme.secondaryBrandColor.withOpacity(0.7),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 3),
             Text(
               'Dokunarak başla',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 10,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.secondaryBrandColor.withOpacity(0.8),
               ),
