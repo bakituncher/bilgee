@@ -120,13 +120,33 @@ exports.generateGemini = onCall(
       }, { merge: true });
     }
 
-    // Premium özellik kontrolü (Zihin Haritası buraya düşer)
-    if (isPremium && (requestType !== 'question_solver' && requestType !== 'chat')) {
-      // Premium gerektiren diğer özellikler (workshop, weekly_plan, mind_map)
-      // Erişim izni var, devam et.
-    } else if (!isPremium && (requestType !== 'question_solver' && requestType !== 'chat')) {
-      // Premium olmayan kullanıcılar sadece question_solver (limitli) ve chat kullanabilir
-      // mind_map isteği gelirse buraya düşer ve reddedilir.
+    // Premium olmayan kullanıcılar için içerik üretici limiti kontrolü (TEK SEFERLİK 3 HAK)
+    if (!isPremium && requestType === 'content_generator') {
+      const lifetimeUsageRef = db.collection("users").doc(request.auth.uid).collection("lifetime_usage").doc("content_generator");
+
+      const lifetimeUsageDoc = await lifetimeUsageRef.get();
+      const lifetimeUsageData = lifetimeUsageDoc.exists ? lifetimeUsageDoc.data() : {};
+      const contentGeneratedCount = lifetimeUsageData.count || 0;
+
+      const FREE_CONTENT_GENERATOR_LIMIT = 3;
+
+      if (contentGeneratedCount >= FREE_CONTENT_GENERATOR_LIMIT) {
+        throw new HttpsError(
+          "permission-denied",
+          `Ücretsiz ${FREE_CONTENT_GENERATOR_LIMIT} içerik üretim hakkınız doldu. Premium üyelik ile sınırsız içerik üretebilirsiniz!`
+        );
+      }
+
+      // Kullanımı artır
+      await lifetimeUsageRef.set({
+        count: admin.firestore.FieldValue.increment(1),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    }
+
+    // Premium özellik kontrolü (Zihin Haritası, Etüt Odası, Haftalık Plan)
+    if (!isPremium && (requestType === 'mind_map' || requestType === 'workshop' || requestType === 'weekly_plan')) {
+      // Premium olmayan kullanıcılar bu özellikleri kullanamaz
       throw new HttpsError("permission-denied", "Bu özellik yalnızca premium kullanıcılara açıktır.");
     }
 
