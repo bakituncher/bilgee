@@ -1467,7 +1467,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.auto_awesome, size: 16, color: theme.colorScheme.primary),
+                  Image.asset('assets/images/bunnyy.png', width: 16, height: 16),
                   const SizedBox(width: 4),
                   Text(
                     "Taktik Tavşan",

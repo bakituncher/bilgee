@@ -742,12 +742,18 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  'Soruyu kaydetmek istediğin dersi seç',
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Soruyu kaydetmek istediğin dersi seç',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
