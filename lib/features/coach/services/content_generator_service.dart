@@ -175,6 +175,10 @@ class ContentGeneratorService {
       final msg = e.message ?? 'AI hizmeti hatası. Lütfen tekrar deneyin.';
       throw Exception(msg);
     } catch (e) {
+      // Ders dışı içerik hatası ise direkt göster (başında "Bir hata oluştu" yazmasın)
+      if (e.toString().contains('ders içeriği barındırmıyor')) {
+        throw Exception(e.toString().replaceAll('Exception: ', ''));
+      }
       throw Exception('Bir hata oluştu: $e');
     }
   }
@@ -240,6 +244,10 @@ class ContentGeneratorService {
       final msg = e.message ?? 'AI hizmeti hatası. Lütfen tekrar deneyin.';
       throw Exception(msg);
     } catch (e) {
+      // Ders dışı içerik hatası ise direkt göster
+      if (e.toString().contains('ders içeriği barındırmıyor')) {
+        throw Exception(e.toString().replaceAll('Exception: ', ''));
+      }
       throw Exception('Bir hata oluştu: $e');
     }
   }
@@ -336,6 +344,11 @@ $basePrompt
 
       final Map<String, dynamic> json = jsonDecode(cleanJson);
 
+      // Hata kontrolü (AI tarafından döndürülen)
+      if (json.containsKey('error')) {
+        throw Exception(json['error']);
+      }
+
       if (contentType == ContentType.summary) {
         return GeneratedContent(
           type: contentType,
@@ -357,6 +370,11 @@ $basePrompt
         );
       }
     } catch (e) {
+      // Bilinen hataları (ders dışı içerik vb.) yukarı fırlat
+      if (e.toString().contains('ders içeriği barındırmıyor')) {
+        rethrow;
+      }
+
       // JSON parse hatası durumunda raw içeriği döndür
       return GeneratedContent(
         type: contentType,
