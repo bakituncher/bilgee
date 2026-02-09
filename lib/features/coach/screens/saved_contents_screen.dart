@@ -89,29 +89,32 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildContentList(savedContents, null, theme, isDark),
-          _buildContentList(
-            savedContents.where((c) => c.type == SavedContentType.flashcard).toList(),
-            SavedContentType.flashcard,
-            theme,
-            isDark,
-          ),
-          _buildContentList(
-            savedContents.where((c) => c.type == SavedContentType.quiz).toList(),
-            SavedContentType.quiz,
-            theme,
-            isDark,
-          ),
-          _buildContentList(
-            savedContents.where((c) => c.type == SavedContentType.summary).toList(),
-            SavedContentType.summary,
-            theme,
-            isDark,
-          ),
-        ],
+      body: SafeArea(
+        bottom: true,
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            _buildContentList(savedContents, null, theme, isDark),
+            _buildContentList(
+              savedContents.where((c) => c.type == SavedContentType.flashcard).toList(),
+              SavedContentType.flashcard,
+              theme,
+              isDark,
+            ),
+            _buildContentList(
+              savedContents.where((c) => c.type == SavedContentType.quiz).toList(),
+              SavedContentType.quiz,
+              theme,
+              isDark,
+            ),
+            _buildContentList(
+              savedContents.where((c) => c.type == SavedContentType.summary).toList(),
+              SavedContentType.summary,
+              theme,
+              isDark,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -253,6 +256,7 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Tür ikonu
                     Container(
@@ -276,6 +280,7 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
                     // Bilgiler
                     Expanded(
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
@@ -285,11 +290,14 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
                               fontWeight: FontWeight.w700,
                               color: colorScheme.onSurface,
                             ),
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
-                          Row(
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -309,19 +317,23 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              Icon(
-                                Icons.access_time_rounded,
-                                size: 12,
-                                color: colorScheme.onSurface.withOpacity(0.4),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                dateFormat.format(content.createdAt),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: colorScheme.onSurface.withOpacity(0.4),
-                                ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.access_time_rounded,
+                                    size: 12,
+                                    color: colorScheme.onSurface.withOpacity(0.4),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    dateFormat.format(content.createdAt),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: colorScheme.onSurface.withOpacity(0.4),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -329,9 +341,12 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
                       ),
                     ),
                     // Ok ikonu
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: colorScheme.onSurface.withOpacity(0.3),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Icon(
+                        Icons.chevron_right_rounded,
+                        color: colorScheme.onSurface.withOpacity(0.3),
+                      ),
                     ),
                   ],
                 ),
@@ -557,7 +572,10 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
           ],
         ),
       ),
-      body: _buildContent(theme, isDark, typeColor, colorScheme),
+      body: SafeArea(
+        bottom: true,
+        child: _buildContent(theme, isDark, typeColor, colorScheme),
+      ),
     );
   }
 
@@ -698,6 +716,7 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
               ],
             ),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Soru header
@@ -733,15 +752,17 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        'Soru ${index + 1}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: questionColor,
+                      Flexible(
+                        child: Text(
+                          'Soru ${index + 1}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: questionColor,
+                          ),
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 8),
                       if (isAnswered)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -791,6 +812,7 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: MarkdownBody(
                       data: card['content'] ?? '',
+                      shrinkWrap: true,
                       styleSheet: MarkdownStyleSheet(
                         p: TextStyle(
                           fontSize: 14,
@@ -804,6 +826,7 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: options.asMap().entries.map((entry) {
                         final optIndex = entry.key;
                         final optText = entry.value;
@@ -846,6 +869,7 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
                                 border: Border.all(color: borderColor, width: 1.5),
                               ),
                               child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Container(
                                     width: 32,
