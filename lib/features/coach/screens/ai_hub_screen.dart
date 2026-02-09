@@ -200,7 +200,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       theme: theme,
                       icon: Icons.auto_awesome_rounded,
                       color: const Color(0xFF0EA5E9),
-                      title: "İçerik Üretici",
+                      title: "Not Defteri",
                       description: "PDF veya görsel yükle, yapay zeka bilgi kartları, soru kartları veya özet üretsin.",
                     ),
                   ],
@@ -444,16 +444,16 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
 
             const SizedBox(height: gap),
 
-            // Satır 3 - İçerik Üretici (Tam genişlik)
+            // Satır 3 - Not Defteri (Tam genişlik)
             _BentoCard(
-              title: 'İçerik Üretici',
+              title: 'Not Defteri',
               description: 'PDF veya görsel yükle, bilgi kartları, soru kartları veya özet üret.',
               icon: Icons.bolt,
               color: const Color(0xFF0EA5E9),
               isPremium: true, // Herkes erişebilir - kilit simgesi yok
               height: 120,
               onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/content-generator', offerData: {
-                'title': 'İçerik Üretici',
+                'title': 'Not Defteri',
                 'subtitle': 'PDF ve görsellerden akıllı içerik.',
                 'iconName': 'auto_awesome',
                 'color': const Color(0xFF0EA5E9),

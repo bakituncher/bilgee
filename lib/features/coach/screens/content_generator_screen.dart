@@ -2823,7 +2823,9 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => const DailyLimitDialog(),
+          builder: (context) => const DailyLimitDialog(
+            feature: LimitFeature.contentGenerator,
+          ),
         );
       }
       return;

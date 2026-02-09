@@ -64,7 +64,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     },
     {
       'icon': Icons.bolt,
-      'title': "İçerik Üretici",
+      'title': "Not Defteri",
       'desc': "Görsel veya dosya yükle, Taktik sana bilgi kartları, soru kartları veya özet üretsin."
     },
     {
