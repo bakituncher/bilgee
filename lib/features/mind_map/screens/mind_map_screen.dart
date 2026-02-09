@@ -402,6 +402,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     }
   }
 
+
   void _centerCanvas() {
     if (!mounted) return;
     // Ekran boyutunu al
@@ -836,13 +837,13 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     final theme = Theme.of(context);
     final isDark = !_isLightMode; // Ekrana özel tema durumu
 
-    // Ekrana özel colorScheme
+    // AppTheme renklerini kullan - bu sayede koyu modda da güzel görünür
     final colorScheme = isDark
         ? ColorScheme.dark(
             primary: theme.colorScheme.primary,
-            surface: const Color(0xFF1E1E1E),
-            onSurface: Colors.white,
-            onSurfaceVariant: Colors.white70,
+            surface: const Color(0xFF1E293B), // AppTheme'deki _darkCardColor
+            onSurface: const Color(0xFFE2E8F0), // AppTheme'deki _darkTextColor
+            onSurfaceVariant: const Color(0xFF94A3B8), // AppTheme'deki _darkSecondaryTextColor
           )
         : ColorScheme.light(
             primary: theme.colorScheme.primary,
@@ -1348,25 +1349,28 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
     final savedHash = ref.watch(savedMapHashProvider);
     final isPreMadeMap = ref.watch(isPreMadeMapProvider);
     final theme = Theme.of(context);
-    final isDark = !_isLightMode;
+    final isDark = !_isLightMode; // Ekrana özel tema
 
+    // AppTheme renklerini kullan - bu sayede koyu modda da güzel görünür
     final colorScheme = isDark
         ? ColorScheme.dark(
-      primary: theme.colorScheme.primary,
-      surface: const Color(0xFF1E1E1E),
-      onSurface: Colors.white,
-      onSurfaceVariant: Colors.white70,
-      outline: Colors.white24,
-      surfaceContainerHighest: const Color(0xFF2C2C2C),
-    )
+            primary: theme.colorScheme.primary,
+            onPrimary: theme.colorScheme.onPrimary,
+            surface: const Color(0xFF1E293B), // AppTheme'deki _darkCardColor
+            onSurface: const Color(0xFFE2E8F0), // AppTheme'deki _darkTextColor
+            onSurfaceVariant: const Color(0xFF94A3B8), // AppTheme'deki _darkSecondaryTextColor
+            outline: const Color(0xFF475569), // Orta ton gri
+            surfaceContainerHighest: const Color(0xFF334155), // AppTheme'deki _darkLightSurfaceColor
+          )
         : ColorScheme.light(
-      primary: theme.colorScheme.primary,
-      surface: Colors.white,
-      onSurface: Colors.black87,
-      onSurfaceVariant: Colors.black54,
-      outline: Colors.black12,
-      surfaceContainerHighest: const Color(0xFFF5F5F5),
-    );
+            primary: theme.colorScheme.primary,
+            onPrimary: theme.colorScheme.onPrimary,
+            surface: Colors.white,
+            onSurface: Colors.black87,
+            onSurfaceVariant: Colors.black54,
+            outline: Colors.black12,
+            surfaceContainerHighest: const Color(0xFFF5F5F5),
+          );
 
     final currentHash = rootNode != null ? _calculateMapHash(rootNode) : null;
 
@@ -1401,8 +1405,8 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
       },
       child: Scaffold(
         backgroundColor: rootNode != null
-            ? (isDark ? const Color(0xFF121212) : Colors.white)
-            : (theme.brightness == Brightness.dark ? const Color(0xFF121212) : Colors.white),
+            ? (isDark ? const Color(0xFF0F172A) : Colors.white) // Harita görünümü: ekrana özel tema
+            : (theme.brightness == Brightness.dark ? const Color(0xFF0F172A) : Colors.white), // Önizleme: global tema
         appBar: AppBar(
           title: rootNode != null
               ? GestureDetector(
@@ -1598,18 +1602,18 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
 
   Widget _buildEmptyState() {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark; // Global tema ayarını kullan
+    final isDark = theme.brightness == Brightness.dark; // Önizleme için global tema kullan
 
-    // Global tema colorScheme
+    // AppTheme renklerini kullan - bu sayede koyu modda da güzel görünür
     final colorScheme = isDark
         ? ColorScheme.dark(
             primary: theme.colorScheme.primary,
             onPrimary: theme.colorScheme.onPrimary,
-            surface: const Color(0xFF1E1E1E),
-            onSurface: Colors.white,
-            onSurfaceVariant: Colors.white70,
-            outline: Colors.white24,
-            surfaceContainerHighest: const Color(0xFF2C2C2C),
+            surface: const Color(0xFF1E293B), // AppTheme'deki _darkCardColor
+            onSurface: const Color(0xFFE2E8F0), // AppTheme'deki _darkTextColor
+            onSurfaceVariant: const Color(0xFF94A3B8), // AppTheme'deki _darkSecondaryTextColor
+            outline: const Color(0xFF475569), // Orta ton gri
+            surfaceContainerHighest: const Color(0xFF334155), // AppTheme'deki _darkLightSurfaceColor
           )
         : ColorScheme.light(
             primary: theme.colorScheme.primary,
@@ -1747,7 +1751,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
   }
 
   List<Widget> _buildNodeWidgets(MindMapNode node) {
-    final isDark = !_isLightMode;
+    final isDark = !_isLightMode; // Ekrana özel tema
     List<Widget> widgets = [];
 
     // Node'u tam merkezinden yerleştirmek için offset ayarı
