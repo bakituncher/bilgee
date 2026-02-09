@@ -39,11 +39,11 @@ const RETRY_DELAY_MS = 2000;
 // Kategori bazlı aylık limitler
 const MONTHLY_LIMITS = {
   workshop: 350,      // Etüt Odası
-  weekly_plan: 60,    // Haftalık Plan
-  chat: 2000,         // Sohbet / Motivasyon
-  question_solver: 1000, // Soru Çözücü
-  mind_map: 100,      // Zihin Haritası (Sadece Premium)
-  content_generator: 150 // YENİ: İçerik Üretici (Sadece Premium)
+  weekly_plan: 50,    // Haftalık Plan
+  chat: 1000,         // Sohbet / Motivasyon
+  question_solver: 800, // Soru Çözücü
+  mind_map: 200,      // Zihin Haritası (Sadece Premium)
+  content_generator: 200 // YENİ: İçerik Üretici (Sadece Premium)
 };
 
 // Exponential backoff ile retry helper
