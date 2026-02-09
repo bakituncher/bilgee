@@ -144,7 +144,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
               Expanded(
                 child: ListView(
                   controller: scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                   children: [
                     Text(
                       "Taktik Araçları Seni Sınava Nasıl Hazırlayacak?",
@@ -156,7 +156,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Text(
                       "Her araç, sınav başarını artırmak için özel olarak tasarlandı.",
                       style: TextStyle(
@@ -167,7 +167,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 28),
                     _ProFeatureRow(
                       theme: theme,
                       icon: Icons.calendar_month_rounded,
@@ -208,7 +208,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
               ),
               if (!isPremium)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 10, 24, 40),
+                  padding: const EdgeInsets.fromLTRB(24, 10, 24, 30),
                   child: SizedBox(
                     width: double.infinity,
                     child: FilledButton(
@@ -238,7 +238,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                   ),
                 )
               else
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
             ],
           );
         },
@@ -250,7 +250,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
   Widget build(BuildContext context) {
     final isPremium = ref.watch(premiumStatusProvider);
     final theme = Theme.of(context);
-    const double gap = 14.0;
+    const double gap = 10.0;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -279,7 +279,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
         ),
         actions: [
           Container(
-            margin: const EdgeInsets.only(right: 16),
+            margin: const EdgeInsets.only(right: 12),
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
               shape: BoxShape.circle,
@@ -299,45 +299,52 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 120),
+        padding: const EdgeInsets.fromLTRB(14, 4, 14, 80),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- 1. HERO COACH (Tavşan) ---
-            KeyedSubtree(
-              key: _coachKey,
-              child: _HeroCoachCard(
-                isPremium: isPremium,
-                onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/motivation-chat', offerData: {
-                  'title': 'Taktik Tavşan',
-                  'subtitle': 'Sınav stresi ve motivasyon koçu.',
-                  'iconName': 'psychology',
-                  'color': Colors.indigoAccent,
-                  'marketingTitle': 'Koçun Cebinde!',
-                  'marketingSubtitle': 'Sınav sadece bilgi değil, mentalitedir. Taktik Tavşan seni mental olarak sınava hazırlar.',
-                  'redirectRoute': '/ai-hub/motivation-chat',
-                  'imageAsset': 'assets/images/bunnyy.png',
-                }),
-              ),
-            ),
 
-            const SizedBox(height: 24),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-              child: Text(
-                'PERFORMANS ARAÇLARI',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
-                  color: theme.colorScheme.onSurface.withOpacity(0.4),
+            // --- BENTO GRID ---
+            // Satır 1 - Mentör (Taktik Tavşan) ve Not Defteri
+            Row(
+              children: [
+                Expanded(
+                  child: KeyedSubtree(
+                    key: _coachKey,
+                    child: _MentorBentoCard(
+                      isPremium: isPremium,
+                      height: 180,
+                      onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/motivation-chat', offerData: {
+                        'title': 'Taktik Tavşan',
+                        'subtitle': 'Sınav stresi ve motivasyon koçu.',
+                        'iconName': 'psychology',
+                        'color': Colors.indigoAccent,
+                        'marketingTitle': 'Koçun Cebinde!',
+                        'marketingSubtitle': 'Sınav sadece bilgi değil, mentalitedir. Taktik Tavşan seni mental olarak sınava hazırlar.',
+                        'redirectRoute': '/ai-hub/motivation-chat',
+                        'imageAsset': 'assets/images/bunnyy.png',
+                      }),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: gap),
+                Expanded(
+                  child: _BentoCard(
+                    title: 'Not\nDefteri',
+                    description: 'PDF veya görsel yükle,\nkart veya özet üret.',
+                    icon: Icons.bolt,
+                    color: const Color(0xFF0EA5E9),
+                    isPremium: true,
+                    height: 180,
+                    onTap: () => context.push('/ai-hub/content-generator'),
+                  ),
+                ),
+              ],
             ),
 
-            // --- 2. BENTO GRID ---
-            // Satır 1
+            const SizedBox(height: gap),
+
+            // Satır 2 - Haftalık Plan ve Soru Çözücü
             Row(
               children: [
                 Expanded(
@@ -364,9 +371,8 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                 ),
                 const SizedBox(width: gap),
                 Expanded(
-                  // --- DÜZELTME BURADA YAPILDI ---
                   child: KeyedSubtree(
-                    key: _solverKey, // Bu Key eksikti!
+                    key: _solverKey,
                     child: _BentoCard(
                       title: 'Soru\nÇözücü',
                       description: 'Sorunu çek, anında\nçözümünü al.',
@@ -391,7 +397,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
 
             const SizedBox(height: gap),
 
-            // Satır 2 - Etüt Odası ve Zihin Haritası
+            // Satır 3 - Etüt Odası ve Zihin Haritası
             Row(
               children: [
                 Expanded(
@@ -425,7 +431,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       description: 'Konuları görselleştir,\ndaha iyi anla ve hatırla.',
                       icon: Icons.account_tree_rounded,
                       color: const Color(0xFF6366F1),
-                      isPremium: true, // Herkes erişebilir
+                      isPremium: true,
                       height: 180,
                       onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/mind-map', offerData: {
                         'title': 'Zihin Haritası',
@@ -442,21 +448,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
               ],
             ),
 
-            const SizedBox(height: gap),
-
-            // Satır 3 - Not Defteri (Tam genişlik)
-            _BentoCard(
-              title: 'Not Defteri',
-              description: 'PDF veya görsel yükle, bilgi kartları, soru kartları veya özet üret.',
-              icon: Icons.bolt,
-              color: const Color(0xFF0EA5E9),
-              isPremium: true, // Herkes erişebilir - kilit simgesi yok
-              height: 120,
-              onTap: () => context.push('/ai-hub/content-generator'),
-            ),
-
-
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
 
             if (!isPremium)
               const _StylishPremiumBanner()
@@ -698,20 +690,20 @@ class _ProFeatureRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 28),
+      padding: const EdgeInsets.only(bottom: 20),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            height: 52,
-            width: 52,
+            height: 48,
+            width: 48,
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: color, size: 26),
+            child: Icon(icon, color: color, size: 24),
           ),
-          const SizedBox(width: 18),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -725,7 +717,7 @@ class _ProFeatureRow extends StatelessWidget {
                     letterSpacing: -0.3,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
                   description,
                   style: TextStyle(
@@ -739,6 +731,153 @@ class _ProFeatureRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MentorBentoCard extends StatelessWidget {
+  final bool isPremium;
+  final double height;
+  final VoidCallback onTap;
+
+  const _MentorBentoCard({
+    required this.isPremium,
+    required this.height,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = Colors.indigoAccent;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        constraints: BoxConstraints(minHeight: height),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: theme.brightness == Brightness.light
+                ? const Color(0xFFE5E7EB)
+                : Colors.white.withOpacity(0.05),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F172A).withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 0,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            children: [
+              // Gradient background
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomLeft,
+                      colors: [
+                        color.withOpacity(0.05),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Tavşan ikonu (soluk, arka planda)
+              Positioned(
+                right: -10,
+                bottom: -10,
+                child: Opacity(
+                  opacity: 0.15,
+                  child: Image.asset(
+                    'assets/images/bunnyy.png',
+                    width: 120,
+                    height: 120,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+
+              // İçerik
+              Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'MENTÖR',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                        if (!isPremium)
+                          Icon(Icons.lock_rounded, size: 18, color: theme.colorScheme.onSurface.withOpacity(0.2)),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Taktik\nTavşan',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            height: 1.1,
+                            color: theme.colorScheme.onSurface,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Sınav stresini yöneten\nTaktik koçun.',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            height: 1.3,
+                            color: theme.colorScheme.onSurface.withOpacity(0.65),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.fade,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -873,102 +1012,6 @@ class _BentoCard extends StatelessWidget {
   }
 }
 
-class _HeroCoachCard extends StatelessWidget {
-  final bool isPremium;
-  final VoidCallback onTap;
-
-  const _HeroCoachCard({
-    required this.isPremium,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 130,
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1B4B) : const Color(0xFFEEF2FF),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: Colors.indigoAccent.withOpacity(0.2),
-            width: 1.5,
-          ),
-        ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 0, 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.indigo,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            'MENTORUN',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Taktik Tavşan',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: isDark ? Colors.white : const Color(0xFF312E81),
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Sınav stresini yöneten\nTaktik koçun.',
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: isDark ? Colors.white70 : const Color(0xFF4338CA),
-                              fontWeight: FontWeight.w500,
-                              height: 1.2
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    flex: 1,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0, right: 12),
-                      child: Image.asset(
-                        'assets/images/bunnyy.png',
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 // Analiz butonları için yardımcı widget
 class _AnalysisButton extends StatelessWidget {
