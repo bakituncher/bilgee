@@ -111,7 +111,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
     return Column(
       children: [
-        // Scrollable content
+        // Scrollable content - Sadece Hero Card
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -206,25 +206,23 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                     ],
                   ),
                 ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
-
-                const SizedBox(height: 24),
-
-                // Dosya Yükleme Alanı
-                _buildFileSelector(theme, isDark),
-
-                const SizedBox(height: 24),
               ],
             ),
           ),
         ),
 
-        // Fixed bottom section - İçerik Türü ve Buton
+        // Fixed bottom section - Dosya Yükleme, İçerik Türü ve Buton
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Dosya Yükleme Alanı
+              _buildFileSelector(theme, isDark),
+
+              const SizedBox(height: 16),
+
               // İçerik Türü Başlığı
               Padding(
                 padding: const EdgeInsets.only(left: 4),
