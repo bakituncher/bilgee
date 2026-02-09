@@ -13,6 +13,7 @@ class ContentGeneratorPrompts {
 SEN: Türkiye'nin önde gelen eğitim içeriği uzmanısın. Sınav hazırlık materyalleri konusunda 15+ yıl deneyimin var.
 
 GÖREV: Gönderilen içeriği (PDF/görsel) analiz et ve öğrencinin hızlı öğrenmesini sağlayacak BİLGİ KARTLARI oluştur.
+EŞİK KONTROLÜ: Eğer gönderilen içerik ders notu, kitap sayfası, soru veya konu anlatımı DEĞİLSE (Örn: Manzara, kedi, çay bardağı, selfie vb.), JSON çıktısında "error": "Bu görsel ders içeriği barındırmıyor. Lütfen ders notu veya soru fotoğrafı yükleyin." parametresini döndür.
 
 $examContext
 
@@ -58,12 +59,14 @@ SADECE JSON döndür. Açıklama, yorum veya başka metin YAZMA.
 SEN: ÖSYM/MEB sınav hazırlama komisyonunda çalışmış, deneyimli bir soru yazarısın.
 
 GÖREV: Gönderilen içeriği (PDF/görsel) analiz et ve gerçek sınav formatında TEST SORULARI oluştur.
+EŞİK KONTROLÜ: Eğer gönderilen içerik ders notu, kitap sayfası, soru veya konu anlatımı DEĞİLSE (Örn: Manzara, kedi, çay bardağı, selfie vb.), JSON çıktısında "error": "Bu görsel ders içeriği barındırmıyor. Lütfen ders notu veya soru fotoğrafı yükleyin." parametresini döndür.
 
 $examContext
 
 SORU YAZIM KURALLARI:
 • 5-8 adet test sorusu üret
 • Her soru $optionCount şıklı olmalı
+• Şıkların başına ASLA harf (A, B, C...) koyma, sadece metni yaz
 • Tek doğru cevap, diğerleri mantıklı çeldiriciler
 
 SORU KALİTESİ KRİTERLERİ:
@@ -79,6 +82,7 @@ YASAKLAR:
 ✗ "Aşağıdakilerden hangisi yanlıştır?" tarzı karmaşık sorular
 ✗ Birden fazla doğru cevap ihtimali
 ✗ Konu dışı veya fotoğrafta olmayan bilgiler
+✗ Şıkların başına A), B) gibi harfler eklemek
 
 SADECE görsel/PDF içindeki konudan soru üret. İçerikte olmayan bilgiyi SORMA.
 
@@ -110,6 +114,7 @@ SADECE JSON döndür. Başka hiçbir şey YAZMA.
 SEN: Eğitim materyalleri hazırlama konusunda uzman bir içerik editörüsün. Karmaşık konuları basit ve akılda kalıcı şekilde özetleme yeteneğin var.
 
 GÖREV: Gönderilen içeriği (PDF/görsel) analiz et ve sınav odaklı ÖZET hazırla.
+EŞİK KONTROLÜ: Eğer gönderilen içerik ders notu, kitap sayfası, soru veya konu anlatımı DEĞİLSE (Örn: Manzara, kedi, çay bardağı, selfie vb.), JSON çıktısında "error": "Bu görsel ders içeriği barındırmıyor. Lütfen ders notu veya soru fotoğrafı yükleyin." parametresini döndür.
 
 $examContext
 
@@ -304,9 +309,9 @@ AGS ÖZEL:
   /// Sınav türüne göre şık template'i döndürür
   static String _getOptionsTemplate(String? examType) {
     if (examType?.toLowerCase() == 'lgs') {
-      return '"A) Şık metni", "B) Şık metni", "C) Şık metni", "D) Şık metni"';
+      return '"Şık metni", "Şık metni", "Şık metni", "Şık metni"';
     }
-    return '"A) Şık metni", "B) Şık metni", "C) Şık metni", "D) Şık metni", "E) Şık metni"';
+    return '"Şık metni", "Şık metni", "Şık metni", "Şık metni", "Şık metni"';
   }
 
   /// Sınav türüne göre correctIndex açıklaması döndürür
@@ -317,5 +322,4 @@ AGS ÖZEL:
     return '0=A, 1=B, 2=C, 3=D, 4=E';
   }
 }
-
 
