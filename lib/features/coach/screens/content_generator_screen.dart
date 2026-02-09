@@ -18,6 +18,7 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/coach/widgets/flashcard_widget.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class ContentGeneratorScreen extends ConsumerStatefulWidget {
   const ContentGeneratorScreen({super.key});
@@ -45,26 +46,35 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     final isPremium = ref.watch(premiumStatusProvider);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: colorScheme.onSurface.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(Icons.arrow_back_ios_new_rounded,
-              color: colorScheme.onSurface,
-              size: 16,
-            ),
+    return PopScope(
+      canPop: state.result == null,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && state.result != null) {
+          // Sonuç gösteriliyorsa, geri tuşuna basıldığında sonucu temizle
+          _notifier.clearResult();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: CustomBackButton(
+            onPressed: () {
+              if (state.result != null) {
+                // Sonuç gösteriliyorsa, sonucu temizle
+                _notifier.clearResult();
+              } else {
+                // Sonuç yoksa normal geri git
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                } else {
+                  context.go('/home');
+                }
+              }
+            },
           ),
-          onPressed: () => context.pop(),
-        ),
-        title: Row(
+          title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Image.asset(
@@ -93,7 +103,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         actions: [
           // Kaydedilenler butonu
           Padding(
-            padding: const EdgeInsets.only(right: 4),
+            padding: const EdgeInsets.only(right: 8),
             child: IconButton(
               icon: Container(
                 padding: const EdgeInsets.all(8),
@@ -110,25 +120,6 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
               onPressed: () => context.push('/saved-contents'),
             ),
           ),
-          if (state.result != null)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.secondaryBrandColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(Icons.add_rounded,
-                    color: AppTheme.secondaryBrandColor,
-                    size: 18,
-                  ),
-                ),
-                tooltip: 'Yeni İçerik',
-                onPressed: _createNewContent,
-              ),
-            ),
         ],
       ),
       body: SafeArea(
@@ -137,6 +128,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             : state.result != null
                 ? _buildResultState(theme, isDark)
                 : _buildInitialState(theme, isDark, isPremium),
+      ),
       ),
     );
   }

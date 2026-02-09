@@ -9,6 +9,7 @@ import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/coach/models/saved_content_model.dart';
 import 'package:taktik/features/coach/providers/saved_content_provider.dart';
 import 'package:taktik/features/coach/widgets/flashcard_widget.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class SavedContentsScreen extends ConsumerStatefulWidget {
   const SavedContentsScreen({super.key});
@@ -46,20 +47,11 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: colorScheme.onSurface.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: colorScheme.onSurface,
-              size: 16,
-            ),
-          ),
-          onPressed: () => context.pop(),
+        leading: CustomBackButton(
+          onPressed: () {
+            // İçerik üretici ekranına git
+            context.go('/ai-hub/content-generator');
+          },
         ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
@@ -528,20 +520,11 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: colorScheme.onSurface.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: colorScheme.onSurface,
-              size: 16,
-            ),
-          ),
-          onPressed: () => Navigator.pop(context),
+        leading: CustomBackButton(
+          onPressed: () {
+            // Navigator.push ile açıldığı için Navigator.pop kullan
+            Navigator.of(context).pop();
+          },
         ),
         title: Row(
           mainAxisSize: MainAxisSize.min,

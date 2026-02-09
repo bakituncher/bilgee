@@ -450,7 +450,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
               description: 'PDF veya görsel yükle, bilgi kartları, soru kartları veya özet üret.',
               icon: Icons.auto_awesome_rounded,
               color: const Color(0xFF0EA5E9),
-              isPremium: isPremium,
+              isPremium: true, // Herkes erişebilir - kilit simgesi yok
               height: 120,
               onTap: () => _handleNavigation(context, isPremium, route: '/ai-hub/content-generator', offerData: {
                 'title': 'İçerik Üretici',
