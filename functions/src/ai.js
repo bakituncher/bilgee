@@ -120,26 +120,27 @@ exports.generateGemini = onCall(
       }, { merge: true });
     }
 
-    // Premium olmayan kullanıcılar için içerik üretici limiti kontrolü (TEK SEFERLİK 3 HAK)
+    // Premium olmayan kullanıcılar için içerik üretici limiti kontrolü (GÜNLÜK 3 HAK)
     if (!isPremium && requestType === 'content_generator') {
-      const lifetimeUsageRef = db.collection("users").doc(request.auth.uid).collection("lifetime_usage").doc("content_generator");
+      const today = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Istanbul' }).substring(0, 10); // 'YYYY-MM-DD'
+      const dailyUsageRef = db.collection("users").doc(request.auth.uid).collection("daily_usage").doc(today);
 
-      const lifetimeUsageDoc = await lifetimeUsageRef.get();
-      const lifetimeUsageData = lifetimeUsageDoc.exists ? lifetimeUsageDoc.data() : {};
-      const contentGeneratedCount = lifetimeUsageData.count || 0;
+      const dailyUsageDoc = await dailyUsageRef.get();
+      const dailyUsageData = dailyUsageDoc.exists ? dailyUsageDoc.data() : {};
+      const contentGeneratedToday = dailyUsageData.content_generated || 0;
 
-      const FREE_CONTENT_GENERATOR_LIMIT = 3;
+      const DAILY_FREE_CONTENT_LIMIT = 3;
 
-      if (contentGeneratedCount >= FREE_CONTENT_GENERATOR_LIMIT) {
+      if (contentGeneratedToday >= DAILY_FREE_CONTENT_LIMIT) {
         throw new HttpsError(
           "permission-denied",
-          `Ücretsiz ${FREE_CONTENT_GENERATOR_LIMIT} içerik üretim hakkınız doldu. Premium üyelik ile sınırsız içerik üretebilirsiniz!`
+          `Günlük ${DAILY_FREE_CONTENT_LIMIT} içerik üretim hakkınız doldu. Premium üyelik ile sınırsız içerik üretebilirsiniz!`
         );
       }
 
       // Kullanımı artır
-      await lifetimeUsageRef.set({
-        count: admin.firestore.FieldValue.increment(1),
+      await dailyUsageRef.set({
+        content_generated: admin.firestore.FieldValue.increment(1),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
     }
@@ -345,7 +346,7 @@ exports.generateGemini = onCall(
 
       const { resp, data } = await retryWithBackoff(async () => {
         const ac = new AbortController();
-        const t = setTimeout(() => ac.abort(), 280_000);
+        const t = setTimeout(() => ac.abort(), 280000);
 
         const response = await fetch(url, {
           method: "POST",

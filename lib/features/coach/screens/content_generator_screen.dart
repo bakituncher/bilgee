@@ -19,6 +19,7 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/coach/widgets/flashcard_widget.dart';
+import 'package:taktik/features/coach/widgets/daily_limit_dialog.dart';
 import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class ContentGeneratorScreen extends ConsumerStatefulWidget {
@@ -233,83 +234,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             ),
           ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
 
-          const SizedBox(height: 16),
-
-          // Kalan hak bilgisi (premium olmayan kullanıcılar için)
-          if (!isPremium)
-            Consumer(
-              builder: (context, ref, _) {
-                final usageAsync = ref.watch(contentGeneratorUsageProvider);
-                return usageAsync.when(
-                  data: (usage) {
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: usage.hasRemainingUsage
-                            ? AppTheme.secondaryBrandColor.withOpacity(0.1)
-                            : colorScheme.errorContainer.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: usage.hasRemainingUsage
-                              ? AppTheme.secondaryBrandColor.withOpacity(0.3)
-                              : colorScheme.error.withOpacity(0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            usage.hasRemainingUsage
-                                ? Icons.info_outline_rounded
-                                : Icons.lock_outline_rounded,
-                            color: usage.hasRemainingUsage
-                                ? AppTheme.secondaryBrandColor
-                                : colorScheme.error,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              usage.hasRemainingUsage
-                                  ? 'Kalan ücretsiz hakkınız: ${usage.remainingCount}/${usage.maxFreeCount}'
-                                  : 'Ücretsiz hakkınız doldu. Premium ile sınırsız kullanın!',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: usage.hasRemainingUsage
-                                    ? colorScheme.onSurface.withOpacity(0.8)
-                                    : colorScheme.error,
-                              ),
-                            ),
-                          ),
-                          if (!usage.hasRemainingUsage)
-                            TextButton(
-                              onPressed: () => context.push('/premium'),
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: Text(
-                                'Premium',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.secondaryBrandColor,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0);
-                  },
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, __) => const SizedBox.shrink(),
-                );
-              },
-            ),
-
-          const SizedBox(height: 12),
+          const SizedBox(height: 24),
 
           // Dosya Yükleme Alanı
           _buildFileSelector(theme, isDark),
@@ -2889,6 +2814,21 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     // En az bir dosya veya görsel olmalı
     if (state.selectedFile == null && state.capturedImages.isEmpty) return;
 
+    // Günlük kullanım limitini kontrol et
+    final usage = await ref.read(contentGeneratorUsageProvider.future);
+
+    // Pro değilse ve limit dolduysa limit dialogu göster
+    if (!usage.isPremium && usage.hasReachedLimit) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const DailyLimitDialog(),
+        );
+      }
+      return;
+    }
+
     // Cache kontrolü - aynı dosya ve içerik türü için daha önce üretilmiş mi?
     final cacheKey = state.capturedImages.isNotEmpty
         ? state.capturedImages.map((f) => f.path).join('_')
@@ -2951,13 +2891,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       _notifier.setResult(result);
     } catch (e) {
       final errorMessage = e.toString().replaceAll('Exception: ', '');
-
-      // Eğer hata "Ücretsiz ... hakkınız doldu" içeriyorsa premium dialog göster
-      if (errorMessage.contains('Ücretsiz') && errorMessage.contains('hakkınız doldu')) {
-        _showPremiumDialog();
-      } else {
-        _notifier.setError(errorMessage);
-      }
+      _notifier.setError(errorMessage);
       _notifier.setLoading(false);
     }
   }
