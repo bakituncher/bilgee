@@ -36,10 +36,12 @@ import 'package:taktik/core/services/firebase_analytics_service.dart';
 import 'package:taktik/shared/notifications/notification_service.dart';
 import 'package:taktik/shared/screens/no_internet_screen.dart';
 import 'package:taktik/shared/screens/force_update_screen.dart';
+import 'package:taktik/shared/screens/time_error_screen.dart';
 import 'package:taktik/features/coach/models/saved_solution_model.dart';
 import 'package:taktik/features/coach/models/saved_content_model.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/data/providers/version_check_provider.dart';
+import 'package:taktik/data/providers/time_check_provider.dart';
 
 /// Firebase Messaging Arka Plan İşleyicisi
 @pragma('vm:entry-point')
@@ -416,6 +418,15 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Uygulama ön plana geldiğinde zaman kontrolünü ve versiyon kontrolünü yenile
+      ref.invalidate(timeCheckProvider);
+      ref.invalidate(versionCheckProvider);
+    }
+  }
+
+  @override
   void didChangePlatformBrightness() {
     super.didChangePlatformBrightness();
     final themeMode = ref.read(themeModeNotifierProvider);
@@ -435,6 +446,10 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
     // Eğer null ise (ilk açılış), 'bağlı' varsayalım ki ekran flash yapmasın.
     // Sadece kesin olarak false dönerse offline ekranı gösterilsin.
     final isOffline = connectivityAsync.valueOrNull == false;
+
+    // Zaman doğruluğu durumu
+    final isTimeAccurateAsync = ref.watch(timeCheckProvider);
+    final isTimeWrong = isTimeAccurateAsync.valueOrNull == false;
 
     // Sistem UI Overlay Ayarı (Status bar rengi vb.)
     final Brightness currentBrightness;
@@ -483,6 +498,13 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
             if (isOffline && versionCheckAsync.valueOrNull?.updateRequired != true)
               const Positioned.fill(
                 child: NoInternetScreen(),
+              ),
+
+            // 4. Zaman Hatası Ekranı (Overlay)
+            // İnternet varsa ve zaman yanlışsa gösterilir
+            if (!isOffline && isTimeWrong && versionCheckAsync.valueOrNull?.updateRequired != true)
+              const Positioned.fill(
+                child: TimeErrorScreen(),
               ),
           ],
         );

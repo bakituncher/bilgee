@@ -18,6 +18,7 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/coach/widgets/flashcard_widget.dart';
+import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class ContentGeneratorScreen extends ConsumerStatefulWidget {
   const ContentGeneratorScreen({super.key});
@@ -45,26 +46,35 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     final isPremium = ref.watch(premiumStatusProvider);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: colorScheme.onSurface.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(Icons.arrow_back_ios_new_rounded,
-              color: colorScheme.onSurface,
-              size: 16,
-            ),
+    return PopScope(
+      canPop: state.result == null,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && state.result != null) {
+          // Sonuç gösteriliyorsa, geri tuşuna basıldığında sonucu temizle
+          _notifier.clearResult();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: CustomBackButton(
+            onPressed: () {
+              if (state.result != null) {
+                // Sonuç gösteriliyorsa, sonucu temizle
+                _notifier.clearResult();
+              } else {
+                // Sonuç yoksa normal geri git
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                } else {
+                  context.go('/home');
+                }
+              }
+            },
           ),
-          onPressed: () => context.pop(),
-        ),
-        title: Row(
+          title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Image.asset(
@@ -93,7 +103,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         actions: [
           // Kaydedilenler butonu
           Padding(
-            padding: const EdgeInsets.only(right: 4),
+            padding: const EdgeInsets.only(right: 8),
             child: IconButton(
               icon: Container(
                 padding: const EdgeInsets.all(8),
@@ -110,25 +120,6 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
               onPressed: () => context.push('/saved-contents'),
             ),
           ),
-          if (state.result != null)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.secondaryBrandColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(Icons.add_rounded,
-                    color: AppTheme.secondaryBrandColor,
-                    size: 18,
-                  ),
-                ),
-                tooltip: 'Yeni İçerik',
-                onPressed: _createNewContent,
-              ),
-            ),
         ],
       ),
       body: SafeArea(
@@ -137,6 +128,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             : state.result != null
                 ? _buildResultState(theme, isDark)
                 : _buildInitialState(theme, isDark, isPremium),
+      ),
       ),
     );
   }
@@ -2816,6 +2808,13 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
 
   /// İçerik üretimi - Cache destekli
   Future<void> _generateContent() async {
+    // Premium kontrolü
+    final isPremium = ref.read(premiumStatusProvider);
+    if (!isPremium) {
+      _showPremiumDialog();
+      return;
+    }
+
     final state = ref.read(contentGeneratorStateProvider);
     // En az bir dosya veya görsel olmalı
     if (state.selectedFile == null && state.capturedImages.isEmpty) return;
@@ -2918,6 +2917,110 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       return Colors.blue.shade700;
     }
     return Colors.blue;
+  }
+
+  /// Premium dialog - İçerik üretimi için
+  void _showPremiumDialog() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        contentPadding: const EdgeInsets.all(32),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF0EA5E9).withValues(alpha: 0.15),
+                    const Color(0xFF06B6D4).withValues(alpha: 0.15),
+                  ],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.auto_awesome_rounded,
+                size: 56,
+                color: const Color(0xFF0EA5E9),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Sınırsız İçerik Üret',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+                letterSpacing: -0.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'PDF veya görsellerden sınırsız bilgi kartları, soru kartları ve özet üret.\nTaktik Pro ile öğrenmeyi hızlandır!',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      'Daha Sonra',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      context.push('/premium');
+                    },
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: const Color(0xFF0EA5E9),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Pro\'ya Geç',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
