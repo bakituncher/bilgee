@@ -63,7 +63,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       'desc': "Görsel zihin haritalarıyla konuları daha kolay öğren ve hatırla."
     },
     {
-      'icon': Icons.auto_awesome_rounded,
+      'icon': Icons.bolt,
       'title': "İçerik Üretici",
       'desc': "Görsel veya dosya yükle, Taktik sana bilgi kartları, soru kartları veya özet üretsin."
     },
