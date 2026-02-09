@@ -1469,7 +1469,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
             if (rootNode == null)
               IconButton(
                 icon: Icon(
-                  Icons.folder_outlined,
+                  Icons.bookmark_border_rounded,
                   color: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
                 ),
                 tooltip: 'Kaydedilenler',

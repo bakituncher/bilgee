@@ -59,8 +59,10 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
+          backgroundColor: theme.scaffoldBackgroundColor,
           elevation: 0,
+          scrolledUnderElevation: 0,
+          centerTitle: true,
           leading: CustomBackButton(
             onPressed: () {
               if (state.result != null) {
@@ -76,54 +78,21 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
               }
             },
           ),
-          title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              'assets/images/bunnyy.png',
-              width: 26,
-              height: 26,
-              errorBuilder: (_, __, ___) => Icon(
-                Icons.auto_awesome_rounded,
-                color: AppTheme.secondaryBrandColor,
-                size: 22,
-              ),
+          title: Text(
+            'Not Defteri',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
             ),
-            const SizedBox(width: 8),
-            Text(
-              'İçerik Üretici',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-                color: colorScheme.onSurface,
-                letterSpacing: -0.3,
-              ),
-            ),
-          ],
-        ),
-        centerTitle: true,
-        actions: [
-          // Kaydedilenler butonu
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.successBrandColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(Icons.bookmark_rounded,
-                  color: AppTheme.successBrandColor,
-                  size: 18,
-                ),
-              ),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.bookmark_border_rounded),
               tooltip: 'Kaydedilenler',
               onPressed: () => context.push('/saved-contents'),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       body: SafeArea(
         child: state.isLoading
             ? _buildLoadingState(theme, isDark)
