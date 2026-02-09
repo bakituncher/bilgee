@@ -53,25 +53,14 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
             context.go('/ai-hub/content-generator');
           },
         ),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.bookmark_rounded,
-              color: AppTheme.secondaryBrandColor,
-              size: 22,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Kaydedilenler',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-                color: colorScheme.onSurface,
-                letterSpacing: -0.3,
-              ),
-            ),
-          ],
+        title: Text(
+          'Kaydedilenler',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            color: colorScheme.onSurface,
+            letterSpacing: -0.3,
+          ),
         ),
         centerTitle: true,
         bottom: TabBar(
