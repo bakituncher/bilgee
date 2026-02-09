@@ -109,11 +109,11 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
   }
 
   Widget _buildContentList(
-    List<SavedContentModel> contents,
-    SavedContentType? type,
-    ThemeData theme,
-    bool isDark,
-  ) {
+      List<SavedContentModel> contents,
+      SavedContentType? type,
+      ThemeData theme,
+      bool isDark,
+      ) {
     final colorScheme = theme.colorScheme;
 
     if (contents.isEmpty) {
@@ -167,11 +167,11 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
   }
 
   Widget _buildContentCard(
-    SavedContentModel content,
-    int index,
-    ThemeData theme,
-    bool isDark,
-  ) {
+      SavedContentModel content,
+      int index,
+      ThemeData theme,
+      bool isDark,
+      ) {
     final colorScheme = theme.colorScheme;
     final typeColor = _getTypeColor(content.type);
     final dateFormat = DateFormat('dd MMM yyyy, HH:mm', 'tr_TR');
@@ -870,18 +870,18 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
                                     child: Center(
                                       child: isAnswered && (isCorrectOption || isSelected)
                                           ? Icon(
-                                              isCorrectOption ? Icons.check_rounded : Icons.close_rounded,
-                                              color: letterColor,
-                                              size: 18,
-                                            )
+                                        isCorrectOption ? Icons.check_rounded : Icons.close_rounded,
+                                        color: letterColor,
+                                        size: 18,
+                                      )
                                           : Text(
-                                              optionLetter,
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w700,
-                                                color: letterColor,
-                                              ),
-                                            ),
+                                        optionLetter,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: letterColor,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 14),
@@ -903,6 +903,91 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
                       }).toList(),
                     ),
                   ),
+
+                // İpucu (İstek üzerine eklenebilir)
+                if (card['hint'] != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.goldBrandColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.lightbulb_outline_rounded, color: AppTheme.goldBrandColor, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              card['hint'] as String,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: colorScheme.onSurface.withOpacity(0.8),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // Açıklama / Cevap (Cevaplandıktan sonra göster)
+                if (isAnswered && card['answer'] != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.successBrandColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppTheme.successBrandColor.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: AppTheme.successBrandColor,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.check_rounded, color: Colors.white, size: 14),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Açıklama',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.successBrandColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  card['answer'] as String,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    height: 1.5,
+                                    color: colorScheme.onSurface.withOpacity(0.8),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0),
+                  ),
               ],
             ),
           ),
@@ -917,7 +1002,7 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
   }
 
   /// Markdown görünümü (fallback)
-  Widget _buildMarkdownView(ThemeData theme, bool isDark, Color typeColor, ColorScheme colorScheme) {
+  Widget _buildMarkdownView(ThemeData theme, isDark, Color typeColor, ColorScheme colorScheme) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: MarkdownBody(
