@@ -74,7 +74,7 @@ async function retryWithBackoff(fn, maxAttempts = MAX_RETRY_ATTEMPTS, baseDelay 
 }
 
 exports.generateGemini = onCall(
-  { region: "us-central1", timeoutSeconds: 300, memory: "256MiB", secrets: [GEMINI_API_KEY], enforceAppCheck: true, maxInstances: 20, concurrency: 10 },
+  { region: "us-central1", timeoutSeconds: 300, memory: "1GiB", secrets: [GEMINI_API_KEY], enforceAppCheck: true, maxInstances: 20, concurrency: 10 },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Oturum gerekli");
