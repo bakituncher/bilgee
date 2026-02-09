@@ -109,229 +109,244 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     final state = ref.watch(contentGeneratorStateProvider);
     final colorScheme = theme.colorScheme;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Hero Card - Taktik Tavşan tanıtımı
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isDark
-                    ? [AppTheme.primaryBrandColor, const Color(0xFF1E293B)]
-                    : [const Color(0xFFF8FAFC), const Color(0xFFE2E8F0)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: AppTheme.secondaryBrandColor.withOpacity(isDark ? 0.2 : 0.15),
-                width: 1,
-              ),
-            ),
-            child: Row(
+    return Column(
+      children: [
+        // Scrollable content
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Tavşan emoji/avatar
+                // Hero Card - Taktik Tavşan tanıtımı
                 Container(
-                  width: 56,
-                  height: 56,
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppTheme.secondaryBrandColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Center(
-                    child: Image.asset(
-                      'assets/images/bunnyy.png',
-                      width: 40,
-                      height: 40,
-                      errorBuilder: (_, __, ___) => Text(
-                        '🐰',
-                        style: const TextStyle(fontSize: 28),
-                      ),
+                    gradient: LinearGradient(
+                      colors: isDark
+                          ? [AppTheme.primaryBrandColor, const Color(0xFF1E293B)]
+                          : [const Color(0xFFF8FAFC), const Color(0xFFE2E8F0)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppTheme.secondaryBrandColor.withOpacity(isDark ? 0.2 : 0.15),
+                      width: 1,
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Taktik Tavşan',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: colorScheme.onSurface,
-                              letterSpacing: -0.3,
+                      // Tavşan emoji/avatar
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: AppTheme.secondaryBrandColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Center(
+                          child: Image.asset(
+                            'assets/images/bunnyy.png',
+                            width: 40,
+                            height: 40,
+                            errorBuilder: (_, __, ___) => Text(
+                              '🐰',
+                              style: const TextStyle(fontSize: 28),
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppTheme.secondaryBrandColor,
-                              borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  'Taktik Tavşan',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: colorScheme.onSurface,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.secondaryBrandColor,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    'AI',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            child: const Text(
-                              'AI',
+                            const SizedBox(height: 4),
+                            Text(
+                              'Dosyanı yükle, sana özel içerik üreteyim!',
                               style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.black,
+                                fontSize: 13,
+                                color: colorScheme.onSurface.withOpacity(0.6),
+                                height: 1.3,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Dosyanı yükle, sana özel içerik üreteyim!',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: colorScheme.onSurface.withOpacity(0.6),
-                          height: 1.3,
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ),
+                ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
+
+                const SizedBox(height: 24),
+
+                // Dosya Yükleme Alanı
+                _buildFileSelector(theme, isDark),
+
+                const SizedBox(height: 24),
               ],
             ),
-          ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
-
-          const SizedBox(height: 24),
-
-          // Dosya Yükleme Alanı
-          _buildFileSelector(theme, isDark),
-
-          const SizedBox(height: 24),
-
-          // İçerik Türü Başlığı
-          Padding(
-            padding: const EdgeInsets.only(left: 4),
-            child: Text(
-              'İçerik Türü',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: colorScheme.onSurface.withOpacity(0.5),
-                letterSpacing: 0.5,
-              ),
-            ),
           ),
-          const SizedBox(height: 10),
+        ),
 
-          // İçerik türü seçici
-          _buildContentTypeSelector(theme, isDark),
-
-          // Hata mesajı
-          if (state.error != null) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppTheme.accentBrandColor.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline_rounded,
-                    color: AppTheme.accentBrandColor,
-                    size: 18,
+        // Fixed bottom section - İçerik Türü ve Buton
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // İçerik Türü Başlığı
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  'İçerik Türü',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: colorScheme.onSurface.withOpacity(0.5),
+                    letterSpacing: 0.5,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      state.error!,
-                      style: TextStyle(
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // İçerik türü seçici
+              _buildContentTypeSelector(theme, isDark),
+
+              // Hata mesajı
+              if (state.error != null) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accentBrandColor.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline_rounded,
                         color: AppTheme.accentBrandColor,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          state.error!,
+                          style: TextStyle(
+                            color: AppTheme.accentBrandColor,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ).animate().fadeIn().shake(hz: 2, offset: const Offset(2, 0)),
+              ],
+
+              const SizedBox(height: 16),
+
+              // Üret butonu - Gradient style
+              Builder(
+                builder: (context) {
+                  final hasContent = state.selectedFile != null || state.capturedImages.isNotEmpty;
+
+                  return Container(
+                    width: double.infinity,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: hasContent
+                          ? LinearGradient(
+                              colors: [
+                                AppTheme.secondaryBrandColor,
+                                AppTheme.secondaryBrandColor.withOpacity(0.8),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: !hasContent ? colorScheme.onSurface.withOpacity(0.08) : null,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: hasContent
+                          ? [
+                              BoxShadow(
+                                color: AppTheme.secondaryBrandColor.withOpacity(0.3),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: hasContent ? _generateContent : null,
+                        borderRadius: BorderRadius.circular(16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.auto_awesome_rounded,
+                              size: 22,
+                              color: hasContent
+                                  ? Colors.black
+                                  : colorScheme.onSurface.withOpacity(0.3),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              state.capturedImages.isNotEmpty
+                                  ? '${state.capturedImages.length} Sayfadan Üret'
+                                  : 'İçerik Üret',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: hasContent
+                                    ? Colors.black
+                                    : colorScheme.onSurface.withOpacity(0.3),
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ).animate().fadeIn(delay: 250.ms, duration: 400.ms).slideY(begin: 0.1, end: 0);
+                },
               ),
-            ).animate().fadeIn().shake(hz: 2, offset: const Offset(2, 0)),
-          ],
-
-          const SizedBox(height: 32),
-
-          // Üret butonu - Gradient style
-          Builder(
-            builder: (context) {
-              final hasContent = state.selectedFile != null || state.capturedImages.isNotEmpty;
-
-              return Container(
-                width: double.infinity,
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: hasContent
-                      ? LinearGradient(
-                          colors: [
-                            AppTheme.secondaryBrandColor,
-                            AppTheme.secondaryBrandColor.withOpacity(0.8),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        )
-                      : null,
-                  color: !hasContent ? colorScheme.onSurface.withOpacity(0.08) : null,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: hasContent
-                      ? [
-                          BoxShadow(
-                            color: AppTheme.secondaryBrandColor.withOpacity(0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: hasContent ? _generateContent : null,
-                    borderRadius: BorderRadius.circular(16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.auto_awesome_rounded,
-                          size: 22,
-                          color: hasContent
-                              ? Colors.black
-                              : colorScheme.onSurface.withOpacity(0.3),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          state.capturedImages.isNotEmpty
-                              ? '${state.capturedImages.length} Sayfadan Üret'
-                              : 'İçerik Üret',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: hasContent
-                                ? Colors.black
-                                : colorScheme.onSurface.withOpacity(0.3),
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ).animate().fadeIn(delay: 250.ms, duration: 400.ms).slideY(begin: 0.1, end: 0);
-            },
+            ],
           ),
-
-          const SizedBox(height: 20),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
