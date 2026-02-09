@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_app_check/firebase_app_check.dart'; // EKLENDİ: Token yenileme için
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/models/exam_model.dart';
@@ -31,7 +32,6 @@ class ChatMessage {
 }
 
 final aiServiceProvider = Provider<AiService>((ref) {
-  // DÜZELTME: Artık ref'i alıyor.
   return AiService(ref);
 });
 
@@ -47,7 +47,7 @@ class AiService {
       final data = snap.data() ?? const <String, dynamic>{};
       final key = '${mode}_summary';
 
-      // Varsa direkt stringi döndür (artık içinde ham mesajlar da olabilir)
+      // Varsa direkt stringi döndür
       final v = data[key];
       if (v is String) return v.trim();
 
@@ -60,15 +60,13 @@ class AiService {
   }
 
   // INDUSTRY STANDARD MEMORY: Rolling Window (Kayan Pencere)
-  // Eski yöntem: Her şeyi özetle -> Robotlaşır.
-  // Yeni yöntem: Son ~4000 karakteri (yaklaşık 10-15 mesaj) olduğu gibi tut. Eskileri at.
   Future<void> _updateChatMemory(
-    String userId,
-    String mode, {
-    required String lastUserMessage,
-    required String aiResponse,
-    String previous = '',
-  }) async {
+      String userId,
+      String mode, {
+        required String lastUserMessage,
+        required String aiResponse,
+        String previous = '',
+      }) async {
     try {
       // 1) Yeni turu formatla
       final newTurn = [
@@ -79,13 +77,10 @@ class AiService {
       // 2) Geçmişe ekle
       String updatedHistory = previous.trim().isEmpty ? newTurn : '${previous.trim()} | $newTurn';
 
-      // 3) Limit Kontrolü (4000 Karakter ~ son turlar)
+      // 3) Limit Kontrolü (8000 Karakter)
       const int maxChars = 8000;
       if (updatedHistory.length > maxChars) {
-        // sondan maxChars kadarını al (en taze sohbet kalsın)
         updatedHistory = updatedHistory.substring(updatedHistory.length - maxChars);
-
-        // kesilen yerin başındaki yarım parça/turn’ü temizle
         final firstPipe = updatedHistory.indexOf('|');
         if (firstPipe != -1 && firstPipe < 100) {
           updatedHistory = updatedHistory.substring(firstPipe + 1).trim();
@@ -115,8 +110,6 @@ class AiService {
     return JsonTextCleaner.cleanString(input);
   }
 
-  // YENI: Düz metin sanitizasyonu (markdown ve madde işaretlerini temizle)
-  // Not: Motivasyon modlarında emoji/enerji öldürmemek için sadece agressif markdown’ı temizleyeceğiz.
   String _sanitizePlainText(String input) {
     var out = input;
     out = out.replaceAll('```', '');
@@ -124,7 +117,6 @@ class AiService {
     out = out.replaceAll('**', '');
     out = out.replaceAll('__', '');
 
-    // Satır başı bullet temizliği (çok robotik liste cevapları kırmak için)
     final lines = out.split('\n').map((l) {
       var line = l;
       line = line.replaceFirst(RegExp(r'^\s*[-*•]\s+'), '');
@@ -138,18 +130,14 @@ class AiService {
     return out.trim();
   }
 
-  // YENI: Koçvari üslubu korumak için bazen fazla “kelime değiştirme” robotikleşiyor.
-  // Bu işi daha çok prompt’a bırakıyoruz.
   String _enforceToneGuard(String input) {
     return input.replaceAll(RegExp(r'\s{2,}'), ' ').trim();
   }
 
   String? _extractJsonFromFencedBlock(String text) {
-    // 1. ```json ... ``` bloklarını ara
     final jsonFence = RegExp(r"```json\s*([\s\S]*?)\s*```", multiLine: true).firstMatch(text);
     if (jsonFence != null) return jsonFence.group(1)!.trim();
 
-    // 2. Herhangi bir ``` ... ``` bloğunu ara
     final anyFence = RegExp(r"```\s*([\s\S]*?)\s*```", multiLine: true).firstMatch(text);
     if (anyFence != null) return anyFence.group(1)!.trim();
 
@@ -157,7 +145,6 @@ class AiService {
   }
 
   String? _extractJsonByBracesFallback(String text) {
-    // İlk { ve son } arasındaki her şeyi al (Regex cerrahi müdahale - Sorunun 1. çözümü)
     final startIndex = text.indexOf('{');
     final endIndex = text.lastIndexOf('}');
     if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
@@ -176,20 +163,14 @@ class AiService {
       }
       return jsonEncode(parsed);
     } catch (e) {
-      // JSON parse hatası - muhtemelen yarım JSON veya kirli format
       final errorMsg = e.toString().toLowerCase();
-
-      // Yarım JSON tespiti (token limiti nedeniyle kesilme)
       if (errorMsg.contains('unexpected end') || errorMsg.contains('unterminated')) {
         return jsonEncode({'error': 'Plan oluşturulurken yanıt yarım kaldı. Lütfen tekrar deneyin veya tempo ayarını "Rahat" seçerek daha kısa bir plan oluşturun.'});
       }
-
-      // Genel parse hatası
       return jsonEncode({'error': 'Yapay zeka yanıtı anlaşılamadı, lütfen tekrar deneyin.'});
     }
   }
 
-  // Son N günün tamamlanan görevlerini Firestore'dan topla (YYYY-MM-DD -> [taskId])
   Future<Map<String, List<String>>> _loadRecentCompletedTasks(String userId, {int days = 28}) async {
     try {
       final svc = _ref.read(firestoreServiceProvider);
@@ -212,7 +193,6 @@ class AiService {
   String _yyyyMmDd(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-  /// Tamamlanan görev ID'lerini Set olarak döndürür (hızlı arama için)
   Future<Set<String>> _loadRecentCompletedTaskIdsOnly(String userId, {int days = 365}) async {
     try {
       final cutoff = DateTime.now().subtract(Duration(days: days));
@@ -226,12 +206,10 @@ class AiService {
       final Set<String> taskIds = {};
       for (var doc in snap.docs) {
         final data = doc.data();
-        // taskId key'i ile kayıtlıysa:
         final taskId = data['taskId'] as String?;
         if (taskId != null && taskId.isNotEmpty) {
           taskIds.add(taskId);
         } else {
-          // Doküman ID'si görev ID'si ise:
           taskIds.add(doc.id);
         }
       }
@@ -242,13 +220,13 @@ class AiService {
   }
 
   Future<String> _callGemini(
-    String prompt, {
-    bool expectJson = false,
-    double? temperature,
-    String? model,
-    int retryCount = 0,
-    required String requestType,
-  }) async {
+      String prompt, {
+        bool expectJson = false,
+        double? temperature,
+        String? model,
+        int retryCount = 0,
+        required String requestType,
+      }) async {
     const int maxRetries = 3;
     try {
       final callable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable('ai-generateGemini');
@@ -256,7 +234,7 @@ class AiService {
         'prompt': prompt,
         'expectJson': expectJson,
         'requestType': requestType,
-        'temperature': temperature ?? 0.7, // Default artık daha insani
+        'temperature': temperature ?? 0.7,
         if (model != null && model.isNotEmpty) 'model': model,
       };
       final result = await callable.call(payload).timeout(const Duration(seconds: 150));
@@ -274,12 +252,35 @@ class AiService {
         return _parseAndNormalizeJsonOrError(_preprocessAiTextForJson(candidate));
       }
 
-      // Sohbet için basit temizlik
       return _enforceToneGuard(_sanitizePlainText(rawResponse));
+
     } on FirebaseFunctionsException catch (e) {
-      // Backend'den "resource-exhausted" gelirse (kota doldu), mesajı kullanıcıya göster
+      // --- APP CHECK HATA YÖNETİMİ ---
+      // "unauthenticated" hatası genellikle App Check token süresinin dolduğunu gösterir.
+      if (e.code == 'unauthenticated' && retryCount < maxRetries) {
+        try {
+          // Token'ı zorla yenile (forceRefresh: true)
+          await FirebaseAppCheck.instance.getToken(true);
+          // Token'ın sunucuya yayılması için kısa bir bekleme
+          await Future.delayed(const Duration(milliseconds: 500));
+
+          // İsteği yeniden dene (retry)
+          return _callGemini(
+              prompt,
+              expectJson: expectJson,
+              temperature: temperature,
+              model: model,
+              requestType: requestType,
+              retryCount: retryCount + 1
+          );
+        } catch (_) {
+          // Yenileme başarısız olursa standart hata akışına devam et
+        }
+      }
+
       final isRateLimit = e.code == 'resource-exhausted' || e.code == 'unavailable' || (e.message?.contains('429') ?? false);
       final isQuotaExceeded = e.message?.contains('limitinize') ?? false;
+
       if (isRateLimit && !isQuotaExceeded && retryCount < maxRetries) {
         final delaySeconds = (retryCount + 1) * 2;
         await Future.delayed(Duration(seconds: delaySeconds));
@@ -292,7 +293,7 @@ class AiService {
       } else if (isRateLimit) {
         msg = 'AI sistemi çok yoğun. Lütfen birkaç saniye bekleyip tekrar deneyin.';
       } else if (e.code == 'unauthenticated') {
-        msg = 'Oturum süresi doldu. Lütfen tekrar giriş yapın.';
+        msg = 'Oturum süresi doldu. Lütfen uygulamayı kapatıp tekrar açın.';
       } else if (e.code == 'permission-denied') {
         msg = e.message ?? 'Bu özelliğe erişim izniniz yok.';
       } else {
@@ -314,7 +315,6 @@ class AiService {
   }
 
   int _getDaysUntilExam(ExamType examType) {
-    // Merkezî takvimden hesapla
     return ExamSchedule.daysUntilExam(examType);
   }
 
@@ -347,30 +347,24 @@ class AiService {
     final examType = ExamType.values.byName(user.selectedExam!);
     final daysUntilExam = _getDaysUntilExam(examType);
 
-    // DÜZELTME 1: Önbellek yerine anlık hesap; yeni denemeler hemen yansısın.
     final String avgNet = _quickAverageNet(tests).toStringAsFixed(2);
     final Map<String, double> subjectAverages = _computeSubjectAveragesQuick(tests);
 
     final availabilityJson = jsonEncode(user.weeklyAvailability);
 
-    // Tamamlanan konu ID'lerini al (Müfredat filtreleme için)
     final completedTopicIds = await _loadRecentCompletedTaskIdsOnly(user.id, days: 365);
 
-    // YENİ SEKTÖR STANDARDI: Tüm müfredat yerine sadece "Sıradaki Aday Konular"
-    // Bu sayede yeni kullanıcı için otomatik olarak ilk konular, ileri kullanıcı için kaldığı yerden devam
     final candidateTopicsJson = await _buildNextStudyTopicsJson(
-      examType,
-      user.selectedExamSection,
-      completedTopicIds
+        examType,
+        user.selectedExamSection,
+        completedTopicIds
     );
 
-    // GUARDRAILS: backlog + konu renkleri + politika
     final guardrailsJson = _buildGuardrailsJson(planDoc?.weeklyPlan, completedTopicIds, performance);
 
     String prompt;
     switch (examType) {
       case ExamType.yks:
-      // FIX: YDT öğrencileri için başlığı "TYT ve YDT" olarak güncelle ki AI her ikisini de kapsasın
         String displaySection = user.selectedExamSection ?? '';
         if (displaySection == 'YDT') {
           displaySection = 'TYT ve YDT';
@@ -423,20 +417,13 @@ class AiService {
         break;
     }
 
-    // DÜZELTME 3: AI cache kırıcı varyasyon etiketi ekle
     prompt += "\n\n[System: Generate a UNIQUE plan. Variation: ${DateTime.now().millisecondsSinceEpoch}]";
-
-    // TOKEN LİMİTİ UYARISI: AI'a JSON'u tam olarak kapatmasını hatırlat (Sorunun 2. çözümü)
     prompt += "\n\nÖNEMLİ: Yanıtını mutlaka geçerli ve KAPALI bir JSON objesi olarak döndür. JSON'un sonunda tüm süslü parantezleri kapat. Yanıt kesilirse kısa tut ama yapıyı koru.";
 
-    // ====================================================================================
-    // DÜZELTME 4: GÜN SIRALAMASI SORUNUNU ÇÖZME (Cumartesi bile olsa o günden başla)
-    // ====================================================================================
     final trDays = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
-    final todayIndex = DateTime.now().weekday - 1; // 0=Pzt, 6=Paz
+    final todayIndex = DateTime.now().weekday - 1;
     final todayName = trDays[todayIndex];
 
-    // Günleri bugünden başlayarak sırala (örn: Cmt, Paz, Pzt, Sal...)
     List<String> orderedDays = [];
     for(int i=0; i<7; i++) {
       orderedDays.add(trDays[(todayIndex + i) % 7]);
@@ -452,12 +439,6 @@ Plan dizisindeki günlerin sırası tam olarak şu sırayla olmalıdır: $orderS
 
 ÖNEMLİ: Haftanın planlamasını yaparken "Pazartesi başlar" kuralını YOK SAY. Kullanıcı stratejiyi bugün ($todayName) oluşturuyor, bu yüzden ilk gün ($todayName) en yoğun ve motive edici başlangıç günü olmalı. Geçmiş günleri (örneğin dünkü Cuma) planlama, onları döngünün sonuna (gelecek hafta) at.
 """;
-
-    // ====================================================================================
-    // ÇÖZÜM 2: KAPASİTE KULLANIMI VE BOŞLUK DOLDURMA
-    // ====================================================================================
-    // Sorun: Kullanıcı "Yoğun" seçiyor ve tüm saatleri açıyor ama AI boşluk bırakıyor.
-    // Çözüm: Pacing moduna göre "Doluluk Oranı" talimatı veriyoruz.
 
     String densityInstruction = "";
 
@@ -490,40 +471,32 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
     }
 
     prompt += densityInstruction;
-    // ====================================================================================
 
     return _callGemini(prompt, expectJson: true, requestType: 'weekly_plan');
   }
 
-  /// YENİ SEKTÖR STANDARDI FONKSİYON: Tüm müfredatı değil, sadece çalışılması gereken "ADAY" konuları hazırlar.
-  /// Bu sayede AI'a token israfı olmaz ve yeni kullanıcılar için otomatik olarak doğru konular seçilir.
   Future<String> _buildNextStudyTopicsJson(
-    ExamType examType,
-    String? selectedSection,
-    Set<String> completedTopicIds // Kullanıcının bitirdiği konuların ID listesi
-  ) async {
+      ExamType examType,
+      String? selectedSection,
+      Set<String> completedTopicIds
+      ) async {
     try {
-      // 1. Tüm müfredatı yerelden çek (Bu işlem token harcamaz, cihazda yapılır)
       final exam = await ExamData.getExamByType(examType);
 
       List<ExamSection> sections = [];
 
-      // 2. Kullanıcının bölümüne göre dersleri filtrele
-      // AGS MANTIĞI: Her zaman "AGS" (Ortak) + Seçilen Branş
       if (examType == ExamType.ags) {
         sections.addAll(exam.sections.where((s) => s.name == 'AGS'));
         if (selectedSection != null && selectedSection.isNotEmpty) {
           sections.addAll(exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()));
         }
       }
-      // YKS MANTIĞI: Her zaman "TYT" + Seçilen Alan (AYT-Sayısal, YDT vb.)
       else if (examType == ExamType.yks) {
         sections.addAll(exam.sections.where((s) => s.name == 'TYT'));
         if (selectedSection != null && selectedSection.isNotEmpty && selectedSection != 'TYT') {
           sections.addAll(exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()));
         }
       }
-      // DİĞERLERİ (LGS, KPSS)
       else {
         sections = (selectedSection != null && selectedSection.isNotEmpty)
             ? exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()).toList()
@@ -532,41 +505,23 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
 
       final Map<String, List<String>> candidateTopics = {};
 
-      // 3. KRİTİK NOKTA: Her ders için "Sıradaki 3 Konuyu" bul
       for (final sec in sections) {
         sec.subjects.forEach((subjectName, subjectDetails) {
-          // Bu dersteki tüm konular (Sıralı halde gelir)
           final allTopics = subjectDetails.topics.map((t) => t.name).toList();
-
-          // Bitmemiş olanları bul (Sırayı bozmadan)
           final remainingTopics = allTopics.where((t) => !completedTopicIds.contains(t)).toList();
 
-          // Eğer hiç konu kalmadıysa (Ders bitmişse) boş geç
           if (remainingTopics.isEmpty) return;
 
-          // SEKTÖR STANDARDI AYAR:
-          // Her dersten önümüzdeki "3" konuyu seç. AI bunlardan birini veya ikisini seçecek.
-          // Hepsini birden göndermiyoruz - Token tasarrufu + Odaklanma
           final nextBatch = remainingTopics.take(3).toList();
-
           candidateTopics[subjectName] = nextBatch;
         });
       }
 
-      // Çıktı Örneği:
-      // {
-      //   "candidates": {
-      //     "Matematik": ["Temel Kavramlar", "Sayı Basamakları", "Bölünebilme"],
-      //     "Fizik": ["Fizik Bilimine Giriş", "Madde ve Özellikleri"]
-      //   },
-      //   "note": "Sadece bu listedeki konuları planlayabilirsin. Sırayı bozma."
-      // }
       return jsonEncode({
         'candidates': candidateTopics,
         'note': 'Sadece bu listedeki konuları planlayabilirsin. Müfredat sırasını takip et.'
       });
     } catch (e) {
-      // Hata durumunda boş liste döndür
       return jsonEncode({
         'candidates': {},
         'note': 'Müfredat yüklenemedi, genel konulardan plan oluştur.'
@@ -577,30 +532,20 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
   Future<String> _buildCurriculumOrderJson(ExamType examType, String? selectedSection) async {
     try {
       final exam = await ExamData.getExamByType(examType);
-
       List<ExamSection> sections = [];
 
-      // 1. AGS MANTIĞI: Her zaman "AGS" (Ortak) + Seçilen Branş
       if (examType == ExamType.ags) {
-        // Ortak bölümü ekle (Adı genellikle 'AGS' olarak parse ediliyor)
         sections.addAll(exam.sections.where((s) => s.name == 'AGS'));
-
-        // Seçilen branşı ekle (Eğer varsa)
         if (selectedSection != null && selectedSection.isNotEmpty) {
           sections.addAll(exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()));
         }
       }
-      // 2. YKS MANTIĞI: Her zaman "TYT" + Seçilen Alan (AYT-Sayısal, YDT vb.)
       else if (examType == ExamType.yks) {
-        // TYT her zaman eklenir
         sections.addAll(exam.sections.where((s) => s.name == 'TYT'));
-
         if (selectedSection != null && selectedSection.isNotEmpty && selectedSection != 'TYT') {
-          // Eğer seçilen alan 'AYT - Sayısal' ise onu ekle
           sections.addAll(exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()));
         }
       }
-      // 3. DİĞERLERİ (LGS, KPSS)
       else {
         sections = (selectedSection != null && selectedSection.isNotEmpty)
             ? exam.sections.where((s) => s.name.toLowerCase() == selectedSection.toLowerCase()).toList()
@@ -624,7 +569,6 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
   }
 
   String _buildGuardrailsJson(Map<String, dynamic>? weeklyPlanRaw, Set<String> completedTopicIds, PerformanceSummary performance){
-    // Backlog: geçen haftanın planından tamamlanmamış görevler
     final backlogActivities = <String>[];
     if (weeklyPlanRaw != null) {
       try {
@@ -647,12 +591,10 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
           }
         }
       } catch (_) {
-        // yoksay
       }
     }
 
-    // Konu renkleri: kırmızı/sarı/yeşil/unknown
-    final topicStatus = <String, Map<String, dynamic>>{}; // subject -> { topic -> status }
+    final topicStatus = <String, Map<String, dynamic>>{};
     int redCount = 0, yellowCount = 0, unknownCount = 0;
     performance.topicPerformances.forEach((subject, topics){
       final map = <String, String>{};
@@ -671,29 +613,18 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
         }
         map[topic] = status;
       });
-      // Sadece içi dolu olan subject'leri ekle
       if (map.isNotEmpty) {
         topicStatus[subject] = map;
       }
     });
 
-    // --- ORTA YOLCU (DENGELİ) POLİTİKA ---
-
-    // Kural: Eğer 3'ten fazla birikmiş görev VEYA 2'den fazla kırmızı konu varsa "Yığılma Var" (Overwhelmed) say.
-    // Bu durumda frene basacağız. Yoksa gaza basmaya devam.
     final bool isOverwhelmed = backlogActivities.length >= 3 || redCount >= 2;
 
     final policy = <String, dynamic>{
-      // Yığılma yoksa yeni konuya izin ver, varsa verme.
       'allowNewTopics': !isOverwhelmed,
-
-      // Öncelik Sıralaması:
-      // Yığılma varsa: Önce Backlog ve Kırmızılar (Temizlik Modu)
-      // Yığılma yoksa: Önce Müfredat (İlerleme Modu)
       'priorities': isOverwhelmed
           ? ['backlog', 'red', 'yellow', 'curriculum']
           : ['curriculum', 'yellow', 'backlog', 'red'],
-
       'notes': isOverwhelmed
           ? 'Kullanıcı geride kalmaya başladı (Yığılma var). Yeni konu açma, öncelik borçları temizlemek.'
           : 'Durum stabil. Ufak eksikleri araya sıkıştır ama ana odak müfredatta ilerlemek olsun.'
@@ -701,7 +632,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
 
     final guardrails = {
       'backlogCount': backlogActivities.length,
-      'backlogSample': backlogActivities.take(5).toList(), // Örnek sayısını makul tut
+      'backlogSample': backlogActivities.take(5).toList(),
       'topicStatus': topicStatus,
       'policy': policy,
     };
@@ -710,22 +641,20 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
   }
 
   Future<String> generateStudyGuideAndQuiz(
-    UserModel user,
-    List<TestModel> tests,
-    PerformanceSummary performance, {
-    Map<String, String>? topicOverride,
-    String difficulty = 'normal',
-    int attemptCount = 1,
-    double? temperature,
-    dynamic contentType, // WorkshopContentType (dynamic to avoid import)
-  }) async {
-    // Eğer test yoksa hemen hata döndürme: bazı yeni hesaplarda konu performansı (ör. manuel veri) olabilir.
+      UserModel user,
+      List<TestModel> tests,
+      PerformanceSummary performance, {
+        Map<String, String>? topicOverride,
+        String difficulty = 'normal',
+        int attemptCount = 1,
+        double? temperature,
+        dynamic contentType,
+      }) async {
     if (tests.isEmpty) {
       final hasTopicData = performance.topicPerformances.values.any((subjectMap) => subjectMap.values.any((t) => (t.questionCount ?? 0) > 0));
       if (!hasTopicData && topicOverride == null) {
         return '{"error":"Analiz için en az bir deneme sonucu gereklidir."}';
       }
-      // tests boş ama konu performansı varsa devam et; AI yine zayıf konuyu bulmaya çalışır.
     }
     if (user.selectedExam == null) {
       return '{"error":"Sınav türü bulunamadı."}';
@@ -738,14 +667,12 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
       weakestSubject = topicOverride['subject']!;
       weakestTopic = topicOverride['topic']!;
     } else {
-      // Önce önbellekli analizden faydalan
       final cachedAnalysis = _ref.read(overallStatsAnalysisProvider).value;
       final info = cachedAnalysis?.getWeakestTopicWithDetails();
       if (info != null) {
         weakestSubject = info['subject']!;
         weakestTopic = info['topic']!;
       } else {
-        // Gerekirse eski yol: tek seferlik hesapla (daha ağır ama nadir)
         final examType = ExamType.values.byName(user.selectedExam!);
         final examData = await ExamData.getExamByType(examType);
         final analysis = StatsAnalysis(tests, examData, _ref.read(firestoreServiceProvider), user: user);
@@ -759,11 +686,10 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
       }
     }
 
-    // ContentType'ı stringe çevir
     String contentTypeStr = 'both';
     if (contentType != null) {
       final typeStr = contentType.toString().split('.').last;
-      contentTypeStr = typeStr; // quizOnly, studyOnly, both
+      contentTypeStr = typeStr;
     }
 
     final prompt = getStudyGuideAndQuizPrompt(
@@ -775,7 +701,6 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
       contentType: contentTypeStr,
     );
 
-    // temperature parametresini _callGemini'ye geçir
     return _callGemini(prompt, expectJson: true, temperature: temperature, requestType: 'workshop');
   }
 
@@ -792,13 +717,9 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
     final examType = user.selectedExam != null ? ExamType.values.byName(user.selectedExam!) : null;
     final analysis = _ref.read(overallStatsAnalysisProvider).value;
 
-    // Sohbet hafızası sadece UI tarafından yönetiliyor (Firestore'a yazılmıyor)
     String historyToUse = conversationHistory;
 
     String prompt;
-
-    // Chat türüne göre dinamik temperature
-    // Daha yüksek temperature = daha yaratıcı ve uzun yanıtlar
     double chatTemperature = 0.85;
 
     switch (promptType) {
@@ -812,7 +733,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
           conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        chatTemperature = 0.80; // Veri odaklı ama samimi
+        chatTemperature = 0.80;
         break;
       case 'strategy_consult':
         prompt = StrategyConsultPrompt.build(
@@ -824,7 +745,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
           conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        chatTemperature = 0.75; // Stratejik ama yaratıcı
+        chatTemperature = 0.75;
         break;
       case 'psych_support':
         prompt = PsychSupportPrompt.build(
@@ -834,7 +755,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
           conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        chatTemperature = 1.0; // MAKSİMUM DOĞALLIK VE EMPATİ
+        chatTemperature = 1.0;
         break;
       case 'motivation_corner':
         prompt = MotivationCornerPrompt.build(
@@ -843,10 +764,9 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
           conversationHistory: historyToUse,
           lastUserMessage: lastUserMessage,
         );
-        chatTemperature = 0.95; // YÜKSEK ENERJİ VE YARATICILIK
+        chatTemperature = 0.95;
         break;
       default:
-        // Diğer durumlar için fallback
         prompt = DefaultMotivationPrompts.userChat(
           user: user,
           tests: tests,
@@ -865,13 +785,9 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
       requestType: 'chat',
     );
 
-    // NOT: Firestore'a yazma devre dışı - sohbet hafızası sadece session içinde tutuluyor
-    // conversationHistory parametresi UI tarafından yönetiliyor
-
     return raw;
   }
 
-  // Hafif yardımcılar: UI dış tek seferlik hesaplamalarda kullanılabilir
   double _quickAverageNet(List<TestModel> tests) {
     if (tests.isEmpty) return 0.0;
     final total = tests.fold<double>(0.0, (acc, t) => acc + t.totalNet);
@@ -879,7 +795,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
   }
 
   Map<String, double> _computeSubjectAveragesQuick(List<TestModel> tests) {
-    if (tests.isEmpty) return {}; // Boş liste ise boş map döndür (NaN önleme)
+    if (tests.isEmpty) return {};
     final Map<String, List<double>> subjectNets = {};
     for (final t in tests) {
       t.scores.forEach((subject, scores) {
@@ -897,7 +813,6 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
   }) async {
     final user = _ref.read(userProfileProvider).value;
     if (user == null) return {};
-    // Set kullan (daha hızlı ve güncel metod)
     final completedTaskIds = await _loadRecentCompletedTaskIdsOnly(user.id, days: daysWindow);
     final guardrailsJson = _buildGuardrailsJson(planDoc?.weeklyPlan, completedTaskIds, performance);
     try {
@@ -909,4 +824,3 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
     }
   }
 }
-
