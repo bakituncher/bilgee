@@ -840,66 +840,67 @@ class _MentorBentoCard extends StatelessWidget {
 
               // İçerik
               Padding(
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.fromLTRB(18, 56, 18, 18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: color,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            'MENTÖR',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ),
-                        if (!isPremium)
-                          Icon(Icons.lock_rounded, size: 18, color: theme.colorScheme.onSurface.withOpacity(0.2)),
-                      ],
+                    Text(
+                      'Taktik\nTavşan',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        height: 1.1,
+                        color: theme.colorScheme.onSurface,
+                        letterSpacing: -0.3,
+                      ),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Taktik\nTavşan',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            height: 1.1,
-                            color: theme.colorScheme.onSurface,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Sınav stresini yöneten\nTaktik koçun.',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            height: 1.3,
-                            color: theme.colorScheme.onSurface.withOpacity(0.65),
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 3,
-                          overflow: TextOverflow.fade,
-                        ),
-                      ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Sınav stresini yöneten\nTaktik koçun.',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        height: 1.3,
+                        color: theme.colorScheme.onSurface.withOpacity(0.65),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.fade,
                     ),
                   ],
                 ),
               ),
+
+              Positioned(
+                top: 14,
+                left: 14,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'MENTÖR',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+              ),
+              if (!isPremium)
+                Positioned(
+                  top: 14,
+                  right: 14,
+                  child: Icon(
+                    Icons.lock_rounded,
+                    size: 18,
+                    color: theme.colorScheme.onSurface.withOpacity(0.2),
+                  ),
+                ),
             ],
           ),
         ),
