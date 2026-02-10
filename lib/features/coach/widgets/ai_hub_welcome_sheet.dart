@@ -271,16 +271,17 @@ class _AiHubWelcomeSheetState extends ConsumerState<AiHubWelcomeSheet>
                     color: const Color(0xFF10B981),
                   ),
                   const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      '7 gün ücretsiz dene, istediğin zaman iptal et',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: textPrimary,
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '7 gün ücretsiz dene, istediğin zaman iptal et',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: textPrimary,
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -317,7 +318,7 @@ class _AiHubWelcomeSheetState extends ConsumerState<AiHubWelcomeSheet>
                   ),
                   child: Center(
                     child: Text(
-                      hasFreeTrial ? 'Ücretsiz Başla' : 'Hemen Başla',
+                      hasFreeTrial ? 'Şimdi Ücretsiz Başla' : 'Hemen Başla',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
