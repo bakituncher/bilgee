@@ -16,6 +16,7 @@ final GlobalKey _solverKey = GlobalKey();
 final GlobalKey _studyRoomKey = GlobalKey();
 final GlobalKey _coachKey = GlobalKey();
 final GlobalKey _mindMapKey = GlobalKey();
+final GlobalKey _notebookKey = GlobalKey();
 
 class AiHubScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic>? extra;
@@ -39,6 +40,19 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
     });
   }
 
+  @override
+  void didUpdateWidget(AiHubScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Eğer extra değişmişse ve yeni extra'da tur başlatma isteği varsa
+    if (widget.extra != oldWidget.extra &&
+        widget.extra != null &&
+        widget.extra!['startPremiumTour'] == true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkAndStartPremiumTour();
+      });
+    }
+  }
+
   void _checkAndStartPremiumTour() {
     if (widget.extra != null && widget.extra!['startPremiumTour'] == true) {
       final premiumSteps = [
@@ -50,7 +64,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
         TutorialStep(
           highlightKey: _weeklyPlanKey,
           title: "Haftalık Çalışma Planın",
-          text: "Her hafta sana özel, eksik konularına ve müsait zamanlarına göre hazırlanan akıllı bir ders programı. Artık neyi ne zaman çalışacağını düşünmek yok!",
+          text: "Eksik konularına ve müsait zamanına göre hazırlanan akıllı ders programı. Neyi, ne zaman çalışacağın artık belli!",
           buttonText: "Anladım",
         ),
         TutorialStep(
@@ -70,6 +84,12 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
           title: "Zihin Haritaları",
           text: "Karmaşık konuları görsel haritalarla öğren. Bilgiyi organize et, hatırlamayı kolaylaştır!",
           buttonText: "Devam",
+        ),
+        TutorialStep(
+          highlightKey: _notebookKey,
+          title: "Akıllı Not Defteri",
+          text: "PDF veya ders notlarını yükle, Taktik saniyeler içinde sana bilgi kartları ve özetler hazırlasın. Çalışmanı verimli hale getir!",
+          buttonText: "Süper",
         ),
         TutorialStep(
           highlightKey: _coachKey,
@@ -329,14 +349,17 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                 ),
                 const SizedBox(width: gap),
                 Expanded(
-                  child: _BentoCard(
-                    title: 'Not\nDefteri',
-                    description: 'PDF veya görsel yükle,\nkart veya özet üret.',
-                    icon: Icons.bolt,
-                    color: const Color(0xFF0EA5E9),
-                    isPremium: true,
-                    height: 180,
-                    onTap: () => context.push('/ai-hub/content-generator'),
+                  child: KeyedSubtree(
+                    key: _notebookKey,
+                    child: _BentoCard(
+                      title: 'Not\nDefteri',
+                      description: 'PDF veya görsel yükle,\nkart veya özet üret.',
+                      icon: Icons.bolt,
+                      color: const Color(0xFF0EA5E9),
+                      isPremium: true,
+                      height: 180,
+                      onTap: () => context.push('/ai-hub/content-generator'),
+                    ),
                   ),
                 ),
               ],
