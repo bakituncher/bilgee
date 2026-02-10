@@ -2257,7 +2257,6 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
               },
               colorScheme: colorScheme,
               isDark: isDark,
-              isPrimary: true,
             ),
 
             const SizedBox(height: 16),
