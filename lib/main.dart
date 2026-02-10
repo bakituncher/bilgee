@@ -147,8 +147,25 @@ void main() async {
       } catch (_) {}
     }
 
-    // 7. App Check - BU KISIM GÜNCELLENDİ (Main thread'i bloklamaması için aşağıya taşınacak)
-    // Burada sadece RevenueCat gibi UI öncesi kritik olanları await ediyoruz.
+    // 7. App Check (Aktivasyon)
+    // KRİTİK: UI çizilmeden önce SDK'nın 'korumalı moda' geçtiğini bilmesi gerekir.
+    // Bu işlem hafiftir, token istemez, sadece konfigürasyondur.
+    try {
+      if (kDebugMode) debugPrint('[AppCheck] Aktivasyon başlatılıyor...');
+
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+        appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+      );
+
+      await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
+
+      if (kDebugMode) debugPrint('[AppCheck] ✅ Aktive edildi (Ready for UI).');
+    } catch (e) {
+      // App Check başarısız olsa bile uygulama açılmalı, sadece logla.
+      if (kDebugMode) debugPrint('[AppCheck] Aktivasyon hatası: $e');
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'AppCheck Activation Failed', fatal: false);
+    }
 
     // 8. RevenueCat (Abonelik) Başlatma
     // Bu işlem, bildirimlerden gelen premium yönlendirmelerinin
@@ -175,29 +192,19 @@ void main() async {
 
     // 10. Arka Plan İşlemleri (UI bloklamaması için microtask)
     Future.microtask(() async {
-      // --- App Check (Performans İyileştirmesi için Buraya Taşındı) ---
-      try {
-        if (kDebugMode) debugPrint('[AppCheck] Başlatılıyor (Arka Plan)...');
-
-        await FirebaseAppCheck.instance.activate(
-          androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-          appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
-        ).timeout(const Duration(seconds: 5));
-
-        await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
-
-        // Token Warm-up
-        if (!kDebugMode) {
-          try {
-            await FirebaseAppCheck.instance.getToken(false).timeout(const Duration(seconds: 3));
-          } catch (_) {}
+      // --- App Check Token Warm-up ---
+      // Token almak internet işlemi gerektirir (ağır işlem).
+      // Bunu arka plana attık ki Splash ekranı donmasın.
+      if (!kDebugMode) {
+        try {
+          // forceRefresh: false -> Varsa cache kullan
+          await FirebaseAppCheck.instance.getToken(false).timeout(const Duration(seconds: 5));
+          if (kDebugMode) debugPrint('[AppCheck] Token ısındırıldı.');
+        } catch (e) {
+          // İlk token sessizce başarısız olabilir, SDK sonra tekrar dener.
+          if (kDebugMode) debugPrint('[AppCheck] Token warm-up pass: $e');
         }
-        if (kDebugMode) debugPrint('[AppCheck] ✅ Tamamlandı.');
-      } catch (e) {
-        if (kDebugMode) debugPrint('[AppCheck] Hata: $e');
-        FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'AppCheck Failed', fatal: false);
       }
-      // -------------------------------------------------------------
 
       // Tarih formatı
       try {

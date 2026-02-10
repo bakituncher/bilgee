@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taktik/data/providers/premium_provider.dart';
 
-class AiHubWelcomeSheet extends StatefulWidget {
+class AiHubWelcomeSheet extends ConsumerStatefulWidget {
   const AiHubWelcomeSheet({super.key});
 
   @override
-  State<AiHubWelcomeSheet> createState() => _AiHubWelcomeSheetState();
+  ConsumerState<AiHubWelcomeSheet> createState() => _AiHubWelcomeSheetState();
 }
 
-class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
+class _AiHubWelcomeSheetState extends ConsumerState<AiHubWelcomeSheet>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
 
@@ -37,6 +39,23 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
     final textPrimary = isDark ? Colors.white : const Color(0xFF1A1A1A);
     final textSecondary = isDark ? Colors.white60 : Colors.grey.shade600;
     final borderColor = isDark ? Colors.white10 : Colors.grey.shade200;
+
+    // Offerings'i kontrol et ve hasFreeTrial'ı belirle
+    final offeringsAsync = ref.watch(offeringsProvider);
+    final hasFreeTrial = offeringsAsync.when(
+      data: (offerings) {
+        final current = offerings.current;
+        if (current == null || current.availablePackages.isEmpty) return false;
+
+        // Herhangi bir pakette trial varsa, kullanıcı trial'ı kullanmamış demektir
+        // Trial kullanılmışsa hiçbir pakette trial olmaz
+        return current.availablePackages.any(
+          (package) => package.storeProduct.introductoryPrice?.price == 0,
+        );
+      },
+      loading: () => false,
+      error: (_, __) => false,
+    );
 
     return Container(
       padding: EdgeInsets.only(
@@ -209,7 +228,15 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(child: SizedBox()),
+                    Expanded(
+                      child: _FeatureItem(
+                        icon: Icons.bolt,
+                        title: 'Not Defteri',
+                        color: const Color(0xFF0EA5E9),
+                        textColor: textPrimary,
+                        subtitleColor: textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -219,47 +246,48 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
           const SizedBox(height: 20),
 
           // Trial Banner
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF6366F1).withOpacity(isDark ? 0.2 : 0.1),
-                  const Color(0xFF8B5CF6).withOpacity(isDark ? 0.2 : 0.1),
+          if (hasFreeTrial)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF6366F1).withOpacity(isDark ? 0.2 : 0.1),
+                    const Color(0xFF8B5CF6).withOpacity(isDark ? 0.2 : 0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: const Color(0xFF6366F1).withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.verified_outlined,
+                    size: 16,
+                    color: const Color(0xFF10B981),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      '7 gün ücretsiz dene, istediğin zaman iptal et',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: const Color(0xFF6366F1).withOpacity(0.3),
-              ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.verified_outlined,
-                  size: 16,
-                  color: const Color(0xFF10B981),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    '7 gün ücretsiz dene, istediğin zaman iptal et',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
 
-          const SizedBox(height: 20),
+          SizedBox(height: hasFreeTrial ? 20 : 0),
 
           // CTA Button
           AnimatedBuilder(
@@ -287,10 +315,10 @@ class _AiHubWelcomeSheetState extends State<AiHubWelcomeSheet>
                       ),
                     ],
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text(
-                      'Ücretsiz Başla',
-                      style: TextStyle(
+                      hasFreeTrial ? 'Ücretsiz Başla' : 'Hemen Başla',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
