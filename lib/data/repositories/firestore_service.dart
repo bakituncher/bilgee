@@ -23,7 +23,6 @@ import 'package:crypto/crypto.dart' as crypto;
 import 'dart:convert' show utf8;
 import 'package:taktik/shared/notifications/in_app_notification_model.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:taktik/core/app_check/app_check_helper.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore;
@@ -1313,10 +1312,7 @@ class FirestoreService {
       final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
       final callable = functions.httpsCallable('reports-submitQuestionReport');
 
-      // App Check token'ının hazır olduğundan emin ol (çok önemli)
-      await ensureAppCheckTokenReady();
-
-      // Fonksiyonu çağır
+      // App Check SDK otomatik olarak token'ı ekler, manuel çağrı gereksiz!
       await callable.call(payload);
 
       return {'success': true};

@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/quests/models/quest_model.dart';
-import 'package:taktik/core/app_check/app_check_helper.dart';
 import 'package:taktik/features/quests/logic/quest_session_state.dart';
 import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
@@ -71,11 +70,7 @@ class QuestService {
       }
 
       try {
-        // Debug modunda değilsek AppCheck token al (Ön hazırlık)
-        if (!kDebugMode) {
-          await ensureAppCheckTokenReady();
-        }
-
+        // App Check SDK otomatik olarak token'ı ekler
         final functions = _ref.read(functionsProvider);
         final callable = functions.httpsCallable('quests-regenerateDailyQuests');
         final result = await callable.call();
@@ -161,7 +156,7 @@ class QuestService {
       }
 
       try {
-        await ensureAppCheckTokenReady();
+        // App Check SDK otomatik olarak token'ı ekler
         final functions = _ref.read(functionsProvider);
         final callable = functions.httpsCallable('quests-regenerateDailyQuests');
         await callable.call();
@@ -198,12 +193,10 @@ class QuestService {
 
   Future<bool> claimReward(String userId, String questId, {int retryCount = 0}) async {
     try {
+      // App Check SDK otomatik olarak token'ı ekler
       final functions = _ref.read(functionsProvider);
       final callable = functions.httpsCallable('quests-claimQuestReward');
 
-      if (!kDebugMode) {
-        await ensureAppCheckTokenReady();
-      }
 
       await callable.call({'questId': questId});
 

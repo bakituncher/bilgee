@@ -592,8 +592,6 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
       final functions = _ref.read(functionsProvider);
       final callable = functions.httpsCallable('quests-updateProgress');
 
-      // Debug kontrolü - Debug modunda App Check'i atla
-      // if (!kDebugMode) await ensureAppCheckTokenReady();
 
       await callable.call({
         'type': 'focus_duration',
