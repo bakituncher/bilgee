@@ -150,37 +150,18 @@ void main() async {
       } catch (_) {}
     }
 
-    // 7. App Check (Güvenlik) - Smart Hybrid Yöntemi
+    // 7. App Check (Güvenlik) - Google Önerisi
     try {
-      if (kDebugMode) debugPrint('[AppCheck] Başlatılıyor...');
-
       await FirebaseAppCheck.instance.activate(
+        // Android: Debug modda test provider, production'da Play Integrity
         androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+        // iOS/macOS: Debug modda test provider, production'da App Attest
         appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
-      ).timeout(const Duration(seconds: 5));
-
-      await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
-
-      // Token Warm-up: Önce cache dene, olmazsa sunucuya git
-      if (!kDebugMode) {
-        try {
-          await FirebaseAppCheck.instance.getToken(false).timeout(const Duration(seconds: 3));
-        } catch (e) {
-          if (kDebugMode) debugPrint('[AppCheck] Cache fail, forcing refresh...');
-          try {
-            await FirebaseAppCheck.instance.getToken(true).timeout(
-              const Duration(seconds: 4),
-              onTimeout: () => throw TimeoutException('Force refresh timeout'),
-            );
-          } catch (_) {}
-        }
-      } else {
-        await FirebaseAppCheck.instance.getToken(false);
-      }
-      if (kDebugMode) debugPrint('[AppCheck] ✅ Tamamlandı.');
+      );
+      if (kDebugMode) debugPrint('[AppCheck] ✅ Başlatıldı');
     } catch (e) {
-      if (kDebugMode) debugPrint('[AppCheck] Hata: $e');
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'AppCheck Failed');
+      // App Check hatası kritik değil, uygulama çalışmaya devam edebilir
+      if (kDebugMode) debugPrint('[AppCheck] ⚠️ Başlatılamadı: $e');
     }
 
     // 8. RevenueCat (Abonelik) Başlatma
