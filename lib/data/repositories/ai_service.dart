@@ -2,7 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_app_check/firebase_app_check.dart'; // EKLENDİ: Token yenileme için
+import 'package:taktik/core/app_check/app_check_helper.dart'; // Merkezi App Check yönetimi
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/models/exam_model.dart';
@@ -237,7 +237,13 @@ class AiService {
         'temperature': temperature ?? 0.7,
         if (model != null && model.isNotEmpty) 'model': model,
       };
-      final result = await callable.call(payload).timeout(const Duration(seconds: 150));
+
+      // callWithAppCheck wrapper kullanarak çağrı yap
+      // Bu wrapper:
+      // 1. Çağrı öncesi geçerli token olduğundan emin olur
+      // 2. Token expired hatası alırsa otomatik olarak token yenileyip tekrar dener
+      final result = await callWithAppCheck(callable, payload).timeout(const Duration(seconds: 150));
+
       final data = result.data;
       final rawResponse = (data is Map && data['raw'] is String) ? (data['raw'] as String).trim() : '';
       if (rawResponse.isEmpty) {
@@ -255,29 +261,7 @@ class AiService {
       return _enforceToneGuard(_sanitizePlainText(rawResponse));
 
     } on FirebaseFunctionsException catch (e) {
-      // --- APP CHECK HATA YÖNETİMİ ---
-      // "unauthenticated" hatası genellikle App Check token süresinin dolduğunu gösterir.
-      if (e.code == 'unauthenticated' && retryCount < maxRetries) {
-        try {
-          // Token'ı zorla yenile (forceRefresh: true)
-          await FirebaseAppCheck.instance.getToken(true);
-          // Token'ın sunucuya yayılması için kısa bir bekleme
-          await Future.delayed(const Duration(milliseconds: 500));
-
-          // İsteği yeniden dene (retry)
-          return _callGemini(
-              prompt,
-              expectJson: expectJson,
-              temperature: temperature,
-              model: model,
-              requestType: requestType,
-              retryCount: retryCount + 1
-          );
-        } catch (_) {
-          // Yenileme başarısız olursa standart hata akışına devam et
-        }
-      }
-
+      // Rate limit ve diğer hatalar
       final isRateLimit = e.code == 'resource-exhausted' || e.code == 'unavailable' || (e.message?.contains('429') ?? false);
       final isQuotaExceeded = e.message?.contains('limitinize') ?? false;
 

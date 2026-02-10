@@ -1,7 +1,6 @@
 // lib/data/repositories/firestore_service.dart
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:taktik/data/models/user_model.dart';
@@ -685,7 +684,9 @@ class FirestoreService {
     try {
       final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
       final callable = functions.httpsCallable('tests-addTestResult');
-      await callable.call({
+
+      // callWithAppCheck wrapper kullanarak çağrı yap
+      await callWithAppCheck(callable, {
         'testName': test.testName,
         'examType': test.examType.name,
         'sectionName': test.sectionName,
@@ -693,26 +694,8 @@ class FirestoreService {
         'penaltyCoefficient': test.penaltyCoefficient,
         'dateMs': test.date.millisecondsSinceEpoch,
       });
-    } on FirebaseFunctionsException catch (e) {
-      // APP CHECK KORUMASI
-      // Eğer hata "unauthenticated" ise ve daha önce denemediyssek:
-      if (e.code == 'unauthenticated' && retryCount < 1) {
-        try {
-          // Token'ı zorla yenile
-          await FirebaseAppCheck.instance.getToken(true);
-          await Future.delayed(const Duration(milliseconds: 500));
-
-          // Fonksiyonu tekrar çağır (Recursive Retry)
-          return addTestResult(test, retryCount: retryCount + 1);
-        } catch (_) {
-          // Yenileme başarısızsa orijinal hatayı fırlat
-          rethrow;
-        }
-      }
-      // Diğer Firebase fonksiyon hatalarını fırlat
-      rethrow;
     } catch (e) {
-      // Genel hataları fırlat
+      // Hataları fırlat
       rethrow;
     }
   }

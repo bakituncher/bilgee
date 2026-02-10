@@ -1,8 +1,7 @@
 // lib/features/quests/logic/quest_service.dart
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart'; // EKLENDİ: Hata yakalamak için
-import 'package:firebase_app_check/firebase_app_check.dart'; // EKLENDİ: Token yenileme için
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/models/user_model.dart';
@@ -25,10 +24,8 @@ class QuestService {
   bool _inProgress = false;
 
   /// AKILLI İSTEMCİ: Tarih kontrolünü istemcide yapar, sadece gerekirse sunucuyu çağırır.
-  /// retryCount eklendi: App Check hatası durumunda kendini tekrar çağırır.
-  Future<List<Quest>> checkAndRefreshQuests(String userId, {int retryCount = 0}) async {
-    // Retry durumunda _inProgress kilidine takılmamak için kontrol
-    if (_inProgress && retryCount == 0) {
+  Future<List<Quest>> checkAndRefreshQuests(String userId) async {
+    if (_inProgress) {
       return await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(userId);
     }
 
@@ -71,14 +68,11 @@ class QuestService {
       }
 
       try {
-        // Debug modunda değilsek AppCheck token al (Ön hazırlık)
-        if (!kDebugMode) {
-          await ensureAppCheckTokenReady();
-        }
-
         final functions = _ref.read(functionsProvider);
         final callable = functions.httpsCallable('quests-regenerateDailyQuests');
-        final result = await callable.call();
+
+        // callWithAppCheck wrapper kullanarak çağrı yap
+        final result = await callWithAppCheck(callable);
 
         final data = result.data as Map<String, dynamic>?;
 
@@ -94,24 +88,6 @@ class QuestService {
         return refreshedQuests;
 
       } on FirebaseFunctionsException catch (e) {
-        // --- APP CHECK KORUMASI ---
-        if (e.code == 'unauthenticated' && retryCount < 1) {
-          if (kDebugMode) debugPrint('[QuestService] AppCheck token expired, yenileniyor...');
-          try {
-            // Kilidi kaldır ki recursive çağrı çalışabilsin
-            _inProgress = false;
-
-            // Token'ı zorla yenile
-            await FirebaseAppCheck.instance.getToken(true);
-            await Future.delayed(const Duration(milliseconds: 500));
-
-            // Recursive Retry
-            return checkAndRefreshQuests(userId, retryCount: retryCount + 1);
-          } catch (_) {
-            // Yenileme başarısızsa devam et
-          }
-        }
-
         if (kDebugMode) {
           debugPrint('[QuestService] Fonksiyon hatası: ${e.message}');
         }
@@ -127,16 +103,12 @@ class QuestService {
         return currentQuests;
       }
     } finally {
-      // Eğer retry yapıyorsak (ve recursive çağrıdan döndüysek) burası çalışır
-      // Recursive çağrının içinde _inProgress false yapıldığı için burada sorun olmaz
-      if (retryCount == 0) {
-        _inProgress = false;
-      }
+      _inProgress = false;
     }
   }
 
-  Future<List<Quest>> refreshDailyQuestsForUser(UserModel user, {bool force = false, int retryCount = 0}) async {
-    if (_inProgress && retryCount == 0) {
+  Future<List<Quest>> refreshDailyQuestsForUser(UserModel user, {bool force = false}) async {
+    if (_inProgress) {
       return await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(user.id);
     }
     _inProgress = true;
@@ -161,10 +133,11 @@ class QuestService {
       }
 
       try {
-        await ensureAppCheckTokenReady();
         final functions = _ref.read(functionsProvider);
         final callable = functions.httpsCallable('quests-regenerateDailyQuests');
-        await callable.call();
+
+        // callWithAppCheck wrapper kullanarak çağrı yap
+        await callWithAppCheck(callable);
 
         final refreshed = await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(user.id);
         _ref.read(sessionCompletedQuestsProvider.notifier).state = <String>{};
@@ -172,16 +145,6 @@ class QuestService {
         return refreshed;
 
       } on FirebaseFunctionsException catch (e) {
-        // --- APP CHECK KORUMASI ---
-        if (e.code == 'unauthenticated' && retryCount < 1) {
-          try {
-            _inProgress = false; // Kilidi kaldır
-            await FirebaseAppCheck.instance.getToken(true);
-            await Future.delayed(const Duration(milliseconds: 500));
-            return refreshDailyQuestsForUser(user, force: force, retryCount: retryCount + 1);
-          } catch (_) {}
-        }
-
         if (kDebugMode) {
           debugPrint('[QuestService] server generation failed: $e');
         }
@@ -192,37 +155,22 @@ class QuestService {
         return existingQuests;
       }
     } finally {
-      if (retryCount == 0) _inProgress = false;
+      _inProgress = false;
     }
   }
 
-  Future<bool> claimReward(String userId, String questId, {int retryCount = 0}) async {
+  Future<bool> claimReward(String userId, String questId) async {
     try {
       final functions = _ref.read(functionsProvider);
       final callable = functions.httpsCallable('quests-claimQuestReward');
 
-      if (!kDebugMode) {
-        await ensureAppCheckTokenReady();
-      }
-
-      await callable.call({'questId': questId});
+      // callWithAppCheck wrapper kullanarak çağrı yap
+      await callWithAppCheck(callable, {'questId': questId});
 
       _ref.invalidate(optimizedQuestsProvider);
       return true;
 
     } on FirebaseFunctionsException catch (e) {
-      // --- APP CHECK KORUMASI (ÖDÜL İÇİN KRİTİK) ---
-      if (e.code == 'unauthenticated' && retryCount < 1) {
-        if (kDebugMode) debugPrint('[QuestService] Ödül alırken token expired, yenileniyor...');
-        try {
-          await FirebaseAppCheck.instance.getToken(true); // Force Refresh
-          await Future.delayed(const Duration(milliseconds: 500));
-          // Recursive Retry
-          return claimReward(userId, questId, retryCount: retryCount + 1);
-        } catch (_) {
-          // Yenileme hatası
-        }
-      }
 
       if (kDebugMode) {
         debugPrint('Ödül alınırken hata: $e');
