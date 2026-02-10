@@ -220,10 +220,10 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                     ),
                     _ProFeatureRow(
                       theme: theme,
-                      icon: Icons.auto_awesome_rounded,
+                      icon: Icons.bolt,
                       color: const Color(0xFF0EA5E9),
                       title: "Not Defteri",
-                      description: "PDF veya görsel yükle, yapay zeka bilgi kartları, soru kartları veya özet üretsin.",
+                      description: "PDF veya görsel yükle, Taktik bilgi kartları, soru kartları veya özet üretsin.",
                     ),
                   ],
                 ),
