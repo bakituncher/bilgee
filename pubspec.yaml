@@ -2,7 +2,7 @@ name: taktik
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.5.1+52
+version: 1.5.4+55
 
 environment:
   sdk: '>=3.4.1 <4.0.0'
