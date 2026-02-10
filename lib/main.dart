@@ -1,3 +1,7 @@
+// lib/main.dart
+// Rahman ve Rahim olan Allah'ın adıyla
+// Bismilahirrahmanirrahim
+
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
@@ -73,8 +77,8 @@ void main() async {
     try {
       await Hive.initFlutter();
       // Adapter'ları kaydet (TypeID çakışmalarına dikkat edin)
-      Hive.registerAdapter(SavedSolutionAdapter());      // TypeId: 0
-      Hive.registerAdapter(SavedContentAdapter());       // TypeId: 1
+      Hive.registerAdapter(SavedSolutionAdapter());     // TypeId: 0
+      Hive.registerAdapter(SavedContentAdapter());      // TypeId: 1
       Hive.registerAdapter(SavedContentTypeAdapter()); // TypeId: 2
       await Hive.openBox<SavedSolutionModel>('saved_solutions_box');
       await Hive.openBox<SavedContentModel>('saved_content_box');
@@ -91,12 +95,11 @@ void main() async {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       ).timeout(
-        const Duration(seconds: 5),
+        const Duration(seconds: 3),
         onTimeout: () {
           throw TimeoutException('Firebase initialization timeout');
         },
       );
-      if (kDebugMode) debugPrint('[Init] Firebase başlatıldı');
     } catch (e, st) {
       if (kDebugMode) {
         debugPrint('[Init] Firebase başlatılamadı: $e');
@@ -142,29 +145,42 @@ void main() async {
       try {
         await FirebaseAnalytics.instance.setSessionTimeoutDuration(const Duration(minutes: 5));
         await FirebaseAnalytics.instance.logEvent(name: 'debug_app_start', parameters: {
-          'time': DateTime.now().toIso8601String(),
+          'ts': DateTime.now().millisecondsSinceEpoch,
         });
       } catch (_) {}
     }
 
-    // 7. App Check (Aktivasyon)
-    // KRİTİK: UI çizilmeden önce SDK'nın 'korumalı moda' geçtiğini bilmesi gerekir.
-    // Bu işlem hafiftir, token istemez, sadece konfigürasyondur.
+    // 7. App Check (Güvenlik) - Smart Hybrid Yöntemi
     try {
-      if (kDebugMode) debugPrint('[AppCheck] Aktivasyon başlatılıyor...');
+      if (kDebugMode) debugPrint('[AppCheck] Başlatılıyor...');
 
       await FirebaseAppCheck.instance.activate(
         androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
         appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
-      );
+      ).timeout(const Duration(seconds: 5));
 
       await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
 
-      if (kDebugMode) debugPrint('[AppCheck] ✅ Aktive edildi (Ready for UI).');
+      // Token Warm-up: Önce cache dene, olmazsa sunucuya git
+      if (!kDebugMode) {
+        try {
+          await FirebaseAppCheck.instance.getToken(false).timeout(const Duration(seconds: 3));
+        } catch (e) {
+          if (kDebugMode) debugPrint('[AppCheck] Cache fail, forcing refresh...');
+          try {
+            await FirebaseAppCheck.instance.getToken(true).timeout(
+              const Duration(seconds: 4),
+              onTimeout: () => throw TimeoutException('Force refresh timeout'),
+            );
+          } catch (_) {}
+        }
+      } else {
+        await FirebaseAppCheck.instance.getToken(false);
+      }
+      if (kDebugMode) debugPrint('[AppCheck] ✅ Tamamlandı.');
     } catch (e) {
-      // App Check başarısız olsa bile uygulama açılmalı, sadece logla.
-      if (kDebugMode) debugPrint('[AppCheck] Aktivasyon hatası: $e');
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'AppCheck Activation Failed', fatal: false);
+      if (kDebugMode) debugPrint('[AppCheck] Hata: $e');
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'AppCheck Failed');
     }
 
     // 8. RevenueCat (Abonelik) Başlatma
@@ -192,20 +208,6 @@ void main() async {
 
     // 10. Arka Plan İşlemleri (UI bloklamaması için microtask)
     Future.microtask(() async {
-      // --- App Check Token Warm-up ---
-      // Token almak internet işlemi gerektirir (ağır işlem).
-      // Bunu arka plana attık ki Splash ekranı donmasın.
-      if (!kDebugMode) {
-        try {
-          // forceRefresh: false -> Varsa cache kullan
-          await FirebaseAppCheck.instance.getToken(false).timeout(const Duration(seconds: 5));
-          if (kDebugMode) debugPrint('[AppCheck] Token ısındırıldı.');
-        } catch (e) {
-          // İlk token sessizce başarısız olabilir, SDK sonra tekrar dener.
-          if (kDebugMode) debugPrint('[AppCheck] Token warm-up pass: $e');
-        }
-      }
-
       // Tarih formatı
       try {
         await initializeDateFormatting('tr_TR', null).timeout(const Duration(seconds: 2));
