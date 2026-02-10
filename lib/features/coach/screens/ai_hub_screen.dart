@@ -43,10 +43,12 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
   @override
   void didUpdateWidget(AiHubScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Eğer extra değişmişse ve yeni extra'da tur başlatma isteği varsa
-    if (widget.extra != oldWidget.extra &&
-        widget.extra != null &&
-        widget.extra!['startPremiumTour'] == true) {
+    // Tanıtım isteği durumu gerçekten değişmişse (false -> true) tetikle.
+    // Bu sayede rebuild işlemlerinde turun tekrar açılması engellenir.
+    final bool wasRequested = oldWidget.extra?['startPremiumTour'] == true;
+    final bool isRequested = widget.extra?['startPremiumTour'] == true;
+
+    if (isRequested && !wasRequested) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _checkAndStartPremiumTour();
       });
