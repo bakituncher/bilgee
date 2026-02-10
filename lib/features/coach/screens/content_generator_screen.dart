@@ -47,7 +47,6 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isPremium = ref.watch(premiumStatusProvider);
-    final colorScheme = theme.colorScheme;
 
     return PopScope(
       canPop: state.result == null,
@@ -792,76 +791,47 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             ),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Column(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppTheme.secondaryBrandColor.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.quiz_rounded,
-                      color: AppTheme.secondaryBrandColor,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${cards.length} Quiz Sorusu',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                        Text(
-                          'Şıklara tıklayarak cevapla',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colorScheme.onSurface.withOpacity(0.5),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (answeredCount > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppTheme.successBrandColor.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '$correctCount/$answeredCount doğru',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.successBrandColor,
-                        ),
-                      ),
-                    ),
-                  const SizedBox(width: 8),
-                  _buildSaveButton(SavedContentType.quiz),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // İlerleme çubuğu
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: answeredCount / cards.length,
-                  backgroundColor: colorScheme.onSurface.withOpacity(0.1),
-                  valueColor: AlwaysStoppedAnimation(AppTheme.secondaryBrandColor),
-                  minHeight: 6,
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.secondaryBrandColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.quiz_rounded,
+                  color: AppTheme.secondaryBrandColor,
+                  size: 22,
                 ),
               ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${cards.length} Quiz Sorusu',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    Text(
+                      'Şıklara tıklayarak cevapla',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurface.withOpacity(0.5),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              _buildSaveButton(SavedContentType.quiz),
             ],
           ),
         ).animate().fadeIn(duration: 300.ms),
@@ -1497,6 +1467,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
@@ -1528,11 +1499,13 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                       style: TextStyle(
                         fontSize: 12,
                         color: colorScheme.onSurface.withOpacity(0.5),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               // Kaydet butonu
               _buildSaveButton(SavedContentType.flashcard),
             ],
@@ -1750,6 +1723,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
@@ -1781,6 +1755,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                       style: TextStyle(
                         fontSize: 12,
                         color: colorScheme.onSurface.withOpacity(0.5),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
