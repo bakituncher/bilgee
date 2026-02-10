@@ -1,8 +1,7 @@
 // lib/features/quests/logic/quest_service.dart
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart'; // EKLENDİ: Hata yakalamak için
-import 'package:firebase_app_check/firebase_app_check.dart'; // EKLENDİ: Token yenileme için
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taktik/data/models/user_model.dart';
@@ -89,23 +88,7 @@ class QuestService {
         return refreshedQuests;
 
       } on FirebaseFunctionsException catch (e) {
-        // --- APP CHECK KORUMASI ---
-        if (e.code == 'unauthenticated' && retryCount < 1) {
-          if (kDebugMode) debugPrint('[QuestService] AppCheck token expired, yenileniyor...');
-          try {
-            // Kilidi kaldır ki recursive çağrı çalışabilsin
-            _inProgress = false;
-
-            // Token'ı zorla yenile
-            await FirebaseAppCheck.instance.getToken(true);
-            await Future.delayed(const Duration(milliseconds: 500));
-
-            // Recursive Retry
-            return checkAndRefreshQuests(userId, retryCount: retryCount + 1);
-          } catch (_) {
-            // Yenileme başarısızsa devam et
-          }
-        }
+        // App Check SDK otomatik olarak token yenileme ve retry yapar
 
         if (kDebugMode) {
           debugPrint('[QuestService] Fonksiyon hatası: ${e.message}');
@@ -167,15 +150,7 @@ class QuestService {
         return refreshed;
 
       } on FirebaseFunctionsException catch (e) {
-        // --- APP CHECK KORUMASI ---
-        if (e.code == 'unauthenticated' && retryCount < 1) {
-          try {
-            _inProgress = false; // Kilidi kaldır
-            await FirebaseAppCheck.instance.getToken(true);
-            await Future.delayed(const Duration(milliseconds: 500));
-            return refreshDailyQuestsForUser(user, force: force, retryCount: retryCount + 1);
-          } catch (_) {}
-        }
+        // App Check SDK otomatik olarak token yenileme ve retry yapar
 
         if (kDebugMode) {
           debugPrint('[QuestService] server generation failed: $e');
@@ -204,18 +179,7 @@ class QuestService {
       return true;
 
     } on FirebaseFunctionsException catch (e) {
-      // --- APP CHECK KORUMASI (ÖDÜL İÇİN KRİTİK) ---
-      if (e.code == 'unauthenticated' && retryCount < 1) {
-        if (kDebugMode) debugPrint('[QuestService] Ödül alırken token expired, yenileniyor...');
-        try {
-          await FirebaseAppCheck.instance.getToken(true); // Force Refresh
-          await Future.delayed(const Duration(milliseconds: 500));
-          // Recursive Retry
-          return claimReward(userId, questId, retryCount: retryCount + 1);
-        } catch (_) {
-          // Yenileme hatası
-        }
-      }
+      // App Check SDK otomatik olarak token yenileme ve retry yapar
 
       if (kDebugMode) {
         debugPrint('Ödül alınırken hata: $e');

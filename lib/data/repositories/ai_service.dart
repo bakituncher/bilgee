@@ -2,7 +2,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_app_check/firebase_app_check.dart'; // EKLENDİ: Token yenileme için
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/models/exam_model.dart';
@@ -255,28 +254,8 @@ class AiService {
       return _enforceToneGuard(_sanitizePlainText(rawResponse));
 
     } on FirebaseFunctionsException catch (e) {
-      // --- APP CHECK HATA YÖNETİMİ ---
-      // "unauthenticated" hatası genellikle App Check token süresinin dolduğunu gösterir.
-      if (e.code == 'unauthenticated' && retryCount < maxRetries) {
-        try {
-          // Token'ı zorla yenile (forceRefresh: true)
-          await FirebaseAppCheck.instance.getToken(true);
-          // Token'ın sunucuya yayılması için kısa bir bekleme
-          await Future.delayed(const Duration(milliseconds: 500));
-
-          // İsteği yeniden dene (retry)
-          return _callGemini(
-              prompt,
-              expectJson: expectJson,
-              temperature: temperature,
-              model: model,
-              requestType: requestType,
-              retryCount: retryCount + 1
-          );
-        } catch (_) {
-          // Yenileme başarısız olursa standart hata akışına devam et
-        }
-      }
+      // App Check SDK otomatik olarak token yenileme ve retry yapar
+      // Manuel App Check retry gereksizdir
 
       final isRateLimit = e.code == 'resource-exhausted' || e.code == 'unavailable' || (e.message?.contains('429') ?? false);
       final isQuotaExceeded = e.message?.contains('limitinize') ?? false;
