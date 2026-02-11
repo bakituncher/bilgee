@@ -123,14 +123,15 @@ flutter:
     - assets/lotties/
     - .env
 
-  # --- FONT TANIMLAMASI BURAYA EKLENDİ ---
-  fonts:
-    - family: Poppins
-      fonts:
-        # assets/fonts/ klasörüne koyduğunuz varsayılmıştır.
-        # Eğer sadece "fonts" klasörüyse: "fonts/Poppins-Bold.ttf" yapın.
-        - asset: assets/fonts/Poppins-Bold.ttf
-          weight: 700
+fonts:
+  - family: Poppins
+    fonts:
+      - asset: assets/fonts/Poppins-Regular.ttf
+        weight: 400
+      - asset: assets/fonts/Poppins-SemiBold.ttf
+        weight: 600
+      - asset: assets/fonts/Poppins-Bold.ttf
+        weight: 700
 
 # Splash Screen Ayarları
 flutter_native_splash:
