@@ -79,7 +79,10 @@ class AppTheme {
     final isDark = brightness == Brightness.dark;
 
     final baseTextTheme = isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme;
-    final textTheme = GoogleFonts.montserratTextTheme(baseTextTheme).apply(
+
+    // DEĞİŞİKLİK: pubspec.yaml'a Poppins eklediğiniz için burada da Poppins kullanıyoruz.
+    // Bu sayede uygulama internete bağlanmaya çalışmaz, yerel dosyayı kullanır.
+    final textTheme = GoogleFonts.poppinsTextTheme(baseTextTheme).apply(
       bodyColor: textColor,
       displayColor: textColor,
     );
@@ -90,7 +93,8 @@ class AppTheme {
       minimumSize: const Size(double.infinity, 52.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
       elevation: 4.0,
-      textStyle: GoogleFonts.montserrat(fontWeight: FontWeight.w700, fontSize: 16),
+      // DEĞİŞİKLİK: Poppins kullanımı
+      textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
       shadowColor: secondaryBrandColor.withOpacity(0.4),
     );
 
@@ -139,7 +143,8 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.montserrat(
+        // DEĞİŞİKLİK: Poppins kullanımı
+        titleTextStyle: GoogleFonts.poppins(
           fontWeight: FontWeight.bold,
           fontSize: 20,
           color: textColor,
@@ -163,7 +168,8 @@ class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: cardColor.withOpacity(0.95),
-        contentTextStyle: GoogleFonts.montserrat(color: textColor, fontWeight: FontWeight.w600),
+        // DEĞİŞİKLİK: Poppins kullanımı
+        contentTextStyle: GoogleFonts.poppins(color: textColor, fontWeight: FontWeight.w600),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
             side: BorderSide(color: lightSurfaceColor.withOpacity(isDark ? 0.4 : 0.8))
