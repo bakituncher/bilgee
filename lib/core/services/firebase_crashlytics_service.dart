@@ -3,7 +3,6 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 
 /// Firebase Crashlytics servisi
-/// AD_ID izni olmadan çalışacak şekilde yapılandırılmıştır
 class FirebaseCrashlyticsService {
   static final FirebaseCrashlytics _crashlytics = FirebaseCrashlytics.instance;
 

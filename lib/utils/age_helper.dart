@@ -4,7 +4,7 @@ class AgeHelper {
   /// Kullanıcının 18 yaşından küçük olup olmadığını kontrol eder
   static bool isUnder18(DateTime? dateOfBirth) {
     if (dateOfBirth == null) {
-      // Yaş bilgisi yoksa güvenli tarafta kalıp kişiselleştirilmemiş reklam göster
+      // Yaş bilgisi yoksa güvenli tarafta kal
       return true;
     }
 

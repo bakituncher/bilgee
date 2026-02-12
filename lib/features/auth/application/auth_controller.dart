@@ -238,7 +238,7 @@ class AuthController extends StreamNotifier<User?> {
   }
 
   Future<void> signOut() async {
-    // PERFORMANS İYİLEŞTİRMESİ: Yan görevleri (RevenueCat, AdMob) paralel olarak
+    // PERFORMANS İYİLEŞTİRMESİ: Yan görevleri (RevenueCat) paralel olarak
     // çalıştır ve hata vermesin diye güvenli şekilde sar. Kullanıcı deneyimi için
     // bu işlemlerin bitmesini beklemeden Firebase'den hemen çıkış yap.
 
