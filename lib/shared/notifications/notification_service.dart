@@ -5,9 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:intl/intl.dart';
-import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 
 class NotificationService {
   NotificationService._();
