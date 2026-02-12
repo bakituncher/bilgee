@@ -45,15 +45,6 @@
 		<true/>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
-		<key>GADApplicationIdentifier</key>
-		<string>ca-app-pub-3940256099942544~1458002511</string>
-		<key>SKAdNetworkItems</key>
-		<array>
-			<dict>
-				<key>SKAdNetworkIdentifier</key>
-				<string>cstr6suwn9.skadnetwork</string>
-			</dict>
-		</array>
 		<key>GIDClientID</key>
 		<string>718736533578-7ntq2qd56pphf2v96a7th6983ob5slj2.apps.googleusercontent.com</string>
 		<key>CFBundleURLTypes</key>
@@ -77,8 +68,6 @@
 		<string>Uygulama yönetimi ve içerik paylaşımı için görsel seçimi yapmanızı sağlar.</string>
 		<key>NSCameraUsageDescription</key>
 		<string>Soru çözümü için fotoğraf çekmenizi sağlar.</string>
-		<key>NSUserTrackingUsageDescription</key>
-		<string>Bu izin, ilgi alanlarınıza uygun reklamlar gösterebilmemizi sağlar.</string>
 		<key>UIBackgroundModes</key>
 		<array>
 			<string>fetch</string>
