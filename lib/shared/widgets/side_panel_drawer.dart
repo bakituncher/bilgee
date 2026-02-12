@@ -423,13 +423,11 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
         required IconData icon,
         required String title,
         required String route,
-        bool isPremium = false,
         bool showPremiumBadge = false,
       }) {
     final bool selected = currentLocation == route || (route != '/home' && currentLocation.startsWith(route));
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final userIsPremium = ref.watch(premiumStatusProvider);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
@@ -437,19 +435,11 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
         borderRadius: BorderRadius.circular(12),
         onTap: () {
           Navigator.of(context).pop();
-          if (isPremium && !userIsPremium) {
-            if (route == '/library') {
-              context.push('/stats-premium-offer?source=archive');
-            } else {
-              context.go('/stats-premium-offer');
-            }
+          // Ana Panel için go kullan (kök sayfaya dön), diğerleri için push (üzerine ekle)
+          if (route == '/home') {
+            context.go(route);
           } else {
-            // Ana Panel için go kullan (kök sayfaya dön), diğerleri için push (üzerine ekle)
-            if (route == '/home') {
-              context.go(route);
-            } else {
-              context.push(route);
-            }
+            context.push(route);
           }
         },
         child: AnimatedContainer(
