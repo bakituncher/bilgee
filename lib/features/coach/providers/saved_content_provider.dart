@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:taktik/features/coach/models/saved_content_model.dart';
 import 'package:uuid/uuid.dart';
+import 'package:taktik/data/providers/firestore_providers.dart';
+import 'package:taktik/data/repositories/firestore_service.dart';
 
 /// Kaydetme işlemi sonucu
 class SaveResult {
@@ -41,12 +43,33 @@ class SaveProtectionState {
 
 final savedContentProvider =
     StateNotifierProvider<SavedContentNotifier, List<SavedContentModel>>((ref) {
-  return SavedContentNotifier();
+  final user = ref.watch(userProfileProvider).value;
+  final firestoreService = ref.watch(firestoreServiceProvider);
+  return SavedContentNotifier(firestoreService, user?.id);
 });
 
 class SavedContentNotifier extends StateNotifier<List<SavedContentModel>> {
-  SavedContentNotifier() : super([]) {
-    _loadFromHive();
+  final FirestoreService _firestoreService;
+  final String? _userId;
+  StreamSubscription? _subscription;
+
+  SavedContentNotifier(this._firestoreService, this._userId) : super([]) {
+    _init();
+  }
+
+  void _init() {
+    if (_userId == null) return;
+
+    // Firestore'dan verileri canlı dinle
+    _subscription = _firestoreService.getSavedContentsStream(_userId!).listen((items) {
+      state = items;
+    });
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 
   SaveProtectionState _protection = const SaveProtectionState();
@@ -55,20 +78,16 @@ class SavedContentNotifier extends StateNotifier<List<SavedContentModel>> {
   static const int cooldownSeconds = 30;
   static const int maxTotalContents = 100;
 
-  Box<SavedContentModel> get _box => Hive.box<SavedContentModel>('saved_content_box');
-
-  void _loadFromHive() {
-    final list = _box.values.toList();
-    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    state = list;
-  }
-
   String _generateContentHash(String content) {
     final bytes = utf8.encode(content);
     return sha256.convert(bytes).toString().substring(0, 16);
   }
 
   SaveResult _validateSave(SavedContentType type, String contentHash) {
+    if (_userId == null) {
+      return SaveResult(success: false, message: 'Oturum açmalısınız.');
+    }
+
     final now = DateTime.now();
 
     final recentSaves = _protection.recentSaves
@@ -127,6 +146,10 @@ class SavedContentNotifier extends StateNotifier<List<SavedContentModel>> {
     String? examType,
   }) async {
     try {
+      if (_userId == null) {
+        return SaveResult(success: false, message: 'Oturum hatası.');
+      }
+
       final contentHash = _generateContentHash(content);
       final validation = _validateSave(type, contentHash);
       if (!validation.success) return validation;
@@ -142,27 +165,30 @@ class SavedContentNotifier extends StateNotifier<List<SavedContentModel>> {
         examType: examType,
       );
 
-      await _box.add(newContent);
-      _updateProtection(type, contentHash);
-      _loadFromHive();
+      // Firestore'a kaydet
+      await _firestoreService.saveContent(_userId!, newContent);
 
-      return SaveResult(success: true, message: 'Kaydedildi!', savedContent: newContent);
+      _updateProtection(type, contentHash);
+      // Stream zaten state'i güncelleyecek
+
+      return SaveResult(success: true, message: 'Buluta kaydedildi!', savedContent: newContent);
     } catch (e) {
       return SaveResult(success: false, message: 'Hata: $e');
     }
   }
 
   Future<void> deleteContent(SavedContentModel item) async {
-    await item.delete();
-    _loadFromHive();
+    if (_userId == null) return;
+    await _firestoreService.deleteSavedContent(_userId!, item.id);
   }
 
   List<SavedContentModel> getByType(SavedContentType type) =>
       state.where((c) => c.type == type).toList();
 
   Future<void> clearAll() async {
-    await _box.clear();
-    state = [];
+    if (_userId == null) return;
+    await _firestoreService.deleteAllSavedContents(_userId!);
+    // State stream ile güncellenecek
   }
 
   Map<String, dynamic> getStorageStats() => {

@@ -78,10 +78,8 @@ void main() async {
       await Hive.initFlutter();
       // Adapter'ları kaydet (TypeID çakışmalarına dikkat edin)
       Hive.registerAdapter(SavedSolutionAdapter());     // TypeId: 0
-      Hive.registerAdapter(SavedContentAdapter());      // TypeId: 1
-      Hive.registerAdapter(SavedContentTypeAdapter()); // TypeId: 2
+      // SavedContent (TypeId: 1, 2) artık Firestore kullanıyor
       await Hive.openBox<SavedSolutionModel>('saved_solutions_box');
-      await Hive.openBox<SavedContentModel>('saved_content_box');
       if (kDebugMode) debugPrint('[Hive] ✅ Başarıyla başlatıldı');
     } catch (e, st) {
       if (kDebugMode) {

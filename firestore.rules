@@ -148,6 +148,10 @@ service cloud.firestore {
         allow create: if request.auth != null && request.auth.uid == userId;
         allow delete: if request.auth != null && request.auth.uid == userId;
       }
+
+      match /saved_contents/{contentId} {
+        allow read, write: if request.auth.uid == userId;
+      }
     }
 
     // =====================================================================
