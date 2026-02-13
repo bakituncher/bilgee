@@ -987,30 +987,6 @@ class _ProfileAvatarHaloState extends State<_ProfileAvatarHalo> with SingleTicke
                 ...List.generate(10 + (widget.rankIndex * 2).clamp(0, 12), (i) => _SparkParticle(controller: _glowController, index: i, radius: 78, apex: _apexTier)),
             ],
 
-            if (widget.rankIndex >= 4)
-              Positioned(
-                top: 4.0 + (10 - widget.rankIndex).clamp(0,6).toDouble(),
-                child: Opacity(
-                  opacity: (0.35 + (widget.rankIndex * 0.07)).clamp(0.4, 1.0),
-                  child: AnimatedBuilder(
-                    animation: _glowController,
-                    builder: (context, child) {
-                      final scale = _isGlowing
-                          ? 1.0 + (_glowController.value * 0.1)
-                          : 1.0;
-                      return Transform.scale(
-                        scale: scale,
-                        child: child,
-                      );
-                    },
-                    child: Icon(
-                      Icons.workspace_premium_rounded,
-                      color: widget.rankIndex >= 8 ? accentProfile2 : accentProfile1.o(0.9),
-                      size: 26 + (widget.rankIndex * 1.8),
-                    ),
-                  ),
-                ),
-              ),
 
             Positioned.fill(
               child: IgnorePointer(
