@@ -4,10 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
-import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/features/pomodoro/logic/pomodoro_notifier.dart';
-import 'package:taktik/shared/widgets/ad_banner_widget.dart';
-import 'dart:ui' as ui;
 
 class PomodoroStatsView extends ConsumerStatefulWidget {
   const PomodoroStatsView({super.key});

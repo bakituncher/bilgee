@@ -20,12 +20,6 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
-// local.properties dosyasından AdMob App ID'yi oku
-val localProperties = Properties()
-val localPropertiesFile = rootProject.file("local.properties")
-if (localPropertiesFile.exists()) {
-    localProperties.load(FileInputStream(localPropertiesFile))
-}
 
 android {
     namespace = "com.codenzi.taktik"
@@ -52,10 +46,6 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-
-        // AdMob App ID'yi local.properties'den al ve AndroidManifest'e aktar
-        val admobAppId = localProperties.getProperty("admob.app.id") ?: "ca-app-pub-3940256099942544~3347511713"
-        manifestPlaceholders["admobAppId"] = admobAppId
     }
 
     signingConfigs {

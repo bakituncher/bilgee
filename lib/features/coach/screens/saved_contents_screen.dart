@@ -1060,7 +1060,6 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
           ),
           codeblockPadding: const EdgeInsets.all(14),
           code: TextStyle(
-            fontFamily: 'monospace',
             fontSize: 12,
             color: colorScheme.onSurface,
           ),

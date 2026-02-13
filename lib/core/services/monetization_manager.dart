@@ -16,22 +16,16 @@ class MonetizationManager {
   // Keys
   static const String _testSubmissionCountKey = 'monetization_test_count';
   static const String _lessonNetSubmissionCountKey = 'monetization_lesson_net_count';
-  static const String _lastAdShowTimeKey = 'monetization_last_ad_time';
   static const String _lastPaywallShowTimeKey = 'monetization_last_paywall_time';
   static const String _paywallShowCountKey = 'monetization_paywall_count';
-  static const String _adShowCountKey = 'monetization_ad_count';
 
-  // --- GÜNCELLENDİ: STRATEJİ HER 3 İŞLEMDE 1 PAYWALL ---
-  // Geçiş reklamları kaldırıldığı için sadece paywall gösteriyoruz
+  // --- STRATEJİ: HER 3 İŞLEMDE 1 PAYWALL ---
   // 1. işlem: skip
   // 2. işlem: skip
   // 3. işlem: paywall
   static const int _cycleLength = 3;
 
-  // Minimum bekleme süreleri (spam önleme)
-  // Debug'da hızlı test için düşük, prod'da daha korumacı.
-  static const Duration _minAdInterval =
-      kDebugMode ? Duration(seconds: 5) : Duration(seconds: 30);
+  // Minimum bekleme süresi (spam önleme)
   static const Duration _minPaywallInterval =
       kDebugMode ? Duration(seconds: 5) : Duration(minutes: 5);
 
@@ -109,20 +103,6 @@ class MonetizationManager {
     _prefs.setInt(_lessonNetSubmissionCountKey, count);
   }
 
-  /// Reklam gösterilebilir mi kontrol et
-  bool _canShowAd() {
-    if (_disableCooldownForTesting) return true;
-
-    final lastShowTime = _prefs.getInt(_lastAdShowTimeKey);
-    if (lastShowTime == null) return true;
-
-    final lastShow = DateTime.fromMillisecondsSinceEpoch(lastShowTime);
-    final now = DateTime.now();
-    final diff = now.difference(lastShow);
-
-    return diff >= _minAdInterval;
-  }
-
   /// Paywall gösterilebilir mi kontrol et
   bool _canShowPaywall() {
     if (_disableCooldownForTesting) return true;
@@ -135,15 +115,6 @@ class MonetizationManager {
     final diff = now.difference(lastShow);
 
     return diff >= _minPaywallInterval;
-  }
-
-  /// Reklam gösterimini kaydet
-  void _recordAdShow() {
-    final now = DateTime.now().millisecondsSinceEpoch;
-    _prefs.setInt(_lastAdShowTimeKey, now);
-
-    final count = _prefs.getInt(_adShowCountKey) ?? 0;
-    _prefs.setInt(_adShowCountKey, count + 1);
   }
 
   /// Paywall gösterimini kaydet
@@ -160,11 +131,7 @@ class MonetizationManager {
     return MonetizationStats(
       totalTests: _getTestSubmissionCount(),
       totalLessonNets: _getLessonNetSubmissionCount(),
-      adsShown: _prefs.getInt(_adShowCountKey) ?? 0,
       paywallsShown: _prefs.getInt(_paywallShowCountKey) ?? 0,
-      lastAdTime: _prefs.getInt(_lastAdShowTimeKey) != null
-          ? DateTime.fromMillisecondsSinceEpoch(_prefs.getInt(_lastAdShowTimeKey)!)
-          : null,
       lastPaywallTime: _prefs.getInt(_lastPaywallShowTimeKey) != null
           ? DateTime.fromMillisecondsSinceEpoch(_prefs.getInt(_lastPaywallShowTimeKey)!)
           : null,
@@ -175,17 +142,14 @@ class MonetizationManager {
   Future<void> reset() async {
     await _prefs.remove(_testSubmissionCountKey);
     await _prefs.remove(_lessonNetSubmissionCountKey);
-    await _prefs.remove(_lastAdShowTimeKey);
     await _prefs.remove(_lastPaywallShowTimeKey);
     await _prefs.remove(_paywallShowCountKey);
-    await _prefs.remove(_adShowCountKey);
     debugPrint('🔄 Monetization: Stats reset');
   }
 }
 
 /// Monetizasyon aksiyonu
 enum MonetizationAction {
-  showAd,
   showPaywall,
   showNothing,
 }
@@ -194,22 +158,18 @@ enum MonetizationAction {
 class MonetizationStats {
   final int totalTests;
   final int totalLessonNets;
-  final int adsShown;
   final int paywallsShown;
-  final DateTime? lastAdTime;
   final DateTime? lastPaywallTime;
 
   MonetizationStats({
     required this.totalTests,
     required this.totalLessonNets,
-    required this.adsShown,
     required this.paywallsShown,
-    this.lastAdTime,
     this.lastPaywallTime,
   });
 
   @override
   String toString() {
-    return 'MonetizationStats(tests: $totalTests, lessonNets: $totalLessonNets, ads: $adsShown, paywalls: $paywallsShown)';
+    return 'MonetizationStats(tests: $totalTests, lessonNets: $totalLessonNets, paywalls: $paywallsShown)';
   }
 }

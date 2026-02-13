@@ -8,7 +8,6 @@ import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
-import 'package:taktik/data/providers/temporary_access_provider.dart';
 import 'package:taktik/features/stats/widgets/fortress_tab_selector.dart';
 import 'package:taktik/features/stats/widgets/cached_analysis_view.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
@@ -57,61 +56,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
       );
 
   Widget _buildErrorState(String error) => Center(child: Text(error));
-
-  Widget _buildTemporaryAccessBanner(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.secondary.withOpacity(0.2),
-            Theme.of(context).colorScheme.secondary.withOpacity(0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
-          width: 1.5,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.verified_rounded,
-            color: Theme.of(context).colorScheme.secondary,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Geçici Erişim Aktif',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => context.go('/premium'),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Text(
-              'Pro\'ya Geç',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.secondary,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.2, end: 0);
-  }
 
   Widget _buildEmptyState(BuildContext context, {bool isCompletelyEmpty = false, String sectionName = ''}) {
     return Center(
@@ -255,7 +199,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
   @override
   Widget build(BuildContext context) {
     final isPremium = ref.watch(premiumStatusProvider);
-    final hasTemporaryAccess = ref.watch(hasPremiumFeaturesAccessProvider);
 
     // Artık herkes ekrana girebilir - premium kontrol sekme bazında yapılacak
 
@@ -464,9 +407,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
       ),
       body: Column(
         children: [
-          // Geçici erişim banner'ı (sadece premium değilse ve geçici erişimi varsa)
-          if (!isPremium && hasTemporaryAccess)
-            _buildTemporaryAccessBanner(context),
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 350),

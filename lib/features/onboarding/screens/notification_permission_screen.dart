@@ -6,7 +6,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lottie/lottie.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
-import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:taktik/shared/notifications/notification_service.dart';
@@ -45,23 +44,6 @@ class _NotificationPermissionScreenState extends ConsumerState<NotificationPermi
     setState(() => _isLoading = true);
 
     try {
-      // iOS için önce App Tracking Transparency (ATT) iznini iste
-      if (Platform.isIOS) {
-        try {
-          final trackingStatus = await AppTrackingTransparency.trackingAuthorizationStatus;
-
-          if (trackingStatus == TrackingStatus.notDetermined) {
-            await Future.delayed(const Duration(milliseconds: 500));
-            final newStatus = await AppTrackingTransparency.requestTrackingAuthorization();
-
-            if (kDebugMode) {
-              debugPrint('ATT izin durumu: $newStatus');
-            }
-          }
-        } catch (e) {
-          if (kDebugMode) debugPrint('ATT izin talebi hatası: $e');
-        }
-      }
 
       // Bildirim iznini iste
       final settings = await FirebaseMessaging.instance.requestPermission(

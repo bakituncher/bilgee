@@ -3,7 +3,6 @@
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
 
     <application
         android:label="Taktik"
@@ -79,16 +78,15 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
+        <!-- Bildirim ikonu -->
         <meta-data
-            android:name="google_analytics_adid_collection_enabled"
-            android:value="false" />
-        <meta-data
-            android:name="google_analytics_default_allow_ad_personalization_signals"
-            android:value="false" />
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
 
+        <!-- Bildirim rengi (opsiyonel - uygulamanızın ana rengi) -->
         <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="${admobAppId}"/>
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_color" />
     </application>
 
     <queries>

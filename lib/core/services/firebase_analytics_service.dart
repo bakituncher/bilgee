@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Firebase Analytics servisi
-/// AD_ID izni olmadan çalışacak şekilde yapılandırılmıştır
 class FirebaseAnalyticsService {
   static final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
   static NavigatorObserver get observer => CompositeNavigatorObserver([

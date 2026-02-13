@@ -43,7 +43,7 @@ class MotivationQuotesData {
     ('Sabır, amacına ulaşmanın anahtarıdır.', 'Bill Gates'),
     ('Öğrenmek için çok geç yoktur.', 'George Eliot'),
     ('Her sorunun içinde bir çözüm gizlidir.', 'Albert Einstein'),
-    ('Hedeflerinizi yüksek tutun ve durma.', 'Bo Jackson'),
+    ('Hedeflerinizi yüksek tutun ve durmayın.', 'Bo Jackson'),
     ('Başarı, küçük çabaların tekrarıdır.', 'Robert Collier'),
     ('Zeka sabit değildir, geliştirilebilir.', 'Carol Dweck'),
 

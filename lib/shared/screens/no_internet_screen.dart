@@ -1,7 +1,7 @@
-// shared/screens/no_internet_screen.dart
+// lib/shared/screens/no_internet_screen.dart
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart'; // <-- KALDIRILDI
 
 class NoInternetScreen extends StatelessWidget {
   const NoInternetScreen({super.key});
@@ -34,7 +34,9 @@ class NoInternetScreen extends StatelessWidget {
                 // Başlık
                 Text(
                   'İnternet Bağlantısı Yok',
-                  style: GoogleFonts.poppins(
+                  // GoogleFonts yerine TextStyle
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : const Color(0xFF0A0E27),
@@ -47,7 +49,9 @@ class NoInternetScreen extends StatelessWidget {
                 // Açıklama
                 Text(
                   'Taktik uygulamasını kullanabilmek için lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.',
-                  style: GoogleFonts.poppins(
+                  // GoogleFonts yerine TextStyle
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
                     fontSize: 16,
                     color: isDark
                         ? Colors.white.withOpacity(0.7)
@@ -89,7 +93,9 @@ class NoInternetScreen extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         'Bağlantı bekleniyor...',
-                        style: GoogleFonts.poppins(
+                        // GoogleFonts yerine TextStyle
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
                           fontSize: 14,
                           color: isDark
                               ? Colors.white.withOpacity(0.5)
@@ -107,4 +113,3 @@ class NoInternetScreen extends StatelessWidget {
     );
   }
 }
-

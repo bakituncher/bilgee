@@ -9,7 +9,6 @@ import 'package:taktik/features/auth/data/auth_repository.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:flutter/foundation.dart'; // kDebugMode ve debugPrint için
 import '../../../shared/notifications/notification_service.dart';
-import '../../../core/services/admob_service.dart';
 import '../../../core/services/revenuecat_service.dart'; // RevenueCat Service
 
 final authControllerProvider = StreamNotifierProvider<AuthController, User?>(() {
@@ -68,10 +67,7 @@ class AuthController extends StreamNotifier<User?> {
           }
 
           // Premium durumunu kontrol et
-          final isPremium = info.entitlements.active.isNotEmpty;
-
-          // AdMob durumunu güncelle
-          AdMobService().updatePremiumStatus(isPremium);
+          // isPremium değişkeni kullanılmadığı için kaldırıldı
 
           // Sunucu senkronizasyonunu tetikle
           _triggerServerSideSync();
@@ -119,41 +115,6 @@ class AuthController extends StreamNotifier<User?> {
         }
       });
 
-      // --- AdMob & Profil Konfigürasyonu ---
-      // Gecikme (delay) kaldırıldı. Yerine profilin yüklenmesini bekleyen sağlam yapı kuruldu.
-      Future.microtask(() async {
-        try {
-          // Kullanıcı profilini çek
-          // Bu işlem asenkrondur ve tamamlanana kadar bekleriz.
-          // Böylece isPremium flag'inin doğru olduğundan emin oluruz.
-          final userProfile = await ref.read(userProfileProvider.future);
-
-          if (userProfile != null) {
-            // 1. AdMob Premium Durumunu Güncelle (Reklamları aç/kapa)
-            await AdMobService().updatePremiumStatus(userProfile.isPremium);
-
-            // 2. AdMob Yaş Konfigürasyonunu Güncelle
-            await AdMobService().updateUserAgeConfiguration(
-              dateOfBirth: userProfile.dateOfBirth,
-            );
-
-            // Eğer kullanıcı premium değilse ve AdMob hiç başlatılmadıysa başlat.
-            // initialize fonksiyonu içeride isPremium kontrolü yapıyor zaten.
-            await AdMobService().initialize(isPremium: userProfile.isPremium);
-          } else {
-            // Profil yoksa (nadir durum), varsayılan olarak güvenli modda başlat
-            // Ancak premium olup olmadığını bilmediğimiz için reklam göstermeye çalışabilir
-            // Profil yüklenince zaten tekrar güncellenecektir.
-            print("⚠️ Kullanıcı profili null döndü, AdMob varsayılan başlatılıyor.");
-            await AdMobService().initialize(isPremium: false);
-          }
-        } catch (e) {
-          print("AdMob configuration update failed (safe to ignore): $e");
-          // Hata durumunda bile varsayılan reklamları yüklemeyi dene
-          AdMobService().initialize(isPremium: false);
-        }
-      });
-
       // --- ZİYARET KAYDI: user_activity aylık dokümanına yaz ---
       Future.delayed(const Duration(seconds: 2), () async {
         try {
@@ -168,10 +129,6 @@ class AuthController extends StreamNotifier<User?> {
         }
       });
       // ------------------------------------
-    } else {
-      // Kullanıcı oturumu kapalıysa (veya çıkış yaptıysa)
-      // Anonim kullanıcı varsayımıyla reklamları yükle
-      AdMobService().initialize(isPremium: false);
     }
   }
 
@@ -281,7 +238,7 @@ class AuthController extends StreamNotifier<User?> {
   }
 
   Future<void> signOut() async {
-    // PERFORMANS İYİLEŞTİRMESİ: Yan görevleri (RevenueCat, AdMob) paralel olarak
+    // PERFORMANS İYİLEŞTİRMESİ: Yan görevleri (RevenueCat) paralel olarak
     // çalıştır ve hata vermesin diye güvenli şekilde sar. Kullanıcı deneyimi için
     // bu işlemlerin bitmesini beklemeden Firebase'den hemen çıkış yap.
 
@@ -296,9 +253,6 @@ class AuthController extends StreamNotifier<User?> {
 
     // Temizlik işlemlerini paralel başlat (kullanıcıyı bekletmeden)
     final cleanupFuture = Future.wait([
-      safeRun(() async {
-        AdMobService().reset(); // void method, Future içinde çalıştır
-      }),
       safeRun(() => _logOutFromRevenueCat()),
     ]);
 
@@ -313,6 +267,7 @@ class AuthController extends StreamNotifier<User?> {
     // Bu satırı kaldırırsanız daha da hızlı olur, ancak güvenlik için bırakılabilir
     cleanupFuture.catchError((e) {
       if (kDebugMode) debugPrint("Background cleanup error (safe): $e");
+      return []; // List<void> dönmek için boş liste
     });
   }
 

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Bildirim ikonu için kullanılacak renk (uygulamanızın ana rengi) -->
+    <color name="notification_color">#7C3AED</color>
+</resources>
+

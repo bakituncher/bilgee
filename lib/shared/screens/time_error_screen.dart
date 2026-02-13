@@ -1,6 +1,6 @@
 // lib/shared/screens/time_error_screen.dart
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart'; // <-- KALDIRILDI
 import 'package:app_settings/app_settings.dart';
 
 class TimeErrorScreen extends StatelessWidget {
@@ -26,8 +26,9 @@ class TimeErrorScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
                 Text(
-                  'Cihaz Tarihi Yanlış',
-                  style: GoogleFonts.poppins(
+                  'Zaman Hatası',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : const Color(0xFF0A0E27),
@@ -36,16 +37,18 @@ class TimeErrorScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Uygulamayı doğru şekilde kullanabilmeniz için cihaz tarih ve saatinizin güncel olması gerekir. Lütfen ayarlardan otomatiğe alın.',
-                  style: GoogleFonts.poppins(
+                  'Cihazınızın saat ve tarih ayarları yanlış görünüyor. Lütfen ayarlarınızı kontrol edin.',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
                     fontSize: 16,
-                    color: isDark ? Colors.white.withValues(alpha: 0.7)
-                        : Colors.black.withValues(alpha: 0.6),
+                    color: isDark
+                        ? Colors.white.withOpacity(0.7)
+                        : Colors.black.withOpacity(0.6),
                     height: 1.5,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 32),
                 ElevatedButton.icon(
                   onPressed: () {
                     AppSettings.openAppSettings(type: AppSettingsType.date);
@@ -59,9 +62,10 @@ class TimeErrorScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    textStyle: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
+                    textStyle: const TextStyle(
+                      fontFamily: 'Montserrat',
                       fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -73,4 +77,3 @@ class TimeErrorScreen extends StatelessWidget {
     );
   }
 }
-

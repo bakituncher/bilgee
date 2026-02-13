@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart'; // <-- KALDIRILDI
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/data/providers/shared_prefs_provider.dart';
 
@@ -100,9 +100,9 @@ class _PreAuthWelcomeScreenState extends ConsumerState<PreAuthWelcomeScreen>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withValues(alpha: 0.1),
+                    Colors.black.withOpacity(0.1),
                     Colors.transparent,
-                    Colors.black.withValues(alpha: 0.7), // Alt kısımdaki karartma
+                    Colors.black.withOpacity(0.7), // Alt kısımdaki karartma
                     Colors.black,
                   ],
                   stops: const [0.0, 0.4, 0.8, 1.0],
@@ -137,7 +137,9 @@ class _PreAuthWelcomeScreenState extends ConsumerState<PreAuthWelcomeScreen>
                         _AnimatedBrandText(
                           text: 'Taktik',
                           controller: _controller,
-                          textStyle: GoogleFonts.poppins(
+                          // DÜZELTME: GoogleFonts yerine TextStyle
+                          textStyle: const TextStyle(
+                            fontFamily: 'Montserrat',
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -169,6 +171,7 @@ class _PreAuthWelcomeScreenState extends ConsumerState<PreAuthWelcomeScreen>
                             height: 1.1,
                             color: Colors.white,
                             letterSpacing: -0.5,
+                            fontFamily: 'Montserrat', // Font eklendi
                           ),
                           gradientColors: const [Colors.white, Colors.white],
                         ),
@@ -184,6 +187,7 @@ class _PreAuthWelcomeScreenState extends ConsumerState<PreAuthWelcomeScreen>
                             fontSize: 16,
                             height: 1.5,
                             fontWeight: FontWeight.w400,
+                            fontFamily: 'Montserrat', // Font eklendi
                           ),
                         ),
 
@@ -355,7 +359,7 @@ class _PremiumButtonState extends State<_PremiumButton> with SingleTickerProvide
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.4),
+                  color: const Color(0xFF2563EB).withOpacity(0.4), // DÜZELTME: withOpacity
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                   spreadRadius: 0,
@@ -370,20 +374,13 @@ class _PremiumButtonState extends State<_PremiumButton> with SingleTickerProvide
                   AnimatedBuilder(
                     animation: _shimmerController,
                     builder: (context, child) {
-                      // Mantık Değişikliği:
-                      // Animasyonun %80'lik kısmı (ilk 4.8 saniye) boş geçsin (bekleme).
-                      // Sadece son %20'lik kısımda (4.8 sn - 6.0 sn arası) efekt oynasın.
                       const double startPoint = 0.8;
-
                       final double value = _shimmerController.value;
 
-                      // Eğer henüz başlama noktasına gelmediysek (ilk 5 saniye) çizme.
                       if (value < startPoint) {
                         return const SizedBox();
                       }
 
-                      // Değeri 0.8 ile 1.0 arasından -> 0.0 ile 1.0 arasına normalize et
-                      // Böylece animasyon akıcı görünür
                       final double normalizedValue = (value - startPoint) / (1.0 - startPoint);
 
                       return FractionallySizedBox(
@@ -393,7 +390,7 @@ class _PremiumButtonState extends State<_PremiumButton> with SingleTickerProvide
                             gradient: LinearGradient(
                               colors: [
                                 Colors.transparent,
-                                Colors.white.withValues(alpha: 0.15),
+                                Colors.white.withOpacity(0.15), // DÜZELTME: withOpacity
                                 Colors.transparent,
                               ],
                               stops: const [0.0, 0.5, 1.0],
@@ -413,7 +410,7 @@ class _PremiumButtonState extends State<_PremiumButton> with SingleTickerProvide
                     child: InkWell(
                       onTap: widget.onTap,
                       borderRadius: BorderRadius.circular(12),
-                      overlayColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.1)),
+                      overlayColor: WidgetStateProperty.all(Colors.white.withOpacity(0.1)), // DÜZELTME
                       child: Center(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -425,6 +422,7 @@ class _PremiumButtonState extends State<_PremiumButton> with SingleTickerProvide
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                                 letterSpacing: 0.5,
+                                fontFamily: 'Montserrat', // Font eklendi
                               ),
                             ),
                             const SizedBox(width: 8),

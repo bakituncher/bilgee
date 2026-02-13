@@ -42,8 +42,7 @@ dependencies:
   lottie: ^3.1.2
   url_launcher: ^6.3.1
 
-  # Font
-  google_fonts: ^6.2.1
+  # Font (google_fonts kaldırıldı, yerel fontlar eklendi)
   intl: ^0.19.0
   flutter_animate: ^4.5.0
   flutter_svg: ^2.0.10+1
@@ -82,18 +81,12 @@ dependencies:
   # Environment variables for secure API key management
   flutter_dotenv: ^5.1.0
 
-  # Google AdMob
-  google_mobile_ads: ^6.0.0
-
   # In-App Review
   in_app_review: ^2.0.11
 
   # Connectivity
   connectivity_plus: ^6.1.2
   font_awesome_flutter: ^10.12.0
-
-  # App Tracking Transparency (iOS)
-  app_tracking_transparency: ^2.0.4+1
 
   # Image Picker & Compression & AI
   image_picker: ^1.0.7
@@ -122,6 +115,27 @@ flutter:
     - assets/images/
     - assets/lotties/
     - .env
+    - assets/fonts/ # Font klasörünü asset olarak tanıttık
+
+  # Font tanımları
+  fonts:
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/Montserrat-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Montserrat-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/Montserrat-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Montserrat-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Montserrat-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Montserrat-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/Montserrat-Black.ttf
+          weight: 900
 
 # Splash Screen Ayarları
 flutter_native_splash:
@@ -137,11 +151,10 @@ flutter_native_splash:
   color_dark: "#FFFFFF"
   image_dark: assets/images/splash_native.png
 
-# --- EKLENEN KISIM BURASI ---
 # Uygulama İkonu Ayarları
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
   image_path: "assets/images/logo.png"
   min_sdk_android: 21
-  remove_alpha_ios: true # Bu satır App Store şeffaflık hatasını çözer!
+  remove_alpha_ios: true

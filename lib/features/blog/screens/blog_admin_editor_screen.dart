@@ -10,7 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart'; // <-- KALDIRILDI
 import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 class BlogAdminEditorScreen extends ConsumerStatefulWidget {
@@ -667,23 +667,58 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
             child: MarkdownBody(
               data: _contentCtrl.text,
               styleSheet: MarkdownStyleSheet(
-                p: GoogleFonts.montserrat(fontSize: 16, height: 1.65, letterSpacing: .05, color: Theme.of(context).colorScheme.onSurface),
-                h1: GoogleFonts.montserrat(fontSize: 26, fontWeight: FontWeight.w800, height: 1.25),
-                h2: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.w800, height: 1.3),
-                h3: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w700, height: 1.35),
-                h4: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w700, height: 1.4),
+                p: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 16,
+                    height: 1.65,
+                    letterSpacing: .05,
+                    color: Theme.of(context).colorScheme.onSurface
+                ),
+                h1: const TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    height: 1.25
+                ),
+                h2: const TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    height: 1.3
+                ),
+                h3: const TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    height: 1.35
+                ),
+                h4: const TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4
+                ),
                 h1Padding: const EdgeInsets.only(top: 18, bottom: 8),
                 h2Padding: const EdgeInsets.only(top: 16, bottom: 8),
                 h3Padding: const EdgeInsets.only(top: 14, bottom: 6),
                 h4Padding: const EdgeInsets.only(top: 12, bottom: 6),
-                code: GoogleFonts.robotoMono(fontSize: 13.5, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
+                code: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 13.5,
+                    height: 1.5,
+                    color: Theme.of(context).colorScheme.onSurface
+                ),
                 codeblockPadding: const EdgeInsets.all(12),
                 codeblockDecoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3)),
                 ),
-                blockquote: GoogleFonts.montserrat(fontStyle: FontStyle.italic, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                blockquote: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontStyle: FontStyle.italic,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant
+                ),
                 blockquotePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 blockquoteDecoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.08),
