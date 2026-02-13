@@ -34,7 +34,7 @@ class NoInternetScreen extends StatelessWidget {
                 // Başlık
                 Text(
                   'İnternet Bağlantısı Yok',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.montserrat(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : const Color(0xFF0A0E27),
@@ -47,7 +47,7 @@ class NoInternetScreen extends StatelessWidget {
                 // Açıklama
                 Text(
                   'Taktik uygulamasını kullanabilmek için lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.montserrat(
                     fontSize: 16,
                     color: isDark
                         ? Colors.white.withOpacity(0.7)
@@ -89,7 +89,7 @@ class NoInternetScreen extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         'Bağlantı bekleniyor...',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.montserrat(
                           fontSize: 14,
                           color: isDark
                               ? Colors.white.withOpacity(0.5)
@@ -107,4 +107,3 @@ class NoInternetScreen extends StatelessWidget {
     );
   }
 }
-

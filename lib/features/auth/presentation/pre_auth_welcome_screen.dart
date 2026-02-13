@@ -137,7 +137,7 @@ class _PreAuthWelcomeScreenState extends ConsumerState<PreAuthWelcomeScreen>
                         _AnimatedBrandText(
                           text: 'Taktik',
                           controller: _controller,
-                          textStyle: GoogleFonts.poppins(
+                          textStyle: GoogleFonts.montserrat(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,

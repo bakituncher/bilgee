@@ -161,7 +161,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                   // Description
                   Text(
                     'Görüşlerin bizim için çok değerli! 🙏',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.montserrat(
                       fontSize: 15,
                       height: 1.6,
                       color: colorScheme.onSurfaceVariant,
@@ -221,7 +221,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                     ),
                     child: Text(
                       'Şimdi Değil',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.montserrat(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: colorScheme.onSurfaceVariant.withOpacity(0.7),
@@ -287,7 +287,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
               const SizedBox(height: 12),
               Text(
                 label,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.montserrat(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: textColor ?? colorScheme.onSurface,
@@ -391,7 +391,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                   // Description
                   Text(
                     'Görüşünü paylaşarak bize destek olabilirsin! 💙',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.montserrat(
                       fontSize: 15,
                       height: 1.6,
                       color: colorScheme.onSurfaceVariant,
@@ -449,7 +449,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                               const SizedBox(width: 8),
                               Text(
                                 'Mağazada Değerlendir',
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.montserrat(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
@@ -472,7 +472,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                     ),
                     child: Text(
                       'Belki Sonra',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.montserrat(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: colorScheme.onSurfaceVariant.withOpacity(0.7),
@@ -605,10 +605,10 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                         child: TextField(
                           controller: _searchCtrl,
                           textInputAction: TextInputAction.search,
-                          style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500),
+                          style: GoogleFonts.montserrat(fontSize: 15, fontWeight: FontWeight.w500),
                           decoration: InputDecoration(
                             hintText: 'Ara...',
-                            hintStyle: GoogleFonts.poppins(
+                            hintStyle: GoogleFonts.montserrat(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
                               color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
@@ -658,7 +658,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                 child: FilterChip(
                                   label: Text(
                                     label,
-                                    style: GoogleFonts.poppins(
+                                    style: GoogleFonts.montserrat(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                       color: isSelected
@@ -738,7 +738,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                             _query.isEmpty
                                 ? 'Blog yazıları yakında yayınlanacak.'
                                 : 'Farklı bir arama deneyin.',
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.montserrat(
                               fontSize: 14,
                               color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
@@ -804,7 +804,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                     ),
                                     child: Text(
                                       tag,
-                                      style: GoogleFonts.poppins(
+                                      style: GoogleFonts.montserrat(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                         color: Theme.of(context).colorScheme.onSurface,
@@ -922,7 +922,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                                         const SizedBox(width: 4),
                                                         Text(
                                                           '${p.readTime} dk',
-                                                          style: GoogleFonts.poppins(
+                                                          style: GoogleFonts.montserrat(
                                                             color: Colors.white,
                                                             fontSize: 12,
                                                             fontWeight: FontWeight.w600,
@@ -963,7 +963,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                                 p.excerpt!,
                                                 maxLines: 2,
                                                 overflow: TextOverflow.ellipsis,
-                                                style: GoogleFonts.poppins(
+                                                style: GoogleFonts.montserrat(
                                                   fontSize: 14,
                                                   height: 1.5,
                                                   color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -981,7 +981,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                                 const SizedBox(width: 6),
                                                 Text(
                                                   p.publishedAt != null ? dateFmt.format(p.publishedAt!) : '-',
-                                                  style: GoogleFonts.poppins(
+                                                  style: GoogleFonts.montserrat(
                                                     fontSize: 12,
                                                     fontWeight: FontWeight.w500,
                                                     color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.8),
