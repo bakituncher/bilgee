@@ -317,7 +317,7 @@ exports.dispatchInactivityEvening = onSchedule({schedule: "30 20 * * *", timeZon
 });
 
 // ====================================================================================
-// 🔥 YENİ: PREMIUM SATIŞ ODAKLI BİLDİRİM SİSTEMİ (HAFTADA 5 GÜN 21:00) 🔥
+// 🔥 YENİ: PREMIUM SATIŞ ODAKLI BİLDİRİM SİSTEMİ (HAFTADA 5 GÜN 22:00) 🔥
 // (Sadece Premium Olmayanlara, Görselsiz, Yüksek Dönüşümlü)
 // ====================================================================================
 
@@ -329,10 +329,55 @@ exports.dispatchPremiumSalesPush = onSchedule({
 }, async (event) => {
   logger.info('💰 Premium Sales Push Started');
 
-  // Basit rastgele seçim - premium için karmaşık sistem gereksiz
-  const payload = PREMIUM_SALES_MESSAGES[Math.floor(Math.random() * PREMIUM_SALES_MESSAGES.length)];
+  // GÜN BAZLI ÖZELLİK ROTASYONU
+  // Her gün farklı bir özelliği öne çıkararak kullanıcının ilgisini canlı tutuyoruz.
+  // Pazartesi (1) -> Soru Çözücü / Haftalık Plan (Hafta başı planlama)
+  // Salı (2)      -> Etüt Odası / Not Defteri
+  // Çarşamba (3)  -> Zihin Haritası / Taktik Tavşan (Hafta ortası motivasyon)
+  // Cuma (5)      -> Taktik Pro Genel (Hafta sonu fırsatı)
+  // Pazar (0)     -> Haftalık Plan / Soru Çözücü (Yeni hafta hazırlığı)
 
-  logger.info('Premium bildirim seçildi', { title: payload.title });
+  const today = new Date();
+  const dayIndex = today.getDay(); // 0=Pazar, 1=Pazartesi, ...
+
+  // Mesaj havuzunu kategorilere ayıralım (Manuel indeksleme yerine anahtar kelime veya grup bazlı)
+  // PREMIUM_SALES_MESSAGES listesinin sırasına güveniyoruz:
+  // 0-3: Soru Çözücü (4 adet)
+  // 4-7: Etüt Odası (4 adet)
+  // 8-10: Haftalık Plan (3 adet)
+  // 11-13: Not Defteri (3 adet)
+  // 14-16: Zihin Haritası (3 adet)
+  // 17-19: Taktik Tavşan (3 adet)
+  // 20-22: Taktik Pro Genel (3 adet)
+
+  let selectedIndices = [];
+
+  switch (dayIndex) {
+    case 1: // PAZARTESİ: Haftalık Plan & Soru Çözücü (Haftaya hızlı başlangıç)
+      selectedIndices = [0, 1, 2, 3, 8, 9, 10];
+      break;
+    case 2: // SALI: Etüt Odası & Not Defteri (Konu çalışma günü)
+      selectedIndices = [4, 5, 6, 7, 11, 12, 13];
+      break;
+    case 3: // ÇARŞAMBA: Zihin Haritası & Taktik Tavşan (Hafta ortası toparlama)
+      selectedIndices = [14, 15, 16, 17, 18, 19];
+      break;
+    case 5: // CUMA: Taktik Pro Genel (Hafta sonu çalışma kampı öncesi)
+      selectedIndices = [20, 21, 22];
+      break;
+    case 0: // PAZAR: Haftalık Plan & Taktik Tavşan (Yeni hafta motivasyonu)
+      selectedIndices = [8, 9, 10, 17, 18, 19];
+      break;
+    default:
+      // Diğer günler (eğer tetiklenirse) genel havuz
+      selectedIndices = [20, 21, 22];
+  }
+
+  // Günün havuzundan rastgele bir mesaj seç
+  const randomIndex = selectedIndices[Math.floor(Math.random() * selectedIndices.length)];
+  const payload = PREMIUM_SALES_MESSAGES[randomIndex] || PREMIUM_SALES_MESSAGES[0];
+
+  logger.info('Premium bildirim seçildi', { title: payload.title, day: dayIndex });
 
   const baseMessage = {
     notification: { title: payload.title, body: payload.body },
