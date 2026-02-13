@@ -22,6 +22,7 @@ import 'package:crypto/crypto.dart' as crypto;
 import 'dart:convert' show utf8;
 import 'package:taktik/shared/notifications/in_app_notification_model.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:taktik/features/coach/models/saved_content_model.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore;
@@ -711,7 +712,7 @@ class FirestoreService {
     return qs.docs.map((d) => TestModel.fromSnapshot(d as DocumentSnapshot<Map<String, dynamic>>)).toList();
   }
 
-  // YENI: Herhangi bir kullanıcının testlerini sayfalı olarak getir (public profile streak gibi yerlerde kullanılır)
+  // YENİ: Herhangi bir kullanıcının testlerini sayfalı olarak getir (public profile streak gibi yerlerde kullanılır)
   Future<List<TestModel>> getTestResultsPaginatedForUser(String userId, {DocumentSnapshot? lastVisible, int limit = 120}) async {
     Query query = _testsCollection
         .where('userId', isEqualTo: userId)
@@ -842,7 +843,7 @@ class FirestoreService {
     await updateEngagementScore(session.userId, 25);
   }
 
-  // YENI: Pomodoro seansını ve ilgili istatistikleri tek atomik işlemde kaydet
+  // YENİ: Pomodoro seansını ve ilgili istatistikleri tek atomik işlemde kaydet
   Future<void> recordFocusSessionAndStats(FocusSessionModel session) async {
     final statsRef = _userStatsDoc(session.userId);
     final newSessionRef = _focusSessionsCollection.doc();
@@ -1120,7 +1121,7 @@ class FirestoreService {
     }
   }
 
-  // YENI: Belirli tarih aralığında günlük odak dakikalarını oku (user_activity)
+  // YENİ: Belirli tarih aralığında günlük odak dakikalarını oku (user_activity)
   Future<Map<String, int>> getFocusMinutesInRange(String userId, {required DateTime start, required DateTime end}) async {
     final startDay = DateTime(start.year, start.month, start.day);
     final endNextDay = DateTime(end.year, end.month, end.day).add(const Duration(days: 1));
@@ -1627,5 +1628,45 @@ class FirestoreService {
       }
       return sum;
     });
+  }
+
+  // === NOT DEFTERİ (SAVED CONTENT) ===
+
+  /// İçeriği kaydeder (Add veya Update)
+  Future<void> saveContent(String userId, SavedContentModel content) async {
+    final col = usersCollection.doc(userId).collection('saved_contents');
+    await col.doc(content.id).set(content.toMap());
+  }
+
+  /// İçeriği siler
+  Future<void> deleteSavedContent(String userId, String contentId) async {
+    await usersCollection
+        .doc(userId)
+        .collection('saved_contents')
+        .doc(contentId)
+        .delete();
+  }
+
+  /// Tüm içerikleri siler
+  Future<void> deleteAllSavedContents(String userId) async {
+    final col = usersCollection.doc(userId).collection('saved_contents');
+    final qs = await col.get();
+    final batch = _firestore.batch();
+    for (final doc in qs.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
+
+  /// Saved Contents stream
+  Stream<List<SavedContentModel>> getSavedContentsStream(String userId) {
+    return usersCollection
+        .doc(userId)
+        .collection('saved_contents')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((qs) => qs.docs
+            .map((d) => SavedContentModel.fromMap(d.data()))
+            .toList());
   }
 }

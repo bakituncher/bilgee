@@ -1,4 +1,4 @@
-import 'package:hive/hive.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Kaydedilebilecek içerik türleri
 enum SavedContentType {
@@ -8,8 +8,7 @@ enum SavedContentType {
 }
 
 /// Kaydedilen içerik modeli - Quiz, Flashcard ve Özet için ortak
-/// TypeId: 1 -> Veritabanı kimliği (SavedSolutionModel = 0)
-class SavedContentModel extends HiveObject {
+class SavedContentModel {
   final String id;
   final SavedContentType type;
   final String title;           // İçerik başlığı
@@ -29,6 +28,37 @@ class SavedContentModel extends HiveObject {
     this.subject,
     this.examType,
   });
+
+  /// Firestore için Map dönüşümü
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'type': type.name, // Enum -> String
+      'title': title,
+      'content': content,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'contentHash': contentHash,
+      'subject': subject,
+      'examType': examType,
+    };
+  }
+
+  /// Firestore'dan Model dönüşümü
+  factory SavedContentModel.fromMap(Map<String, dynamic> map) {
+    return SavedContentModel(
+      id: map['id'] ?? '',
+      type: SavedContentType.values.firstWhere(
+        (e) => e.name == map['type'],
+        orElse: () => SavedContentType.summary,
+      ),
+      title: map['title'] ?? '',
+      content: map['content'] ?? '',
+      createdAt: (map['createdAt'] as Timestamp).toDate(),
+      contentHash: map['contentHash'] ?? '',
+      subject: map['subject'],
+      examType: map['examType'],
+    );
+  }
 
   /// Kopyalama metodu
   SavedContentModel copyWith({
@@ -51,53 +81,5 @@ class SavedContentModel extends HiveObject {
       subject: subject ?? this.subject,
       examType: examType ?? this.examType,
     );
-  }
-}
-
-/// Hive Adaptörü - SavedContentModel için
-class SavedContentAdapter extends TypeAdapter<SavedContentModel> {
-  @override
-  final int typeId = 1;
-
-  @override
-  SavedContentModel read(BinaryReader reader) {
-    return SavedContentModel(
-      id: reader.read(),
-      type: SavedContentType.values[reader.read()],
-      title: reader.read(),
-      content: reader.read(),
-      createdAt: DateTime.fromMillisecondsSinceEpoch(reader.read()),
-      contentHash: reader.read(),
-      subject: reader.read(),
-      examType: reader.read(),
-    );
-  }
-
-  @override
-  void write(BinaryWriter writer, SavedContentModel obj) {
-    writer.write(obj.id);
-    writer.write(obj.type.index);
-    writer.write(obj.title);
-    writer.write(obj.content);
-    writer.write(obj.createdAt.millisecondsSinceEpoch);
-    writer.write(obj.contentHash);
-    writer.write(obj.subject);
-    writer.write(obj.examType);
-  }
-}
-
-/// SavedContentType için Hive Adaptörü
-class SavedContentTypeAdapter extends TypeAdapter<SavedContentType> {
-  @override
-  final int typeId = 2;
-
-  @override
-  SavedContentType read(BinaryReader reader) {
-    return SavedContentType.values[reader.read()];
-  }
-
-  @override
-  void write(BinaryWriter writer, SavedContentType obj) {
-    writer.write(obj.index);
   }
 }

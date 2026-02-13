@@ -50,14 +50,32 @@ const GENERAL_MESSAGES = [
 
   // 🍅 POMODORO - Odaklanma (Düşük oran - sadece 2 mesaj)
   { title: 'Sadece 25 dakika, söz! 🍅', body: 'Bir pomodoro aç, odaklan. Mola zamanı gelince haber veririm!', route: '/home/pomodoro' },
-  { title: 'Telefonla savaşmak zor, biliyorum 📱', body: 'Pomodoro sayacını aç, 25 dakika sadece çalışmaya odaklan!', route: '/home/pomodoro' }
+  { title: 'Telefonla savaşmak zor, biliyorum 📱', body: 'Pomodoro sayacını aç, 25 dakika sadece çalışmaya odaklan!', route: '/home/pomodoro' },
+
+  // 📝 NOT DEFTERİ & ÖZET ÇIKARICI - /ai-hub
+  { title: 'Uzun uzun okumaya üşeniyor musun? 😴', body: 'Sayfanın fotoğrafını çek, Taktik Tavşan senin için özetlesin! Hem de saniyeler içinde.', route: '/ai-hub' },
+  { title: 'Ders notların çok mu karışık? 📚', body: 'Fotoğrafı yükle, senin için düzenleyip "hap bilgi" haline getireyim. Denemeye değer!', route: '/ai-hub' },
+  { title: 'Otobüste, yolda konu tekrarı yap! 🚌', body: 'Tüm notlarını PDF yap, Taktik sana özet çıkarsın. Sınav öncesi hayat kurtarır.', route: '/ai-hub' },
+  { title: 'Soru değil, konu eksiğin mi var? 📝', body: 'Kitabın o sayfasını çek, sana özel çalışma kartları hazırlayayım. Ezberlemek artık çok kolay.', route: '/ai-hub' },
+
+  // 🧠 ZİHİN HARİTASI - /ai-hub
+  { title: 'Bu konu kafanı mı karıştırdı? 🤯', body: 'Tek tıkla Zihin Haritası oluştur! Konunun büyük resmini gör, bağlantıları kaçırma.', route: '/ai-hub' },
+  { title: 'Görsel hafızanla fark at! 👁️', body: 'Karmaşık sözel konuları şemalarla öğren. Zihin Haritası ile unutmaya son!', route: '/ai-hub' },
+  { title: 'Tarih, Biyoloji, Edebiyat... 🌿', body: 'Hangi konu nereye bağlanıyor? Zihin Haritasını çıkar, bulmaca çözer gibi öğren.', route: '/ai-hub' },
+  { title: 'Ezber yapma, mantığını kavra! 🧩', body: 'Konuyu söyle, sana tüm detaylarıyla haritasını çizeyim. Kalıcı öğrenmenin sırrı bu.', route: '/ai-hub' },
+
+  // 🐰 TAKTİK TAVŞAN & MOTİVASYON - /ai-hub
+  { title: 'Kanka naber? Nasılsın? 🐰', body: 'Canın sıkkınsa içine atma. Ben buradayım, seni dinlemeye hazırım.', route: '/ai-hub' },
+  { title: 'Ders çalışmak zor geliyor mu? 🛑', body: 'Bazen hiç için gelmez, çok normal. Gel biraz mola verelim, konuşup rahatlayalım.', route: '/ai-hub' },
+  { title: 'Kafan çok mu dolu? 🤯', body: 'Sınav, dersler, gelecek kaygısı... Hepsini konuşabiliriz. Yalnız hissetme, ben yanındayım.', route: '/ai-hub' },
+  { title: 'Mola verdiysen bi çayını al gel ☕', body: 'Biraz kafa dağıtmak iyi gelir. Dersten uzaklaş, kafanı toparla, sonra daha sağlam devam edersin.', route: '/ai-hub' }
 ];
 
 // ---- 2. YÜKSEK DÖNÜŞÜMLÜ PREMIUM SATIŞ MESAJLARI (Stratejik & Samimi) ----
-// Pazar, Çarşamba, Cuma 22:00'de sadece Premium olmayanlara gidecek.
-// AIHub özellikleri odaklı: Soru Çözücü, Etüt Odası, Haftalık Plan Yapıcı
+// Haftanın 5 günü (Ptesi, Salı, Çarşamba, Cuma, Pazar) 21:00'de sadece Premium olmayanlara gidecek.
+// AIHub Odaklı: Soru Çözücü, Etüt Odası, Haftalık Plan, Not Defteri, Zihin Haritası, Taktik Tavşan
 const PREMIUM_SALES_MESSAGES = [
-  // 📸 SORU ÇÖZÜCÜ - Fotoğraf çek, anında çözüm al
+  // 📸 SORU ÇÖZÜCÜ
   {
     title: 'Takıldığın soru mu var? 📸',
     body: 'Fotoğrafını çek, saniyeler içinde adım adım çözümünü gör! Artık hiçbir soru çözümsüz kalmayacak.',
@@ -118,6 +136,57 @@ const PREMIUM_SALES_MESSAGES = [
     route: '/ai-hub'
   },
 
+  // 📝 NOT DEFTERİ - Sadece kayıt değil, Taktik Dönüşüm!
+  {
+    title: 'Kitap okumaya üşeniyor musun? 📸',
+    body: 'Sayfanın fotoğrafını çek, Taktik Tavşan senin için özetini çıkarsın ve test sorusu hazırlasın! Taktik Pro ile ders çalışmak bu kadar kolay.',
+    route: '/ai-hub'
+  },
+  {
+    title: 'Not çıkarmakla vakit kaybetme ⏳',
+    body: 'Ders notunun fotoğrafını yükle, saniyeler içinde bilgi kartlarına ve özetlere dönüşsün. Taktik Pro senin yerine halleder!',
+    route: '/ai-hub'
+  },
+  {
+    title: 'Sınav öncesi hayat kurtarıcı! 🆘',
+    body: 'Tüm notlarını PDF olarak yükle, Taktik sana "hap bilgiler" çıkarsın. Taktik Pro ile 1 saatlik dersi 10 dakikada tekrar et.',
+    route: '/ai-hub'
+  },
+
+  // 🧠 ZİHİN HARİTASI - Karmaşıklığı Giderecek Çözüm
+  {
+    title: 'Kafan mı karıştı? 🤯',
+    body: 'Tarih, Biyoloji, Edebiyat... Karmaşık konuları tek tıkla Zihin Haritasına dönüştür. Görsel hafızanla tek seferde kap!',
+    route: '/ai-hub'
+  },
+  {
+    title: 'Ezber yapma, mantığını gör! 👁️',
+    body: 'Konuyu Taktik\'e söyle, sana tüm bağlantıları şematize etsin. Taktik Pro ile dersler artık bulmaca gibi keyifli.',
+    route: '/ai-hub'
+  },
+  {
+    title: 'Ders çalışırken kaybolma 🗺️',
+    body: 'Hangi konu nereye bağlanıyor? Zihin Haritası ile büyük resmi gör. Pro\'ya geç, kuşbakışı çalış!',
+    route: '/ai-hub'
+  },
+
+  // 🐰 TAKTİK TAVŞAN - 7/24 Çalışma Arkadaşın
+  {
+    title: 'Canın mı sıkkın? Motivasyonun mu düştü? 🐰',
+    body: 'Taktik Tavşan seni yargılamadan dinler ve tam destek olur! Sadece bir uygulama değil, senin en iyi çalışma kankan.',
+    route: '/ai-hub'
+  },
+  {
+    title: 'Bugün hiç çalışasın yok mu? 🛑',
+    body: 'Gel bi konuşalım, sana özel 5 dakikalık "başlangıç taktiği" vereyim. Ertelemeyi bırak, beraber halledelim!',
+    route: '/ai-hub'
+  },
+  {
+    title: 'Kafana takılan bi şey mi var? 💡',
+    body: 'Gecenin 3\'ünde bile sınav stresini, planlama derdini konuşabileceğin tek kankan. Taktik Pro ile Tavşan hep yanında.',
+    route: '/ai-hub'
+  },
+
   // 🐰 TAKTİK PRO GENEL
   {
     title: 'Taktik Pro\'yu 7 gün bedava dene! 🐰',
@@ -131,7 +200,7 @@ const PREMIUM_SALES_MESSAGES = [
   },
   {
     title: 'Bu yolda yalnız değilsin! 💪',
-    body: 'Soru çözümünden haftalık plana, sınav koçun olarak hep yanındayım.',
+    body: 'Soru çözümünden haftalık plana, sınav kankan olarak hep yanındayım.',
     route: '/premium'
   }
 ];
@@ -189,7 +258,10 @@ const MESSAGE_CATEGORIES = {
   istatistik: [17, 18, 19, 20, 21],  // 5 mesaj - /home/stats, /stats/overview
   arsiv: [22, 23],                   // 2 mesaj - /library
   soru_kutusu: [24, 25],             // 2 mesaj - /question-box
-  pomodoro: [26, 27]                 // 2 mesaj - /home/pomodoro
+  pomodoro: [26, 27],                // 2 mesaj - /home/pomodoro
+  not_defteri: [28, 29, 30, 31],     // 4 mesaj - YENİ
+  zihin_haritasi: [32, 33, 34, 35],  // 4 mesaj - YENİ
+  taktik_tavsan: [36, 37, 38, 39]    // 4 mesaj - YENİ
 };
 
 // Kategori döngü sırası - her slotId için farklı başlangıç
@@ -203,6 +275,9 @@ const CATEGORY_ORDER = [
   'arsiv',          // 5
   'soru_kutusu',    // 6
   'pomodoro',       // 7
+  'not_defteri',    // 8
+  'zihin_haritasi', // 9
+  'taktik_tavsan'   // 10
 ];
 
 // Tarihe ve slot'a göre dengeli bildirim seç
@@ -266,22 +341,67 @@ exports.dispatchInactivityEvening = onSchedule({schedule: "30 20 * * *", timeZon
 });
 
 // ====================================================================================
-// 🔥 YENİ: PREMIUM SATIŞ ODAKLI BİLDİRİM SİSTEMİ (PAZAR, ÇARŞAMBA, CUMA 22:00) 🔥
+// 🔥 YENİ: PREMIUM SATIŞ ODAKLI BİLDİRİM SİSTEMİ (HAFTADA 5 GÜN 22:00) 🔥
 // (Sadece Premium Olmayanlara, Görselsiz, Yüksek Dönüşümlü)
 // ====================================================================================
 
 exports.dispatchPremiumSalesPush = onSchedule({
-  schedule: "0 22 * * 0,3,5",
+  schedule: "0 22 * * 1,2,3,5,0", // Pazartesi, Salı, Çarşamba, Cuma, Pazar (Haftada 5 gün)
   timeZone: "Europe/Istanbul",
   timeoutSeconds: 540,
   memory: "1GiB"
 }, async (event) => {
   logger.info('💰 Premium Sales Push Started');
 
-  // Basit rastgele seçim - premium için karmaşık sistem gereksiz
-  const payload = PREMIUM_SALES_MESSAGES[Math.floor(Math.random() * PREMIUM_SALES_MESSAGES.length)];
+  // GÜN BAZLI ÖZELLİK ROTASYONU
+  // Her gün farklı bir özelliği öne çıkararak kullanıcının ilgisini canlı tutuyoruz.
+  // Pazartesi (1) -> Soru Çözücü / Haftalık Plan (Hafta başı planlama)
+  // Salı (2)      -> Etüt Odası / Not Defteri
+  // Çarşamba (3)  -> Zihin Haritası / Taktik Tavşan (Hafta ortası motivasyon)
+  // Cuma (5)      -> Taktik Pro Genel (Hafta sonu fırsatı)
+  // Pazar (0)     -> Haftalık Plan / Soru Çözücü (Yeni hafta hazırlığı)
 
-  logger.info('Premium bildirim seçildi', { title: payload.title });
+  const today = new Date();
+  const dayIndex = today.getDay(); // 0=Pazar, 1=Pazartesi, ...
+
+  // Mesaj havuzunu kategorilere ayıralım (Manuel indeksleme yerine anahtar kelime veya grup bazlı)
+  // PREMIUM_SALES_MESSAGES listesinin sırasına güveniyoruz:
+  // 0-3: Soru Çözücü (4 adet)
+  // 4-7: Etüt Odası (4 adet)
+  // 8-10: Haftalık Plan (3 adet)
+  // 11-13: Not Defteri (3 adet)
+  // 14-16: Zihin Haritası (3 adet)
+  // 17-19: Taktik Tavşan (3 adet)
+  // 20-22: Taktik Pro Genel (3 adet)
+
+  let selectedIndices = [];
+
+  switch (dayIndex) {
+    case 1: // PAZARTESİ: Haftalık Plan & Soru Çözücü (Haftaya hızlı başlangıç)
+      selectedIndices = [0, 1, 2, 3, 8, 9, 10];
+      break;
+    case 2: // SALI: Etüt Odası & Not Defteri (Konu çalışma günü)
+      selectedIndices = [4, 5, 6, 7, 11, 12, 13];
+      break;
+    case 3: // ÇARŞAMBA: Zihin Haritası & Taktik Tavşan (Hafta ortası toparlama)
+      selectedIndices = [14, 15, 16, 17, 18, 19];
+      break;
+    case 5: // CUMA: Taktik Pro Genel (Hafta sonu çalışma kampı öncesi)
+      selectedIndices = [20, 21, 22];
+      break;
+    case 0: // PAZAR: Haftalık Plan & Taktik Tavşan (Yeni hafta motivasyonu)
+      selectedIndices = [8, 9, 10, 17, 18, 19];
+      break;
+    default:
+      // Diğer günler (eğer tetiklenirse) genel havuz
+      selectedIndices = [20, 21, 22];
+  }
+
+  // Günün havuzundan rastgele bir mesaj seç
+  const randomIndex = selectedIndices[Math.floor(Math.random() * selectedIndices.length)];
+  const payload = PREMIUM_SALES_MESSAGES[randomIndex] || PREMIUM_SALES_MESSAGES[0];
+
+  logger.info('Premium bildirim seçildi', { title: payload.title, day: dayIndex });
 
   const baseMessage = {
     notification: { title: payload.title, body: payload.body },
