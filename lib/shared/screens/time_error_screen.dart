@@ -1,6 +1,6 @@
 // lib/shared/screens/time_error_screen.dart
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart'; // <-- KALDIRILDI
 import 'package:app_settings/app_settings.dart';
 
 class TimeErrorScreen extends StatelessWidget {
@@ -27,7 +27,8 @@ class TimeErrorScreen extends StatelessWidget {
                 const SizedBox(height: 32),
                 Text(
                   'Zaman Hatası',
-                  style: GoogleFonts.montserrat(
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : const Color(0xFF0A0E27),
@@ -37,7 +38,8 @@ class TimeErrorScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(
                   'Cihazınızın saat ve tarih ayarları yanlış görünüyor. Lütfen ayarlarınızı kontrol edin.',
-                  style: GoogleFonts.montserrat(
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
                     fontSize: 16,
                     color: isDark
                         ? Colors.white.withOpacity(0.7)
@@ -60,7 +62,8 @@ class TimeErrorScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    textStyle: GoogleFonts.montserrat(
+                    textStyle: const TextStyle(
+                      fontFamily: 'Montserrat',
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),

@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart'; // <-- KALDIRILDI
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
@@ -70,7 +70,15 @@ class BlogDetailScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: Text('Blog', style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.w700)),
+        // GoogleFonts yerine TextStyle
+        title: const Text(
+            'Blog',
+            style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 20,
+                fontWeight: FontWeight.w700
+            )
+        ),
         automaticallyImplyLeading: true,
         leading: CustomBackButton(
           onPressed: () {
@@ -119,7 +127,9 @@ class BlogDetailScreen extends ConsumerWidget {
             ),
             child: Text(
               t,
-              style: GoogleFonts.montserrat(
+              // GoogleFonts yerine TextStyle
+              style: TextStyle(
+                fontFamily: 'Montserrat',
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -209,7 +219,9 @@ class BlogDetailScreen extends ConsumerWidget {
                             ),
                           Text(
                             post.title,
-                            style: GoogleFonts.montserrat(
+                            // GoogleFonts yerine TextStyle
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
                               fontSize: 28,
                               height: 1.15,
                               fontWeight: FontWeight.w900,
@@ -254,7 +266,9 @@ class BlogDetailScreen extends ConsumerWidget {
                                     children: [
                                       Text(
                                         'Taktik Ekibi',
-                                        style: GoogleFonts.montserrat(
+                                        // GoogleFonts yerine TextStyle
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
                                           fontWeight: FontWeight.w600,
                                           fontSize: 14,
                                           color: Theme.of(context).colorScheme.onSurface,
@@ -266,7 +280,9 @@ class BlogDetailScreen extends ConsumerWidget {
                                           if (post.publishedAt != null) dateFmt.format(post.publishedAt!),
                                           if (post.readTime != null) '${post.readTime} dk okuma'
                                         ].join(' • '),
-                                        style: GoogleFonts.montserrat(
+                                        // GoogleFonts yerine TextStyle
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
                                           fontSize: 12,
                                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                                         ),
@@ -289,31 +305,36 @@ class BlogDetailScreen extends ConsumerWidget {
                   child: MarkdownBody(
                     data: post.contentMarkdown,
                     styleSheet: MarkdownStyleSheet(
-                      p: GoogleFonts.montserrat(
+                      p: TextStyle(
+                        fontFamily: 'Montserrat',
                         fontSize: 16,
                         height: 1.75,
                         letterSpacing: 0.2,
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
-                      h1: GoogleFonts.montserrat(
+                      h1: const TextStyle(
+                        fontFamily: 'Montserrat',
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
                         height: 1.2,
                         letterSpacing: -0.5,
                       ),
-                      h2: GoogleFonts.montserrat(
+                      h2: const TextStyle(
+                        fontFamily: 'Montserrat',
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
                         height: 1.25,
                         letterSpacing: -0.3,
                       ),
-                      h3: GoogleFonts.montserrat(
+                      h3: const TextStyle(
+                        fontFamily: 'Montserrat',
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                         height: 1.3,
                         letterSpacing: -0.2,
                       ),
-                      h4: GoogleFonts.montserrat(
+                      h4: const TextStyle(
+                        fontFamily: 'Montserrat',
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         height: 1.35,
@@ -322,7 +343,8 @@ class BlogDetailScreen extends ConsumerWidget {
                       h2Padding: const EdgeInsets.only(top: 20, bottom: 10),
                       h3Padding: const EdgeInsets.only(top: 18, bottom: 8),
                       h4Padding: const EdgeInsets.only(top: 16, bottom: 8),
-                      code: GoogleFonts.montserrat(
+                      code: TextStyle(
+                        fontFamily: 'Montserrat',
                         fontSize: 14,
                         height: 1.6,
                         color: Theme.of(context).colorScheme.primary,
@@ -344,7 +366,8 @@ class BlogDetailScreen extends ConsumerWidget {
                           width: 1,
                         ),
                       ),
-                      blockquote: GoogleFonts.montserrat(
+                      blockquote: TextStyle(
+                        fontFamily: 'Montserrat',
                         fontStyle: FontStyle.italic,
                         fontSize: 16,
                         height: 1.7,
@@ -387,9 +410,9 @@ class BlogDetailScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      img: GoogleFonts.montserrat(),
-                      tableHead: GoogleFonts.montserrat(fontWeight: FontWeight.w700),
-                      tableBody: GoogleFonts.montserrat(),
+                      img: const TextStyle(fontFamily: 'Montserrat'),
+                      tableHead: const TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.w700),
+                      tableBody: const TextStyle(fontFamily: 'Montserrat'),
                     ),
                     sizedImageBuilder: (image) {
                       final uri = image.uri;
@@ -448,4 +471,3 @@ class BlogDetailScreen extends ConsumerWidget {
     );
   }
 }
-
