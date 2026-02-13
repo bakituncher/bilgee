@@ -1,7 +1,6 @@
 // lib/core/theme/app_theme.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // --- BRAND COLORS (Consistent across themes) ---
@@ -78,8 +77,12 @@ class AppTheme {
   }) {
     final isDark = brightness == Brightness.dark;
 
+    // GoogleFonts yerine standart TextTheme kullanıp fontFamily atıyoruz
     final baseTextTheme = isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme;
-    final textTheme = GoogleFonts.montserratTextTheme(baseTextTheme).apply(
+
+    // .apply metodu ile tüm metin stillerine font ailesini enjekte ediyoruz
+    final textTheme = baseTextTheme.apply(
+      fontFamily: 'Montserrat',
       bodyColor: textColor,
       displayColor: textColor,
     );
@@ -90,7 +93,12 @@ class AppTheme {
       minimumSize: const Size(double.infinity, 52.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
       elevation: 4.0,
-      textStyle: GoogleFonts.montserrat(fontWeight: FontWeight.w700, fontSize: 16),
+      // GoogleFonts kaldırıldı, yerine standart TextStyle
+      textStyle: const TextStyle(
+          fontFamily: 'Montserrat',
+          fontWeight: FontWeight.w700,
+          fontSize: 16
+      ),
       shadowColor: secondaryBrandColor.withOpacity(0.4),
     );
 
@@ -101,14 +109,15 @@ class AppTheme {
       ),
       filled: true,
       fillColor: isDark ? lightSurfaceColor.withOpacity(0.5) : lightSurfaceColor,
-      labelStyle: TextStyle(color: secondaryTextColor),
-      hintStyle: TextStyle(color: secondaryTextColor.withOpacity(0.7)),
+      labelStyle: TextStyle(color: secondaryTextColor, fontFamily: 'Montserrat'),
+      hintStyle: TextStyle(color: secondaryTextColor.withOpacity(0.7), fontFamily: 'Montserrat'),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     );
 
     return ThemeData(
       brightness: brightness,
       primaryColor: primaryBrandColor,
+      fontFamily: 'Montserrat', // Tüm uygulamanın varsayılan fontu
       scaffoldBackgroundColor: scaffoldBackgroundColor,
       colorScheme: ColorScheme(
         brightness: brightness,
@@ -139,7 +148,9 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.montserrat(
+        // GoogleFonts yerine standart TextStyle
+        titleTextStyle: TextStyle(
+          fontFamily: 'Montserrat',
           fontWeight: FontWeight.bold,
           fontSize: 20,
           color: textColor,
@@ -154,7 +165,11 @@ class AppTheme {
           color: secondaryBrandColor,
           borderRadius: BorderRadius.circular(8),
         ),
-        textStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        textStyle: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Montserrat'
+        ),
       ),
       bottomAppBarTheme: BottomAppBarThemeData(
         color: cardColor,
@@ -163,7 +178,12 @@ class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: cardColor.withOpacity(0.95),
-        contentTextStyle: GoogleFonts.montserrat(color: textColor, fontWeight: FontWeight.w600),
+        // GoogleFonts yerine standart TextStyle
+        contentTextStyle: TextStyle(
+            fontFamily: 'Montserrat',
+            color: textColor,
+            fontWeight: FontWeight.w600
+        ),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
             side: BorderSide(color: lightSurfaceColor.withOpacity(isDark ? 0.4 : 0.8))
