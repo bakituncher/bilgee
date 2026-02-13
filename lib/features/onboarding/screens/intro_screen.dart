@@ -45,10 +45,10 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
       color: const Color(0xFF0EA5E9),
     ),
     _IntroContent(
-      title: "Sana Özel Plan",
-      description: "Hedeflerine ve boş zamanlarına uygun haftalık çalışma programını saniyeler içinde hazırlarım. Planlama derdine son!",
-      iconData: Icons.calendar_month_rounded,
-      color: const Color(0xFF10B981),
+      title: "Zihin Haritası",
+      description: "Karmaşık konuları görsel zihin haritalarına dönüştüreyim. Daha iyi anla, daha kolay hatırla!",
+      iconData: Icons.account_tree_rounded,
+      color: const Color(0xFF6366F1),
     ),
     _IntroContent(
       title: "Rekabet ve Zafer",
