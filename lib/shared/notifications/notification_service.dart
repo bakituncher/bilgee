@@ -59,8 +59,8 @@ class NotificationService {
       _appBuild = int.tryParse(info.buildNumber);
     } catch (_) {}
 
-    // DÜZELTME: '@mipmap/ic_launcher' yerine Manifest'teki '@mipmap/launcher_icon' kullanılmalı
-    const androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
+    // DÜZELTME: Bildirimler için özel small icon kullanılmalı
+    const androidInit = AndroidInitializationSettings('@drawable/ic_notification');
 
     // ÖNEMLİ DÜZELTME:
     // iOS için varsayılan izin isteklerini 'false' yapıyoruz.
@@ -285,6 +285,7 @@ class NotificationService {
           channelDescription: _channel?.description,
           importance: Importance.high,
           priority: Priority.high,
+          icon: '@drawable/ic_notification',
           styleInformation: style,
           // Dar görünümde de küçük görsel gözüksün
           largeIcon: thumbIcon,
@@ -303,6 +304,7 @@ class NotificationService {
           channelDescription: _channel?.description,
           importance: Importance.high,
           priority: Priority.high,
+          icon: '@drawable/ic_notification',
         );
         iosDetails = const DarwinNotificationDetails();
       }
@@ -313,6 +315,7 @@ class NotificationService {
         channelDescription: _channel?.description,
         importance: Importance.high,
         priority: Priority.high,
+        icon: '@drawable/ic_notification',
       );
       iosDetails = const DarwinNotificationDetails();
     }
@@ -337,6 +340,7 @@ class NotificationService {
         channelDescription: _channel?.description,
         importance: Importance.high,
         priority: Priority.high,
+        icon: '@drawable/ic_notification',
       );
       const iosDetails = DarwinNotificationDetails();
       final details = NotificationDetails(android: androidDetails, iOS: iosDetails);
