@@ -54,10 +54,10 @@ const GENERAL_MESSAGES = [
 ];
 
 // ---- 2. YÜKSEK DÖNÜŞÜMLÜ PREMIUM SATIŞ MESAJLARI (Stratejik & Samimi) ----
-// Pazar, Çarşamba, Cuma 22:00'de sadece Premium olmayanlara gidecek.
-// AIHub özellikleri odaklı: Soru Çözücü, Etüt Odası, Haftalık Plan Yapıcı
+// Haftanın 5 günü (Ptesi, Salı, Çarşamba, Cuma, Pazar) 21:00'de sadece Premium olmayanlara gidecek.
+// AIHub Odaklı: Soru Çözücü, Etüt Odası, Haftalık Plan, Not Defteri, Zihin Haritası, Taktik Tavşan
 const PREMIUM_SALES_MESSAGES = [
-  // 📸 SORU ÇÖZÜCÜ - Fotoğraf çek, anında çözüm al
+  // 📸 SORU ÇÖZÜCÜ
   {
     title: 'Takıldığın soru mu var? 📸',
     body: 'Fotoğrafını çek, saniyeler içinde adım adım çözümünü gör! Artık hiçbir soru çözümsüz kalmayacak.',
@@ -118,6 +118,57 @@ const PREMIUM_SALES_MESSAGES = [
     route: '/ai-hub'
   },
 
+  // 📝 NOT DEFTERİ - Sadece kayıt değil, Taktik Dönüşüm!
+  {
+    title: 'Kitap okumaya üşeniyor musun? 📸',
+    body: 'Sayfanın fotoğrafını çek, Taktik Tavşan senin için özetini çıkarsın ve test sorusu hazırlasın! Taktik Pro ile ders çalışmak bu kadar kolay.',
+    route: '/ai-hub'
+  },
+  {
+    title: 'Not çıkarmakla vakit kaybetme ⏳',
+    body: 'Ders notunun fotoğrafını yükle, saniyeler içinde bilgi kartlarına ve özetlere dönüşsün. Taktik Pro senin yerine halleder!',
+    route: '/ai-hub'
+  },
+  {
+    title: 'Sınav öncesi hayat kurtarıcı! 🆘',
+    body: 'Tüm notlarını PDF olarak yükle, Taktik sana "hap bilgiler" çıkarsın. Taktik Pro ile 1 saatlik dersi 10 dakikada tekrar et.',
+    route: '/ai-hub'
+  },
+
+  // 🧠 ZİHİN HARİTASI - Karmaşıklığı Giderecek Çözüm
+  {
+    title: 'Kafan mı karıştı? 🤯',
+    body: 'Tarih, Biyoloji, Edebiyat... Karmaşık konuları tek tıkla Zihin Haritasına dönüştür. Görsel hafızanla tek seferde kap!',
+    route: '/ai-hub'
+  },
+  {
+    title: 'Ezber yapma, mantığını gör! 👁️',
+    body: 'Konuyu Taktik\'e söyle, sana tüm bağlantıları şematize etsin. Taktik Pro ile dersler artık bulmaca gibi keyifli.',
+    route: '/ai-hub'
+  },
+  {
+    title: 'Ders çalışırken kaybolma 🗺️',
+    body: 'Hangi konu nereye bağlanıyor? Zihin Haritası ile büyük resmi gör. Pro\'ya geç, kuşbakışı çalış!',
+    route: '/ai-hub'
+  },
+
+  // 🐰 TAKTİK TAVŞAN - 7/24 Çalışma Arkadaşın
+  {
+    title: 'Canın mı sıkkın? Motivasyonun mu düştü? 🐰',
+    body: 'Taktik Tavşan seni yargılamadan dinler ve tam destek olur! Sadece bir uygulama değil, senin en iyi çalışma kankan.',
+    route: '/ai-hub'
+  },
+  {
+    title: 'Bugün hiç çalışasın yok mu? 🛑',
+    body: 'Gel bi konuşalım, sana özel 5 dakikalık "başlangıç taktiği" vereyim. Ertelemeyi bırak, beraber halledelim!',
+    route: '/ai-hub'
+  },
+  {
+    title: 'Kafana takılan bi şey mi var? 💡',
+    body: 'Gecenin 3\'ünde bile sınav stresini, planlama derdini konuşabileceğin tek kankan. Taktik Pro ile Tavşan hep yanında.',
+    route: '/ai-hub'
+  },
+
   // 🐰 TAKTİK PRO GENEL
   {
     title: 'Taktik Pro\'yu 7 gün bedava dene! 🐰',
@@ -131,7 +182,7 @@ const PREMIUM_SALES_MESSAGES = [
   },
   {
     title: 'Bu yolda yalnız değilsin! 💪',
-    body: 'Soru çözümünden haftalık plana, sınav koçun olarak hep yanındayım.',
+    body: 'Soru çözümünden haftalık plana, sınav kankan olarak hep yanındayım.',
     route: '/premium'
   }
 ];
@@ -266,12 +317,12 @@ exports.dispatchInactivityEvening = onSchedule({schedule: "30 20 * * *", timeZon
 });
 
 // ====================================================================================
-// 🔥 YENİ: PREMIUM SATIŞ ODAKLI BİLDİRİM SİSTEMİ (PAZAR, ÇARŞAMBA, CUMA 22:00) 🔥
+// 🔥 YENİ: PREMIUM SATIŞ ODAKLI BİLDİRİM SİSTEMİ (HAFTADA 5 GÜN 21:00) 🔥
 // (Sadece Premium Olmayanlara, Görselsiz, Yüksek Dönüşümlü)
 // ====================================================================================
 
 exports.dispatchPremiumSalesPush = onSchedule({
-  schedule: "0 22 * * 0,3,5",
+  schedule: "0 22 * * 1,2,3,5,0", // Pazartesi, Salı, Çarşamba, Cuma, Pazar (Haftada 5 gün)
   timeZone: "Europe/Istanbul",
   timeoutSeconds: 540,
   memory: "1GiB"
