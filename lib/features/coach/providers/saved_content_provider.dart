@@ -171,7 +171,7 @@ class SavedContentNotifier extends StateNotifier<List<SavedContentModel>> {
       _updateProtection(type, contentHash);
       // Stream zaten state'i güncelleyecek
 
-      return SaveResult(success: true, message: 'Buluta kaydedildi!', savedContent: newContent);
+      return SaveResult(success: true, message: 'Başarıyla kaydedildi!', savedContent: newContent);
     } catch (e) {
       return SaveResult(success: false, message: 'Hata: $e');
     }
