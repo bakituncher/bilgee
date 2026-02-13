@@ -33,14 +33,26 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
       color: const Color(0xFF0EA5E9),
     ),
     _IntroContent(
-      title: "Sana Özel Plan",
-      description: "Hedeflerine ve boş zamanlarına uygun haftalık çalışma programını saniyeler içinde hazırlarım. Planlama derdine son!",
-      iconData: Icons.calendar_month_rounded,
+      title: "Soru Çözücü",
+      description: "Takıldığın sorunun fotoğrafını çek, saniyeler içinde adım adım çözümünü ve mantığını anlatayım. Özel ders artık cebinde!",
+      iconData: Icons.camera_enhance_rounded,
       color: const Color(0xFFF59E0B),
     ),
     _IntroContent(
+      title: "Akıllı Not Defteri",
+      description: "PDF veya görsel yükle, saniyeler içinde sana bilgi kartları, özetler veya test hazırlayayım. Çalışmanı verimli hale getireceğim!",
+      iconData: Icons.bolt,
+      color: const Color(0xFF0EA5E9),
+    ),
+    _IntroContent(
+      title: "Sana Özel Plan",
+      description: "Hedeflerine ve boş zamanlarına uygun haftalık çalışma programını saniyeler içinde hazırlarım. Planlama derdine son!",
+      iconData: Icons.calendar_month_rounded,
+      color: const Color(0xFF10B981),
+    ),
+    _IntroContent(
       title: "Rekabet ve Zafer",
-      description: "Diğer adaylarla arenada yarış, liglerde yüksel ve başarılarını madalyalarla taçlandır. Motivasyonun hep zirvede kalsın.",
+      description: "Diğer adaylarla arenada yarış, liglerde yüksel ve başarılarını madalyalarla taçlandır. Seni hep motive tutacağım!",
       iconData: Icons.emoji_events_rounded,
       color: const Color(0xFFEC4899),
     ),
@@ -233,7 +245,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: List.generate(
                             _contents.length,
-                            (index) => AnimatedContainer(
+                                (index) => AnimatedContainer(
                               duration: const Duration(milliseconds: 400),
                               curve: Curves.easeOutBack,
                               margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -269,36 +281,38 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
                           ),
                           child: _isLoading
                               ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    color: Colors.white,
-                                  ),
-                                )
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
                               : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      _currentPage == _contents.length - 1
-                                          ? "Başlayalım"
-                                          : "Devam Et",
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Icon(
-                                      _currentPage == _contents.length - 1
-                                          ? Icons.rocket_launch_rounded
-                                          : Icons.arrow_forward_rounded,
-                                      size: 24,
-                                    ),
-                                  ],
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _currentPage == 0
+                                    ? "Hazırım!"
+                                    : _currentPage == _contents.length - 1
+                                    ? "Başlayalım"
+                                    : "Devam Et",
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
                                 ),
+                              ),
+                              const SizedBox(width: 12),
+                              Icon(
+                                _currentPage == _contents.length - 1
+                                    ? Icons.rocket_launch_rounded
+                                    : Icons.arrow_forward_rounded,
+                                size: 24,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -349,9 +363,9 @@ class _IntroSlide extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableHeight = constraints.maxHeight;
-        final contentHeight = availableHeight * 0.85;
-        final visualHeight = contentHeight * 0.5;
-        final textHeight = contentHeight * 0.4;
+        final contentHeight = availableHeight * 0.80;
+        final visualHeight = contentHeight * 0.45;
+        final textHeight = contentHeight * 0.48;
 
         return Center(
           child: SizedBox(
@@ -384,49 +398,49 @@ class _IntroSlide extends StatelessWidget {
                           child: Center(
                             child: content.isAssetImage
                                 ? Padding(
-                                    padding: const EdgeInsets.all(32.0),
-                                    child: Image.asset(
-                                      content.imagePath!,
-                                      fit: BoxFit.contain,
-                                    )
-                                        .animate()
-                                        .scale(
-                                          duration: 600.ms,
-                                          curve: Curves.elasticOut,
-                                        )
-                                        .shimmer(
-                                          delay: 1000.ms,
-                                          duration: 1500.ms,
-                                          color: Colors.white24,
-                                        ),
-                                  )
+                              padding: const EdgeInsets.all(32.0),
+                              child: Image.asset(
+                                content.imagePath!,
+                                fit: BoxFit.contain,
+                              )
+                                  .animate()
+                                  .scale(
+                                duration: 600.ms,
+                                curve: Curves.elasticOut,
+                              )
+                                  .shimmer(
+                                delay: 1000.ms,
+                                duration: 1500.ms,
+                                color: Colors.white24,
+                              ),
+                            )
                                 : Icon(
-                                    content.iconData,
-                                    size: 100,
-                                    color: content.color,
-                                  )
-                                    .animate()
-                                    .scale(
-                                      duration: 500.ms,
-                                      curve: Curves.easeOutBack,
-                                    )
-                                    .then()
-                                    .shake(duration: 500.ms, hz: 2),
+                              content.iconData,
+                              size: 100,
+                              color: content.color,
+                            )
+                                .animate()
+                                .scale(
+                              duration: 500.ms,
+                              curve: Curves.easeOutBack,
+                            )
+                                .then()
+                                .shake(duration: 500.ms, hz: 2),
                           ),
                         ),
                       ),
                     )
                         .animate()
                         .slideY(
-                          begin: 0.1,
-                          end: 0,
-                          duration: 600.ms,
-                          curve: Curves.easeOutQuint,
-                        )
+                      begin: 0.1,
+                      end: 0,
+                      duration: 600.ms,
+                      curve: Curves.easeOutQuint,
+                    )
                         .fadeIn(duration: 600.ms),
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
 
                   // Text Content
                   SizedBox(
@@ -455,12 +469,12 @@ class _IntroSlide extends StatelessWidget {
                           child: Text(
                             content.description,
                             textAlign: TextAlign.center,
-                            maxLines: 4,
-                            overflow: TextOverflow.ellipsis,
+                            maxLines: 5,
+                            overflow: TextOverflow.visible,
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: colorScheme.onSurfaceVariant,
-                              height: 1.5,
-                              fontSize: 16,
+                              height: 1.45,
+                              fontSize: 15.5,
                             ),
                           )
                               .animate()
