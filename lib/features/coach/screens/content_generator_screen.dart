@@ -1881,7 +1881,6 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
               codeblockPadding: const EdgeInsets.all(14),
               code: TextStyle(
                 backgroundColor: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
-                fontFamily: 'monospace',
                 fontSize: 12,
                 color: colorScheme.onSurface,
               ),

@@ -197,7 +197,6 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                                 fontSize: 14,
                                 letterSpacing: 0.3,
                                 color: colorScheme.onSurface,
-                                fontFamily: 'Poppins',
                               ),
                             ),
                             const SizedBox(width: 6),

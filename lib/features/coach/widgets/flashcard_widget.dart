@@ -308,7 +308,6 @@ class _FlashcardWidgetState extends State<FlashcardWidget> with SingleTickerProv
                         code: TextStyle(
                           backgroundColor: colorScheme.surfaceContainerHighest,
                           color: colorScheme.onSurface,
-                          fontFamily: 'monospace',
                         ),
                       ),
                       builders: {

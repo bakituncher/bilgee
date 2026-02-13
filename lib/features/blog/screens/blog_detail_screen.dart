@@ -119,7 +119,7 @@ class BlogDetailScreen extends ConsumerWidget {
             ),
             child: Text(
               t,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -254,7 +254,7 @@ class BlogDetailScreen extends ConsumerWidget {
                                     children: [
                                       Text(
                                         'Taktik Ekibi',
-                                        style: GoogleFonts.inter(
+                                        style: GoogleFonts.poppins(
                                           fontWeight: FontWeight.w600,
                                           fontSize: 14,
                                           color: Theme.of(context).colorScheme.onSurface,
@@ -266,7 +266,7 @@ class BlogDetailScreen extends ConsumerWidget {
                                           if (post.publishedAt != null) dateFmt.format(post.publishedAt!),
                                           if (post.readTime != null) '${post.readTime} dk okuma'
                                         ].join(' • '),
-                                        style: GoogleFonts.inter(
+                                        style: GoogleFonts.poppins(
                                           fontSize: 12,
                                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                                         ),
@@ -289,7 +289,7 @@ class BlogDetailScreen extends ConsumerWidget {
                   child: MarkdownBody(
                     data: post.contentMarkdown,
                     styleSheet: MarkdownStyleSheet(
-                      p: GoogleFonts.inter(
+                      p: GoogleFonts.poppins(
                         fontSize: 16,
                         height: 1.75,
                         letterSpacing: 0.2,
@@ -322,7 +322,7 @@ class BlogDetailScreen extends ConsumerWidget {
                       h2Padding: const EdgeInsets.only(top: 20, bottom: 10),
                       h3Padding: const EdgeInsets.only(top: 18, bottom: 8),
                       h4Padding: const EdgeInsets.only(top: 16, bottom: 8),
-                      code: GoogleFonts.robotoMono(
+                      code: GoogleFonts.poppins(
                         fontSize: 14,
                         height: 1.6,
                         color: Theme.of(context).colorScheme.primary,
@@ -344,7 +344,7 @@ class BlogDetailScreen extends ConsumerWidget {
                           width: 1,
                         ),
                       ),
-                      blockquote: GoogleFonts.inter(
+                      blockquote: GoogleFonts.poppins(
                         fontStyle: FontStyle.italic,
                         fontSize: 16,
                         height: 1.7,
@@ -387,9 +387,9 @@ class BlogDetailScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      img: GoogleFonts.inter(),
-                      tableHead: GoogleFonts.inter(fontWeight: FontWeight.w700),
-                      tableBody: GoogleFonts.inter(),
+                      img: GoogleFonts.poppins(),
+                      tableHead: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                      tableBody: GoogleFonts.poppins(),
                     ),
                     sizedImageBuilder: (image) {
                       final uri = image.uri;

@@ -676,7 +676,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                 h2Padding: const EdgeInsets.only(top: 16, bottom: 8),
                 h3Padding: const EdgeInsets.only(top: 14, bottom: 6),
                 h4Padding: const EdgeInsets.only(top: 12, bottom: 6),
-                code: GoogleFonts.robotoMono(fontSize: 13.5, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
+                code: GoogleFonts.poppins(fontSize: 13.5, height: 1.5, color: Theme.of(context).colorScheme.onSurface),
                 codeblockPadding: const EdgeInsets.all(12),
                 codeblockDecoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.12),
