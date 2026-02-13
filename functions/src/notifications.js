@@ -50,7 +50,25 @@ const GENERAL_MESSAGES = [
 
   // 🍅 POMODORO - Odaklanma (Düşük oran - sadece 2 mesaj)
   { title: 'Sadece 25 dakika, söz! 🍅', body: 'Bir pomodoro aç, odaklan. Mola zamanı gelince haber veririm!', route: '/home/pomodoro' },
-  { title: 'Telefonla savaşmak zor, biliyorum 📱', body: 'Pomodoro sayacını aç, 25 dakika sadece çalışmaya odaklan!', route: '/home/pomodoro' }
+  { title: 'Telefonla savaşmak zor, biliyorum 📱', body: 'Pomodoro sayacını aç, 25 dakika sadece çalışmaya odaklan!', route: '/home/pomodoro' },
+
+  // 📝 NOT DEFTERİ & ÖZET ÇIKARICI - /ai-hub
+  { title: 'Uzun uzun okumaya üşeniyor musun? 😴', body: 'Sayfanın fotoğrafını çek, Taktik Tavşan senin için özetlesin! Hem de saniyeler içinde.', route: '/ai-hub' },
+  { title: 'Ders notların çok mu karışık? 📚', body: 'Fotoğrafı yükle, senin için düzenleyip "hap bilgi" haline getireyim. Denemeye değer!', route: '/ai-hub' },
+  { title: 'Otobüste, yolda konu tekrarı yap! 🚌', body: 'Tüm notlarını PDF yap, Taktik sana özet çıkarsın. Sınav öncesi hayat kurtarır.', route: '/ai-hub' },
+  { title: 'Soru değil, konu eksiğin mi var? 📝', body: 'Kitabın o sayfasını çek, sana özel çalışma kartları hazırlayayım. Ezberlemek artık çok kolay.', route: '/ai-hub' },
+
+  // 🧠 ZİHİN HARİTASI - /ai-hub
+  { title: 'Bu konu kafanı mı karıştırdı? 🤯', body: 'Tek tıkla Zihin Haritası oluştur! Konunun büyük resmini gör, bağlantıları kaçırma.', route: '/ai-hub' },
+  { title: 'Görsel hafızanla fark at! 👁️', body: 'Karmaşık sözel konuları şemalarla öğren. Zihin Haritası ile unutmaya son!', route: '/ai-hub' },
+  { title: 'Tarih, Biyoloji, Edebiyat... 🌿', body: 'Hangi konu nereye bağlanıyor? Zihin Haritasını çıkar, bulmaca çözer gibi öğren.', route: '/ai-hub' },
+  { title: 'Ezber yapma, mantığını kavra! 🧩', body: 'Konuyu söyle, sana tüm detaylarıyla haritasını çizeyim. Kalıcı öğrenmenin sırrı bu.', route: '/ai-hub' },
+
+  // 🐰 TAKTİK TAVŞAN & MOTİVASYON - /ai-hub
+  { title: 'Kanka naber? Nasılsın? 🐰', body: 'Canın sıkkınsa içine atma. Ben buradayım, seni dinlemeye hazırım.', route: '/ai-hub' },
+  { title: 'Ders çalışmak zor geliyor mu? 🛑', body: 'Bazen hiç için gelmez, çok normal. Gel biraz mola verelim, konuşup rahatlayalım.', route: '/ai-hub' },
+  { title: 'Kafan çok mu dolu? 🤯', body: 'Sınav, dersler, gelecek kaygısı... Hepsini konuşabiliriz. Yalnız hissetme, ben yanındayım.', route: '/ai-hub' },
+  { title: 'Mola verdiysen bi çayını al gel ☕', body: 'Biraz kafa dağıtmak iyi gelir. Dersten uzaklaş, kafanı toparla, sonra daha sağlam devam edersin.', route: '/ai-hub' }
 ];
 
 // ---- 2. YÜKSEK DÖNÜŞÜMLÜ PREMIUM SATIŞ MESAJLARI (Stratejik & Samimi) ----
@@ -240,7 +258,10 @@ const MESSAGE_CATEGORIES = {
   istatistik: [17, 18, 19, 20, 21],  // 5 mesaj - /home/stats, /stats/overview
   arsiv: [22, 23],                   // 2 mesaj - /library
   soru_kutusu: [24, 25],             // 2 mesaj - /question-box
-  pomodoro: [26, 27]                 // 2 mesaj - /home/pomodoro
+  pomodoro: [26, 27],                // 2 mesaj - /home/pomodoro
+  not_defteri: [28, 29, 30, 31],     // 4 mesaj - YENİ
+  zihin_haritasi: [32, 33, 34, 35],  // 4 mesaj - YENİ
+  taktik_tavsan: [36, 37, 38, 39]    // 4 mesaj - YENİ
 };
 
 // Kategori döngü sırası - her slotId için farklı başlangıç
@@ -254,6 +275,9 @@ const CATEGORY_ORDER = [
   'arsiv',          // 5
   'soru_kutusu',    // 6
   'pomodoro',       // 7
+  'not_defteri',    // 8
+  'zihin_haritasi', // 9
+  'taktik_tavsan'   // 10
 ];
 
 // Tarihe ve slot'a göre dengeli bildirim seç
