@@ -184,3 +184,76 @@ exports.isCurrentUserSuperAdmin = onCall({
   ]);
   return { isSuperAdmin: await isSuperAdmin(request.auth.uid) };
 });
+
+// ---- OPTİMİZE EDİLMİŞ İSTATİSTİK FONKSİYONU (AGGREGATION) ----
+// Bu versiyon verileri tek tek çekmez, veritabanına saydırır.
+// 100.000 kullanıcıda bile maliyeti neredeyse SIFIRDIR.
+exports.getUserStats = onCall({
+  region: "us-central1",
+  enforceAppCheck: true,
+  maxInstances: 5,
+  rateLimits: { maxCalls: 20, timeFrameSeconds: 60 },
+}, async (request) => {
+  // 1. Yetki Kontrolü
+  if (!request.auth) throw new HttpsError("unauthenticated", "Oturum gerekli");
+
+  const isAdmin = request.auth.token && request.auth.token.admin === true;
+  if (!isAdmin) throw new HttpsError("permission-denied", "Yetki yok");
+
+  try {
+    const usersRef = db.collection("users");
+
+    // KPSS Alt Türleri
+    const kpssTypes = ['kpssLisans', 'kpssOnlisans', 'kpssOrtaogretim'];
+
+    // 2. Aggregation Sorgularını Hazırla (Paralel Çalışacaklar)
+    // Not: 'in' operatörü ile KPSS türlerini grupluyoruz.
+    // Diğer sınavlar için küçük/büyük harf duyarlılığına dikkat ediyoruz (genelde lowercase tutulur).
+
+    const promises = [
+      // YKS İstatistikleri
+      usersRef.where('selectedExam', '==', 'yks').count().get(),
+      usersRef.where('selectedExam', '==', 'yks').where('isPremium', '==', true).count().get(),
+
+      // LGS İstatistikleri
+      usersRef.where('selectedExam', '==', 'lgs').count().get(),
+      usersRef.where('selectedExam', '==', 'lgs').where('isPremium', '==', true).count().get(),
+
+      // AGS İstatistikleri
+      usersRef.where('selectedExam', '==', 'ags').count().get(),
+      usersRef.where('selectedExam', '==', 'ags').where('isPremium', '==', true).count().get(),
+
+      // KPSS İstatistikleri (Toplu)
+      usersRef.where('selectedExam', 'in', kpssTypes).count().get(),
+      usersRef.where('selectedExam', 'in', kpssTypes).where('isPremium', '==', true).count().get(),
+    ];
+
+    // 3. Tüm sayımları aynı anda başlat ve bitmesini bekle (Hız için)
+    const snapshots = await Promise.all(promises);
+
+    // 4. Sonuçları formatla
+    // Promise sırasına göre index'leri alıyoruz.
+    return {
+      yks: {
+        total: snapshots[0].data().count,
+        premium: snapshots[1].data().count
+      },
+      lgs: {
+        total: snapshots[2].data().count,
+        premium: snapshots[3].data().count
+      },
+      ags: {
+        total: snapshots[4].data().count,
+        premium: snapshots[5].data().count
+      },
+      kpss: {
+        total: snapshots[6].data().count,
+        premium: snapshots[7].data().count
+      },
+    };
+
+  } catch (error) {
+    console.error("Aggregation Stats error:", error);
+    throw new HttpsError("internal", "İstatistikler hesaplanırken hata oluştu.");
+  }
+});

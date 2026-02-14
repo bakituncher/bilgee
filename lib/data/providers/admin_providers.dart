@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+// cloud_firestore kütüphanesini kaldırdık çünkü artık doğrudan okuma yapmıyoruz.
 import 'package:taktik/features/auth/application/auth_controller.dart';
 
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
@@ -52,3 +53,24 @@ final superAdminProvider = FutureProvider<bool>((ref) async {
   }
 });
 
+/// GÜVENLİ VE PERFORMANSLI VERSİYON
+/// İstatistikler sunucu tarafında (Cloud Function) hesaplanıp getirilir.
+final userStatisticsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  try {
+    // Cloud Functions örneğini al (Bölge us-central1 olmalı, function'ınla aynı)
+    final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+
+    // 'admin-getUserStats' fonksiyonunu çağır
+    // (functions/src/admin.js dosyasında tanımladığımız isimle aynı olmalı)
+    final callable = functions.httpsCallable('admin-getUserStats');
+
+    final result = await callable.call();
+
+    // Gelen veriyi Map formatına çevir
+    return Map<String, dynamic>.from(result.data);
+  } catch (e) {
+    print('Error fetching user statistics via Cloud Function: $e');
+    // Hata durumunda UI'da göstermek için hatayı fırlat
+    rethrow;
+  }
+});

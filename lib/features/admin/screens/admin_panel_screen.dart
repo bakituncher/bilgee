@@ -61,6 +61,14 @@ class AdminPanelScreen extends ConsumerWidget {
           ),
           const Divider(),
           ListTile(
+            leading: const Icon(Icons.bar_chart_outlined),
+            title: const Text('Kullanıcı İstatistikleri'),
+            subtitle: const Text('Sınav tipi ve premium kullanıcı dağılımı'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/admin/statistics'),
+          ),
+          const Divider(),
+          ListTile(
             leading: const Icon(Icons.flag_outlined),
             title: const Text('Soru Raporları'),
             subtitle: const Text('Kullanıcıların raporladığı sorular'),

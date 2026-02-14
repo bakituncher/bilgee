@@ -27,6 +27,7 @@ import 'package:taktik/features/admin/screens/admin_panel_screen.dart';
 import 'package:taktik/features/admin/screens/user_management_screen.dart';
 import 'package:taktik/features/admin/screens/user_reports_screen.dart';
 import 'package:taktik/features/admin/screens/version_management_screen.dart';
+import 'package:taktik/features/admin/screens/user_statistics_screen.dart';
 import 'package:taktik/shared/notifications/notification_center_screen.dart';
 import 'package:taktik/features/profile/screens/blocked_users_screen.dart';
 import 'package:taktik/features/profile/screens/user_search_screen.dart';
@@ -383,6 +384,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           context: context,
           state: state,
           child: const PushComposerScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/statistics',
+        name: 'AdminStatistics',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const UserStatisticsScreen(),
         ),
       ),
       GoRoute(
