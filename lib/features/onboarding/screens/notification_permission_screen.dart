@@ -44,33 +44,46 @@ class _NotificationPermissionScreenState extends ConsumerState<NotificationPermi
     setState(() => _isLoading = true);
 
     try {
+      bool permissionGranted = false;
 
-      // Bildirim iznini iste
-      final settings = await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        announcement: true,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
-      );
-
-      if (kDebugMode) {
-        debugPrint('Bildirim izin durumu: ${settings.authorizationStatus}');
-      }
-
-      // Android 13+ için ek izin kontrolü
       if (Platform.isAndroid) {
+        // Android 13+ için önce permission_handler ile kontrol et
         final status = await ph.Permission.notification.status;
-        if (!status.isGranted) {
-          await ph.Permission.notification.request();
+        if (kDebugMode) {
+          debugPrint('Android bildirim izin durumu (öncesi): $status');
         }
+
+        if (!status.isGranted) {
+          final result = await ph.Permission.notification.request();
+          permissionGranted = result.isGranted;
+          if (kDebugMode) {
+            debugPrint('Android bildirim izin sonucu: $result');
+          }
+        } else {
+          permissionGranted = true;
+        }
+      } else {
+        // iOS için Firebase Messaging kullan
+        final settings = await FirebaseMessaging.instance.requestPermission(
+          alert: true,
+          announcement: true,
+          badge: true,
+          carPlay: false,
+          criticalAlert: false,
+          provisional: false,
+          sound: true,
+        );
+
+        if (kDebugMode) {
+          debugPrint('iOS bildirim izin durumu: ${settings.authorizationStatus}');
+        }
+
+        permissionGranted = settings.authorizationStatus == AuthorizationStatus.authorized ||
+            settings.authorizationStatus == AuthorizationStatus.provisional;
       }
 
       // İzin verildiyse FCM token'ı kaydet
-      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
-          settings.authorizationStatus == AuthorizationStatus.provisional) {
+      if (permissionGranted) {
         await NotificationService.instance.registerTokenAfterPermissionGranted();
       }
 

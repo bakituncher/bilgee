@@ -129,9 +129,9 @@ class NotificationService {
 
   Future<void> _ensureAndRegisterToken() async {
     try {
-      // iOS'ta izin verilmeden token almaya çalışmak izin dialogu açabilir
-      // Bu yüzden önce izin durumunu kontrol ediyoruz
+      // Hem iOS hem Android için izin durumunu kontrol et
       final settings = await FirebaseMessaging.instance.getNotificationSettings();
+
       if (settings.authorizationStatus == AuthorizationStatus.notDetermined) {
         // İzin henüz sorulmamış, NotificationPermissionScreen'de sorulacak
         if (kDebugMode) debugPrint('FCM: İzin henüz sorulmamış, token alınmadı');
@@ -140,6 +140,7 @@ class NotificationService {
 
       if (settings.authorizationStatus == AuthorizationStatus.denied) {
         // İzin reddedilmiş, token almaya gerek yok
+        // Android'de getToken() çağrısı izin dialogu açar, bu yüzden burada durduruyoruz
         if (kDebugMode) debugPrint('FCM: İzin reddedilmiş, token alınmadı');
         return;
       }
