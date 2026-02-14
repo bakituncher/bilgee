@@ -334,14 +334,12 @@ exports.generateInitialQuests = onDocumentCreated({
 // ORTAK YENİLEME MANTIĞI (Helper Function)
 // Hem yeni hem eski fonksiyon bunu kullanacak. Kod tekrarını önler.
 // --------------------------------------------------------------------------
-async function _coreRegenerateLogic(uid, ip, forceRefresh = false) {
-  // 1. Rate Limit & Kota - forceRefresh modunda atla
-  if (!forceRefresh) {
-    await Promise.all([
-      enforceRateLimit(`quests_regen_uid_${uid}`, 300, 1), // 5 dakikada 1
-      enforceDailyQuota(`quests_regen_daily_${uid}`, 10),  // Günde max 10 (biraz esnek)
-    ]);
-  }
+async function _coreRegenerateLogic(uid, ip) {
+  // 1. Rate Limit & Kota
+  await Promise.all([
+    enforceRateLimit(`quests_regen_uid_${uid}`, 300, 1), // 5 dakikada 1
+    enforceDailyQuota(`quests_regen_daily_${uid}`, 10),  // Günde max 10 (biraz esnek)
+  ]);
 
   const userRef = db.collection("users").doc(uid);
   const userSnap = await userRef.get();
@@ -349,17 +347,15 @@ async function _coreRegenerateLogic(uid, ip, forceRefresh = false) {
 
   const userData = userSnap.data() || {};
 
-  // 2. Tarih Kontrolü (Server-Side Idempotency) - forceRefresh modunda atla
-  if (!forceRefresh) {
-    const lastRefresh = userData.lastQuestRefreshDate;
-    if (lastRefresh) {
-      const lastDate = lastRefresh.toDate();
-      const now = nowIstanbul();
-      if (lastDate.getDate() === now.getDate() &&
-          lastDate.getMonth() === now.getMonth() &&
-          lastDate.getFullYear() === now.getFullYear()) {
-        return { skipped: true, count: 0 };
-      }
+  // 2. Tarih Kontrolü (Server-Side Idempotency)
+  const lastRefresh = userData.lastQuestRefreshDate;
+  if (lastRefresh) {
+    const lastDate = lastRefresh.toDate();
+    const now = nowIstanbul();
+    if (lastDate.getDate() === now.getDate() &&
+        lastDate.getMonth() === now.getMonth() &&
+        lastDate.getFullYear() === now.getFullYear()) {
+      return { skipped: true, count: 0 };
     }
   }
 
@@ -443,11 +439,8 @@ exports.regenerateDailyQuests = onCall({
   const uid = request.auth.uid;
   const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
 
-  // Debug force refresh - sadece admin kullanıcılar için
-  const forceRefresh = request.data && request.data.forceRefresh === true;
-
   try {
-    const result = await _coreRegenerateLogic(uid, ip, forceRefresh);
+    const result = await _coreRegenerateLogic(uid, ip);
 
     if (result.skipped) {
       logger.info(`Quest regeneration skipped for ${uid}: already fresh today`);

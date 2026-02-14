@@ -142,8 +142,7 @@ class QuestService {
         // App Check SDK otomatik olarak token'ı ekler
         final functions = _ref.read(functionsProvider);
         final callable = functions.httpsCallable('quests-regenerateDailyQuests');
-        // Debug modda forceRefresh gönder - rate limit ve tarih kontrolünü bypass eder
-        await callable.call(kDebugMode && force ? {'forceRefresh': true} : null);
+        await callable.call();
 
         final refreshed = await _ref.read(firestoreServiceProvider).getDailyQuestsOnce(user.id);
         _ref.read(sessionCompletedQuestsProvider.notifier).state = <String>{};

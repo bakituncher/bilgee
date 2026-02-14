@@ -1,6 +1,5 @@
 // lib/features/quests/screens/quests_screen.dart
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/features/quests/logic/quest_service.dart';
@@ -83,23 +82,6 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
           ),
         ),
         centerTitle: true,
-        actions: [
-          // Debug modda görevleri yenile butonu
-          if (kDebugMode)
-            IconButton(
-              icon: const Icon(Icons.refresh_rounded),
-              tooltip: 'Görevleri Yenile (Debug)',
-              onPressed: () {
-                _refreshQuests();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Görevler yenileniyor...'),
-                    duration: Duration(seconds: 1),
-                  ),
-                );
-              },
-            ),
-        ],
       ),
       body: Stack(
         children: [
