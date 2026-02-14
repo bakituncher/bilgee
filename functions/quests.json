@@ -319,16 +319,4 @@
     "actionRoute": "/ai-hub/question-solver",
     "tags": ["question_solver", "ai_feature", "learning"]
   },
-  {
-    "id": "daily_pra_15_momentum_master",
-    "title": "Temponu Koru",
-    "description": "Dünkü yüksek temponu koru! Bugün de en az 3 plan görevini tamamlayarak ivmeyi sürdür.",
-    "type": "daily",
-    "category": "consistency",
-    "reward": 80,
-    "goalValue": 3,
-    "actionRoute": "/home/quests",
-    "tags": ["momentum", "discipline"],
-    "triggerConditions": {"highYesterdayPlanRatio": true}
-  }
 ]

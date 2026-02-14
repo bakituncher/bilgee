@@ -15,7 +15,7 @@ enum QuestProgressType {
 
 enum QuestDifficulty { trivial, easy, medium, hard, epic }
 
-enum QuestRoute { home, pomodoro, coach, weeklyPlan, stats, addTest, quests, strategy, workshop, availability, avatar, arena, library, motivationChat, questionSolver, mindMap, contentGenerator, questionBox, unknown }
+enum QuestRoute { home, pomodoro, coach, weeklyPlan, stats, addTest, quests, strategy, workshop, availability, avatar, arena, library, motivationChat, questionSolver, mindMap, contentGenerator, questionBox, blog, unknown }
 
 QuestRoute questRouteFromPath(String path) {
   switch (path) {
@@ -62,6 +62,7 @@ String questRouteToPath(QuestRoute r) {
     case QuestRoute.mindMap: return '${AppRoutes.aiHub}/${AppRoutes.mindMap}';
     case QuestRoute.contentGenerator: return '${AppRoutes.aiHub}/${AppRoutes.contentGenerator}';
     case QuestRoute.questionBox: return AppRoutes.questionBox;
+    case QuestRoute.blog: return '/blog';
     case QuestRoute.unknown: return AppRoutes.home;
   }
 }

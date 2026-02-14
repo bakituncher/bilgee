@@ -231,7 +231,7 @@ class QuestNotifier extends StateNotifier<bool> {
     _reportAction(
       QuestCategory.consistency,
       amount: 1,
-      tags: ['login', 'daily'],
+      tags: ['login', 'daily', 'habit', 'streak'],
     );
   }
 
@@ -402,6 +402,17 @@ class QuestNotifier extends StateNotifier<bool> {
       route: QuestRoute.home,
       tags: ['profile', 'discovery'],
     );
+  }
+
+  /// Kullanıcı blog yazısı okuduğunda
+  void userReadBlogPost() {
+    _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.blog,
+      tags: ['discovery', 'reading', 'blog'],
+    );
+    _updateUserFeatureUsage('blog');
   }
 
   /// Legacy metod - geriye dönük uyumluluk için
