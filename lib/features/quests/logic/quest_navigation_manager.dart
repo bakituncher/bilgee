@@ -70,11 +70,14 @@ class QuestNavigationManager {
       case QuestRoute.pomodoro:
       case QuestRoute.coach:
       case QuestRoute.weeklyPlan:
+      case QuestRoute.contentGenerator:
         return QuestCategory.study;
 
       case QuestRoute.strategy:
       case QuestRoute.workshop:
       case QuestRoute.arena:
+      case QuestRoute.questionSolver:
+      case QuestRoute.questionBox:
         return QuestCategory.practice;
 
       case QuestRoute.stats:
@@ -84,6 +87,7 @@ class QuestNavigationManager {
       case QuestRoute.motivationChat:
       case QuestRoute.avatar:
       case QuestRoute.library:
+      case QuestRoute.mindMap:
         return QuestCategory.engagement;
 
       case QuestRoute.quests:
@@ -100,7 +104,10 @@ class QuestNavigationManager {
       case QuestType.daily:
         return {
           QuestType.daily: [
-            QuestRoute.pomodoro,
+            QuestRoute.questionSolver,
+            QuestRoute.mindMap,
+            QuestRoute.contentGenerator,
+            QuestRoute.questionBox,
             QuestRoute.coach,
             QuestRoute.addTest,
             QuestRoute.stats,

@@ -267,6 +267,36 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
           'redirectRoute': '/ai-hub/motivation-chat',
           'imageAsset': 'assets/images/bunnyy.png',
         };
+      case '/ai-hub/question-solver':
+        return {
+          'title': 'Soru Çözücü',
+          'subtitle': 'Anında çözüm cebinde.',
+          'icon': Icons.camera_enhance_rounded,
+          'color': Colors.orangeAccent,
+          'marketingTitle': 'Soruda Takılma!',
+          'marketingSubtitle': 'Yapamadığın sorunun fotoğrafını çek, Taktik Tavşan adım adım çözümünü anlatsın.',
+          'redirectRoute': '/ai-hub/question-solver',
+        };
+      case '/ai-hub/mind-map':
+        return {
+          'title': 'Zihin Haritası',
+          'subtitle': 'Karmaşık konuları görselleştir.',
+          'icon': Icons.account_tree_rounded,
+          'color': Colors.tealAccent,
+          'marketingTitle': 'Büyük Resmi Gör!',
+          'marketingSubtitle': 'Konuları Zihin Haritasına dönüştür, bağlantıları tek bakışta anla.',
+          'redirectRoute': '/ai-hub/mind-map',
+        };
+      case '/ai-hub/content-generator':
+        return {
+          'title': 'İçerik Üretici',
+          'subtitle': 'Notlarını hap bilgiye dönüştür.',
+          'icon': Icons.auto_awesome_rounded,
+          'color': Colors.purpleAccent,
+          'marketingTitle': 'Özetini Çıkar!',
+          'marketingSubtitle': 'Ders notlarını yükle, Taktik sana özet çıkarsın. 1 saatlik dersi 10 dakikada tekrar et.',
+          'redirectRoute': '/ai-hub/content-generator',
+        };
       default:
         return null;
     }

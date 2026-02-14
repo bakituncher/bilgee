@@ -49,6 +49,14 @@ function routeKeyFromPath(pathname) {
     return "library";
   case "/ai-hub/motivation-chat":
     return "motivationChat";
+  case "/ai-hub/question-solver":
+    return "questionSolver";
+  case "/ai-hub/mind-map":
+    return "mindMap";
+  case "/ai-hub/content-generator":
+    return "contentGenerator";
+  case "/question-box":
+    return "questionBox";
   default:
     return "home";
   }

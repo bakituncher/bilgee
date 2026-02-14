@@ -356,6 +356,15 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
       'marketingSubtitle': 'Karmaşık konuları görsel zihin haritalarına dönüştür. Daha iyi anla, daha kolay hatırla.',
       'redirectRoute': '/ai-hub/mind-map',
     },
+    '/ai-hub/content-generator': {
+      'title': 'İçerik Üretici',
+      'subtitle': 'Notlarını hap bilgiye dönüştür.',
+      'iconName': 'auto_awesome',
+      'color': Colors.purpleAccent,
+      'marketingTitle': 'Özetini Çıkar!',
+      'marketingSubtitle': 'Ders notlarını yükle, Taktik sana özet çıkarsın. 1 saatlik dersi 10 dakikada tekrar et.',
+      'redirectRoute': '/ai-hub/content-generator',
+    },
   };
 
   /// Mağazaya yönlendirme işlemi
