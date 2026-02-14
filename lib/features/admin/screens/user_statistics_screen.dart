@@ -24,45 +24,36 @@ class UserStatisticsScreen extends ConsumerWidget {
               ref.invalidate(userStatisticsProvider);
             },
             child: ListView(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(8.0),
               children: [
-                Text(
-                  'Sınav Tipi Dağılımı',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-                const SizedBox(height: 16),
                 _buildExamTypeCard(
                   context,
                   'YKS',
-                  // DÜZELTME: Gelen veriyi güvenli bir şekilde Map<String, dynamic> yapıyoruz
                   Map<String, dynamic>.from(stats['yks'] ?? {}),
                   Colors.blue,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 6),
                 _buildExamTypeCard(
                   context,
                   'LGS',
                   Map<String, dynamic>.from(stats['lgs'] ?? {}),
                   Colors.green,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 6),
                 _buildExamTypeCard(
                   context,
                   'KPSS',
                   Map<String, dynamic>.from(stats['kpss'] ?? {}),
                   Colors.orange,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 6),
                 _buildExamTypeCard(
                   context,
                   'AGS',
                   Map<String, dynamic>.from(stats['ags'] ?? {}),
                   Colors.purple,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 12),
                 _buildTotalCard(context, stats),
               ],
             ),
@@ -107,21 +98,21 @@ class UserStatisticsScreen extends ConsumerWidget {
     return Card(
       elevation: 2,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(10.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  width: 4,
-                  height: 40,
+                  width: 3,
+                  height: 28,
                   decoration: BoxDecoration(
                     color: color,
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(1.5),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,19 +123,18 @@ class UserStatisticsScreen extends ConsumerWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 4),
                       Text(
-                        'Toplam Kullanıcı: $total',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        'Toplam: $total',
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 12),
+            const SizedBox(height: 6),
+            const Divider(height: 1),
+            const SizedBox(height: 6),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -186,18 +176,20 @@ class UserStatisticsScreen extends ConsumerWidget {
       ) {
     return Column(
       children: [
-        Icon(icon, color: color, size: 24),
-        const SizedBox(height: 4),
+        Icon(icon, color: color, size: 18),
+        const SizedBox(height: 1),
         Text(
           value,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.bold,
+            fontSize: 13,
           ),
         ),
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Colors.grey,
+            fontSize: 11,
           ),
         ),
       ],
@@ -236,18 +228,18 @@ class UserStatisticsScreen extends ConsumerWidget {
       elevation: 4,
       color: Theme.of(context).colorScheme.primaryContainer,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(10.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               'GENEL TOPLAM',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).colorScheme.onPrimaryContainer,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 6),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -259,19 +251,20 @@ class UserStatisticsScreen extends ConsumerWidget {
                         fit: BoxFit.scaleDown,
                         child: Text(
                           '$totalUsers',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).colorScheme.onPrimaryContainer,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 1),
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
                           'Toplam Kullanıcı',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            fontSize: 10,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -281,8 +274,8 @@ class UserStatisticsScreen extends ConsumerWidget {
                 ),
                 Container(
                   width: 1,
-                  height: 40,
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                  height: 28,
+                  margin: const EdgeInsets.symmetric(horizontal: 6),
                   color: Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.3),
                 ),
                 Expanded(
@@ -293,19 +286,20 @@ class UserStatisticsScreen extends ConsumerWidget {
                         fit: BoxFit.scaleDown,
                         child: Text(
                           '$totalPremium',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.amber,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 1),
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
                           'Premium Kullanıcı',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            fontSize: 10,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -315,8 +309,8 @@ class UserStatisticsScreen extends ConsumerWidget {
                 ),
                 Container(
                   width: 1,
-                  height: 40,
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                  height: 28,
+                  margin: const EdgeInsets.symmetric(horizontal: 6),
                   color: Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.3),
                 ),
                 Expanded(
@@ -327,19 +321,20 @@ class UserStatisticsScreen extends ConsumerWidget {
                         fit: BoxFit.scaleDown,
                         child: Text(
                           '${overallPremiumPercentage.toStringAsFixed(1)}%',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).colorScheme.onPrimaryContainer,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 1),
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
                           'Premium Oranı',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            fontSize: 10,
                           ),
                           textAlign: TextAlign.center,
                         ),
