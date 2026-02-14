@@ -117,18 +117,6 @@
     "tags": ["analysis", "tracking"]
   },
   {
-    "id": "daily_tes_02_analysis_pro",
-    "title": "Analizini İncele",
-    "description": "Taktik Tavşan ile deneme sonuçlarınızı detaylı analiz ettirin ve zayıf noktalarınızı belirleyin.",
-    "type": "daily",
-    "category": "study",
-    "reward": 90,
-    "goalValue": 1,
-    "actionRoute": "/coach",
-    "tags": ["analysis", "ai_feature"],
-    "triggerConditions": {"hasTestResults": true}
-  },
-  {
     "id": "daily_eng_06_workshop_session",
     "title": "Etüt Odası'nda Çalış",
     "description": "Etüt Odası'nda zayıf konularınızı güçlendirin. Yanlış yaptığınız soruları tekrar çözün.",
@@ -150,18 +138,6 @@
     "actionRoute": "/coach",
     "tags": ["weekend", "high_volume"],
     "triggerConditions": {"dayOfWeek": ["saturday", "sunday"]}
-  },
-  {
-    "id": "daily_eng_07_avatar_customization",
-    "title": "Avatar Seç",
-    "description": "Sizi yansıtan bir kimlik oluşturun. Profilinize girip size özel bir avatar seçin.",
-    "type": "daily",
-    "category": "engagement",
-    "reward": 40,
-    "goalValue": 1,
-    "actionRoute": "/profile",
-    "tags": ["profile", "onboarding", "customization"],
-    "excludeConditions": {"hasCustomAvatar": true}
   },
   {
     "id": "daily_eng_08_mind_map_explore",
@@ -253,17 +229,6 @@
     "tags": ["discovery", "reading"]
   },
   {
-    "id": "daily_con_05_consistency_check",
-    "title": "İstikrarı Koru",
-    "description": "Dün de buradaydınız, harika! Bugün de bir çalışma yaparak istikrarınızı koruyun.",
-    "type": "daily",
-    "category": "consistency",
-    "reward": 60,
-    "goalValue": 1,
-    "tags": ["habit", "streak"],
-    "triggerConditions": {"wasActiveYesterday": true}
-  },
-  {
     "id": "daily_foc_05_mind_map_connect",
     "title": "Konuları Bağla",
     "description": "Zihin Haritası ile farklı konular arasındaki bağlantıları görselleştirin. Büyük resmi görün!",
@@ -284,18 +249,6 @@
     "goalValue": 10,
     "actionRoute": "/coach",
     "tags": ["quick_win", "micro_session"]
-  },
-  {
-    "id": "daily_tes_06_review_analysis",
-    "title": "Sonuç Analizi",
-    "description": "Taktik'nin sizin için yaptığı deneme analizini detaylıca inceleyin ve bir sonraki adımlarınızı planlayın.",
-    "type": "daily",
-    "category": "study",
-    "reward": 55,
-    "goalValue": 1,
-    "actionRoute": "/coach",
-    "tags": ["ai_feature", "analysis", "review"],
-    "triggerConditions": {"hasTestResults": true}
   },
   {
     "id": "daily_foc_07_study_cards",
