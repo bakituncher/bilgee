@@ -318,5 +318,5 @@
     "goalValue": 1,
     "actionRoute": "/ai-hub/question-solver",
     "tags": ["question_solver", "ai_feature", "learning"]
-  },
+  }
 ]
