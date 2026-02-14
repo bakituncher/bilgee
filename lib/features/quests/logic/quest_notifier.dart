@@ -138,12 +138,23 @@ class QuestNotifier extends StateNotifier<bool> {
 
   /// Kullanıcı "Etüt Odası"nda bir quiz bitirdiğinde bu metot çağrılır.
   void userCompletedWorkshopQuiz(String subject, String topic) {
+    // 1. Practice (Ana kategori)
     _reportAction(
       QuestCategory.practice,
       amount: 1,
       route: QuestRoute.workshop,
-      tags: ['workshop', subject.toLowerCase()],
+      tags: ['workshop', subject.toLowerCase(), 'practice'],
     );
+
+    // 2. Engagement (Etüt Odası keşif/oturum görevleri için)
+    // Örn: daily_eng_06_workshop_session, daily_eng_03_workshop_intro
+    _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.workshop,
+      tags: ['workshop', 'discovery', 'review'],
+    );
+
     _updateUserFeatureUsage('workshop');
     if (kDebugMode) {
       debugPrint('[QuestNotifier] Atölye quizi tamamlandı - $subject/$topic');
@@ -238,12 +249,22 @@ class QuestNotifier extends StateNotifier<bool> {
 
   /// Kullanıcı stats raporunu görüntülediğinde
   void userViewedStatsReport() {
+    // 1. Study (Analiz inceleme görevleri: daily_tes_02_analysis_pro)
+    _reportAction(
+      QuestCategory.study,
+      amount: 1,
+      route: QuestRoute.stats,
+      tags: ['stats', 'analysis', 'review'],
+    );
+
+    // 2. Engagement (Genel kullanım)
     _reportAction(
       QuestCategory.engagement,
       amount: 1,
       route: QuestRoute.stats,
       tags: ['stats', 'analysis'],
     );
+
     _updateUserFeatureUsage('stats');
   }
 
@@ -271,30 +292,58 @@ class QuestNotifier extends StateNotifier<bool> {
 
   /// Kullanıcı Soru Çözücü'yü kullandığında
   void userUsedQuestionSolver() {
+    // 1. Focus (Ana kategori - Günlük görev)
     _reportAction(
-      QuestCategory.practice,
+      QuestCategory.focus,
       amount: 1,
       route: QuestRoute.questionSolver,
       tags: ['question_solver', 'ai_feature', 'practice'],
     );
+
+    // 2. Engagement (Keşif görevi: daily_eng_04_question_solver_intro)
+    _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.questionSolver,
+      tags: ['question_solver', 'discovery', 'ai_feature'],
+    );
+
     _updateUserFeatureUsage('questionSolver');
   }
 
   /// Kullanıcı Zihin Haritası oluşturduğunda
   void userUsedMindMap() {
+    // 1. Study (Ana kategori: daily_stu_01_mind_map_study)
     _reportAction(
-      QuestCategory.engagement,
+      QuestCategory.study,
       amount: 1,
       route: QuestRoute.mindMap,
       tags: ['mind_map', 'study', 'visualization'],
     );
+
+    // 2. Focus (Bağlantı görevi: daily_foc_05_mind_map_connect)
+    _reportAction(
+      QuestCategory.focus,
+      amount: 1,
+      route: QuestRoute.mindMap,
+      tags: ['mind_map', 'study', 'connection'],
+    );
+
+    // 3. Engagement (Keşif: daily_eng_08_mind_map_explore)
+    _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.mindMap,
+      tags: ['mind_map', 'discovery', 'visualization'],
+    );
+
     _updateUserFeatureUsage('mindMap');
   }
 
   /// Kullanıcı İçerik Üretici'yi kullandığında
   void userUsedContentGenerator() {
     _reportAction(
-      QuestCategory.study,
+      QuestCategory.focus, // Fixed: was study
       amount: 1,
       route: QuestRoute.contentGenerator,
       tags: ['content', 'notes', 'study'],
@@ -305,12 +354,22 @@ class QuestNotifier extends StateNotifier<bool> {
   /// Kullanıcı Soru Kutusu'na soru eklediğinde
   void userUsedQuestionBox() {
     _reportAction(
-      QuestCategory.practice,
+      QuestCategory.focus, // Fixed: was practice (daily_foc_02_question_box is focus)
       amount: 1,
       route: QuestRoute.questionBox,
       tags: ['question_box', 'practice', 'review'],
     );
     _updateUserFeatureUsage('questionBox');
+  }
+
+  /// Kullanıcı Soru Kutusu'ndaki bir soruyu incelediğinde (Tekrar)
+  void userReviewedQuestionBox() {
+    _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.questionBox,
+      tags: ['question_box', 'review', 'practice'],
+    );
   }
 
   /// Kullanıcı profil ekranını ziyaret ettiğinde

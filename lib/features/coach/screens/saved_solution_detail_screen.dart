@@ -10,25 +10,40 @@ import 'package:taktik/features/coach/screens/question_solver_screen.dart';
 import 'package:taktik/features/coach/widgets/daily_limit_dialog.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:taktik/shared/widgets/full_screen_image_viewer.dart';
+import 'package:taktik/features/quests/logic/quest_notifier.dart';
 
-class SavedSolutionDetailScreen extends ConsumerWidget {
+class SavedSolutionDetailScreen extends ConsumerStatefulWidget {
   final SavedSolutionModel solution;
 
   const SavedSolutionDetailScreen({super.key, required this.solution});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SavedSolutionDetailScreen> createState() => _SavedSolutionDetailScreenState();
+}
+
+class _SavedSolutionDetailScreenState extends ConsumerState<SavedSolutionDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Quest takibi: Soru inceleme (Review)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(questNotifierProvider.notifier).userReviewedQuestionBox();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final allSolutions = ref.watch(savedSolutionsProvider);
 
     SavedSolutionModel currentSolution;
     try {
       currentSolution = allSolutions.firstWhere(
-            (s) => s.id == solution.id,
-        orElse: () => solution,
+            (s) => s.id == widget.solution.id,
+        orElse: () => widget.solution,
       );
     } catch (_) {
-      currentSolution = solution;
+      currentSolution = widget.solution;
     }
 
     final bool isSolved = currentSolution.solutionText != 'Görsel Soru';
