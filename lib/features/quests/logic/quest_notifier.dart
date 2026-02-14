@@ -283,7 +283,7 @@ class QuestNotifier extends StateNotifier<bool> {
   /// Kullanıcı Zihin Haritası oluşturduğunda
   void userUsedMindMap() {
     _reportAction(
-      QuestCategory.study,
+      QuestCategory.engagement,
       amount: 1,
       route: QuestRoute.mindMap,
       tags: ['mind_map', 'study', 'visualization'],

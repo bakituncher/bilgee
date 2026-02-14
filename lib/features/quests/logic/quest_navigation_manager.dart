@@ -128,6 +128,9 @@ class QuestNavigationManager {
       QuestRoute.strategy,
       QuestRoute.workshop,
       QuestRoute.motivationChat,
+      QuestRoute.questionSolver,
+      QuestRoute.mindMap,
+      QuestRoute.contentGenerator,
     };
 
     if (premiumRoutes.contains(route) && !isPremiumUser) {

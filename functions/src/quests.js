@@ -133,6 +133,29 @@ function evaluateTriggerConditions(template, ctx) {
     const r = ctx.user && ctx.user.lastScheduleCompletionRatio;
     if (!(typeof r === "number" && r >= 0.85)) return false;
   }
+  // hasCreatedStrategicPlan: Stratejik plan oluşturulmuş mu kontrol et
+  if (cond.hasCreatedStrategicPlan === false) {
+    // Kullanıcı stratejik plan oluşturmuşsa bu görevi gösterme
+    if (ctx.user && ctx.user.hasCreatedStrategicPlan === true) return false;
+  }
+  if (cond.hasCreatedStrategicPlan === true) {
+    // Kullanıcı stratejik plan oluşturmamışsa bu görevi gösterme
+    if (!ctx.user || ctx.user.hasCreatedStrategicPlan !== true) return false;
+  }
+  // usedFeatures.workshop: Workshop kullanılmış mı kontrol et (trigger için)
+  if (cond["usedFeatures.workshop"] === true) {
+    if (!ctx.user || !ctx.user.usedFeatures || ctx.user.usedFeatures.workshop !== true) return false;
+  }
+  // hasTestResults: Kullanıcının test sonuçları var mı kontrol et
+  if (cond.hasTestResults === true) {
+    const hasResults = ctx.stats && ctx.stats.totalTestsSubmitted && ctx.stats.totalTestsSubmitted > 0;
+    if (!hasResults) return false;
+  }
+  // wasActiveYesterday: Kullanıcı dün aktif miydi kontrol et
+  if (cond.wasActiveYesterday === true) {
+    // yesterdayInactive true ise, kullanıcı dün aktif değildi - bu durumda koşul sağlanmaz
+    if (ctx.yesterdayInactive === true) return false;
+  }
   return true;
 }
 
