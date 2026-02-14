@@ -1,6 +1,7 @@
 // lib/features/blog/screens/blog_detail_screen.dart
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:taktik/features/blog/providers/blog_providers.dart';
+import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -10,6 +11,9 @@ import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/shared/widgets/custom_back_button.dart';
+
+/// Blog yazısının okunduğunun takibi için - aynı oturumda tekrar çağrılmasını önler
+final _blogReadTrackerProvider = StateProvider.family<bool, String>((ref, slug) => false);
 
 class BlogDetailScreen extends ConsumerWidget {
   final String slug;
@@ -22,6 +26,16 @@ class BlogDetailScreen extends ConsumerWidget {
     final isAdmin = isAdminAsync.asData?.value ?? false;
     final postForActions = postAsync.asData?.value; // null olabilir
     final dateFmt = DateFormat('d MMM y', 'tr');
+
+    // Blog yazısı yüklendiğinde quest'i bir kez tetikle
+    final hasTracked = ref.watch(_blogReadTrackerProvider(slug));
+    if (postForActions != null && !hasTracked) {
+      // Bir sonraki frame'de çağır (build içinde state değiştirmemek için)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(_blogReadTrackerProvider(slug).notifier).state = true;
+        ref.read(questNotifierProvider.notifier).userReadBlogPost();
+      });
+    }
 
     Future<void> deletePost() async {
       final post = postForActions;

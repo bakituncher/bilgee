@@ -1389,11 +1389,27 @@ class _StudyViewState extends ConsumerState<_StudyView> {
   bool _isSaved = false;
   final ScrollController _scrollController = ScrollController();
   bool _showSaveButton = false;
+  bool _questReported = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+
+    // Sadece konu anlatımı modunda (quiz yoksa) görev takibini yap
+    // Bu sayede kullanıcı konu anlatımını görüntülediğinde görev tamamlanır
+    final hasQuiz = widget.material.quiz != null && widget.material.quiz!.isNotEmpty;
+    if (!hasQuiz && !_questReported) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_questReported) {
+          _questReported = true;
+          ref.read(questNotifierProvider.notifier).userCompletedWorkshopStudy(
+            widget.material.subject,
+            widget.material.topic,
+          );
+        }
+      });
+    }
   }
 
   @override
@@ -1485,6 +1501,7 @@ class _StudyViewState extends ConsumerState<_StudyView> {
                 final userId = ref.read(authControllerProvider).value!.uid;
                 final workshopToSave = widget.material.copyWith(id: const Uuid().v4());
                 await ref.read(firestoreServiceProvider).saveWorkshopForUser(userId, workshopToSave);
+
                 if (mounted) {
                   setState(() {
                     _isSaving = false;

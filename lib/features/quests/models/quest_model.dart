@@ -15,7 +15,7 @@ enum QuestProgressType {
 
 enum QuestDifficulty { trivial, easy, medium, hard, epic }
 
-enum QuestRoute { home, pomodoro, coach, weeklyPlan, stats, addTest, quests, strategy, workshop, availability, avatar, arena, library, motivationChat, unknown }
+enum QuestRoute { home, pomodoro, coach, weeklyPlan, stats, addTest, quests, strategy, workshop, availability, avatar, arena, library, motivationChat, questionSolver, mindMap, contentGenerator, questionBox, blog, unknown }
 
 QuestRoute questRouteFromPath(String path) {
   switch (path) {
@@ -32,7 +32,12 @@ QuestRoute questRouteFromPath(String path) {
     case '/profile/avatar-selection': return QuestRoute.avatar;
     case '/arena': return QuestRoute.arena;
     case '/library': return QuestRoute.library;
+    case '/profile': return QuestRoute.avatar; // Profile sayfası avatar ile ilişkilendirildi
     case '/ai-hub/motivation-chat': return QuestRoute.motivationChat;
+    case '/ai-hub/question-solver': return QuestRoute.questionSolver;
+    case '/ai-hub/mind-map': return QuestRoute.mindMap;
+    case '/ai-hub/content-generator': return QuestRoute.contentGenerator;
+    case '/question-box': return QuestRoute.questionBox;
     default: return QuestRoute.unknown;
   }
 }
@@ -53,6 +58,11 @@ String questRouteToPath(QuestRoute r) {
     case QuestRoute.arena: return AppRoutes.arena;
     case QuestRoute.library: return AppRoutes.library;
     case QuestRoute.motivationChat: return '${AppRoutes.aiHub}/${AppRoutes.motivationChat}';
+    case QuestRoute.questionSolver: return '${AppRoutes.aiHub}/question-solver';
+    case QuestRoute.mindMap: return '${AppRoutes.aiHub}/${AppRoutes.mindMap}';
+    case QuestRoute.contentGenerator: return '${AppRoutes.aiHub}/${AppRoutes.contentGenerator}';
+    case QuestRoute.questionBox: return AppRoutes.questionBox;
+    case QuestRoute.blog: return '/blog';
     case QuestRoute.unknown: return AppRoutes.home;
   }
 }

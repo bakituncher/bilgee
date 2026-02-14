@@ -319,16 +319,8 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
   }
 
   /// Premium rotaların tanımları
+  /// NOT: Soru Çözücü, Zihin Haritası, İçerik Üretici artık ücretsiz - listeden çıkarıldı
   static final Map<String, Map<String, dynamic>> _premiumRoutesMap = {
-    '/ai-hub/question-solver': {
-      'title': 'Soru Çözücü',
-      'subtitle': 'Anında çözüm cebinde.',
-      'icon': Icons.camera_enhance_rounded,
-      'color': Colors.orangeAccent,
-      'marketingTitle': 'Soruda Takılma!',
-      'marketingSubtitle': 'Yapamadığın sorunun fotoğrafını çek, Taktik Tavşan adım adım çözümünü anlatsın.',
-      'redirectRoute': '/ai-hub/question-solver',
-    },
     '/ai-hub/weakness-workshop': {
       'title': 'Etüt Odası',
       'subtitle': 'Kişiye özel çalışma materyalleri.',
@@ -346,15 +338,6 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
       'marketingTitle': 'Programın Hazır!',
       'marketingSubtitle': 'Eksik konularına ve müsait zamanına göre sana en uygun haftalık ders çalışma programını saniyeler içinde oluştur.',
       'redirectRoute': '/ai-hub/strategic-planning',
-    },
-    '/ai-hub/mind-map': {
-      'title': 'Zihin Haritası',
-      'subtitle': 'Konuları görselleştir ve daha iyi anla.',
-      'iconName': 'account_tree',
-      'color': const Color(0xFF6366F1),
-      'marketingTitle': 'Düşüncelerini Haritala!',
-      'marketingSubtitle': 'Karmaşık konuları görsel zihin haritalarına dönüştür. Daha iyi anla, daha kolay hatırla.',
-      'redirectRoute': '/ai-hub/mind-map',
     },
   };
 

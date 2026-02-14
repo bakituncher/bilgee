@@ -19,6 +19,7 @@ import 'package:taktik/features/coach/providers/saved_solutions_provider.dart';
 import 'package:taktik/features/coach/screens/subject_solutions_screen.dart';
 import 'package:taktik/utils/subject_utils.dart';
 import 'package:taktik/shared/widgets/custom_back_button.dart';
+import 'package:taktik/features/quests/logic/quest_notifier.dart';
 
 class SavedSolutionsScreen extends ConsumerStatefulWidget {
   final bool isSelectionMode; // Ders seçim modu aktif mi?
@@ -355,6 +356,9 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
         solutionText: 'Görsel Soru',
         subject: subject,
       );
+
+      // Quest takibi: Soru Kutusu kullanıldı
+      ref.read(questNotifierProvider.notifier).userUsedQuestionBox();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

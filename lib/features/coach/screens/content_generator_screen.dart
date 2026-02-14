@@ -21,6 +21,7 @@ import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/features/coach/widgets/flashcard_widget.dart';
 import 'package:taktik/features/coach/widgets/daily_limit_dialog.dart';
 import 'package:taktik/shared/widgets/custom_back_button.dart';
+import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:lottie/lottie.dart';
 
 class ContentGeneratorScreen extends ConsumerStatefulWidget {
@@ -1276,6 +1277,9 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       }
 
       _notifier.setResult(result);
+
+      // Quest takibi: İçerik Üretici kullanıldı
+      ref.read(questNotifierProvider.notifier).userUsedContentGenerator();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2759,6 +2763,9 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
       // Sonucu cache'e ekle
       _notifier.addToCache(cacheKey, state.selectedContentType, result);
       _notifier.setResult(result);
+
+      // Quest takibi: İçerik Üretici kullanıldı
+      ref.read(questNotifierProvider.notifier).userUsedContentGenerator();
     } catch (e) {
       final errorMessage = e.toString().replaceAll('Exception: ', '');
       _notifier.setError(errorMessage);

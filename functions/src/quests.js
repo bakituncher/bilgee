@@ -133,6 +133,29 @@ function evaluateTriggerConditions(template, ctx) {
     const r = ctx.user && ctx.user.lastScheduleCompletionRatio;
     if (!(typeof r === "number" && r >= 0.85)) return false;
   }
+  // hasCreatedStrategicPlan: Stratejik plan oluşturulmuş mu kontrol et
+  if (cond.hasCreatedStrategicPlan === false) {
+    // Kullanıcı stratejik plan oluşturmuşsa bu görevi gösterme
+    if (ctx.user && ctx.user.hasCreatedStrategicPlan === true) return false;
+  }
+  if (cond.hasCreatedStrategicPlan === true) {
+    // Kullanıcı stratejik plan oluşturmamışsa bu görevi gösterme
+    if (!ctx.user || ctx.user.hasCreatedStrategicPlan !== true) return false;
+  }
+  // usedFeatures.workshop: Workshop kullanılmış mı kontrol et (trigger için)
+  if (cond["usedFeatures.workshop"] === true) {
+    if (!ctx.user || !ctx.user.usedFeatures || ctx.user.usedFeatures.workshop !== true) return false;
+  }
+  // hasTestResults: Kullanıcının test sonuçları var mı kontrol et
+  if (cond.hasTestResults === true) {
+    const hasResults = ctx.stats && ctx.stats.totalTestsSubmitted && ctx.stats.totalTestsSubmitted > 0;
+    if (!hasResults) return false;
+  }
+  // wasActiveYesterday: Kullanıcı dün aktif miydi kontrol et
+  if (cond.wasActiveYesterday === true) {
+    // yesterdayInactive true ise, kullanıcı dün aktif değildi - bu durumda koşul sağlanmaz
+    if (ctx.yesterdayInactive === true) return false;
+  }
   return true;
 }
 
@@ -156,6 +179,10 @@ function evaluateExcludeConditions(template, ctx) {
   if (cond.hasCustomAvatar === true && (ctx.user && (ctx.user.avatarStyle || ctx.user.avatarSeed))) return true;
   if (cond["usedFeatures.workshop"] === true && ctx.user && ctx.user.usedFeatures && ctx.user.usedFeatures.workshop === true) return true;
   if (cond["usedFeatures.pomodoro"] === true && ctx.user && ctx.user.usedFeatures && ctx.user.usedFeatures.pomodoro === true) return true;
+  if (cond["usedFeatures.questionSolver"] === true && ctx.user && ctx.user.usedFeatures && ctx.user.usedFeatures.questionSolver === true) return true;
+  if (cond["usedFeatures.mindMap"] === true && ctx.user && ctx.user.usedFeatures && ctx.user.usedFeatures.mindMap === true) return true;
+  if (cond["usedFeatures.contentGenerator"] === true && ctx.user && ctx.user.usedFeatures && ctx.user.usedFeatures.contentGenerator === true) return true;
+  if (cond["usedFeatures.questionBox"] === true && ctx.user && ctx.user.usedFeatures && ctx.user.usedFeatures.questionBox === true) return true;
 
   return false;
 }
@@ -170,27 +197,64 @@ function pickTemplatesForType(type, ctx, desiredCount) {
   // 1. Skora göre sırala
   const scored = pool.map((q) => ({ q, s: scoreTemplateForUser(q, ctx) })).sort((a, b) => b.s - a.s);
 
-  // 2. En iyi 10 görevi al ve karıştır (daha fazla çeşitlilik için)
-  const topPool = scored.slice(0, 10);
-  for (let i = topPool.length - 1; i > 0; i--) {
+  // 2. TÜM uygun görevleri al ve karıştır (daha fazla çeşitlilik için)
+  // Ağırlıklı rastgele seçim: her görevin skoru kadar "bilet" var
+  // Bu sayede yüksek puanlı görevler hala avantajlı ama düşük puanlılar da şans buluyor
+  const shuffledPool = [...scored];
+  for (let i = shuffledPool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [topPool[i], topPool[j]] = [topPool[j], topPool[i]]; // Karıştırma
+    [shuffledPool[i], shuffledPool[j]] = [shuffledPool[j], shuffledPool[i]];
   }
 
-  // 3. Karıştırılmış havuzdan istenen sayıda görev seç, kategori çeşitliliğini koru
+  // 3. Karıştırılmış havuzdan ağırlıklı seçim yap, kategori çeşitliliğini koru
   const selected = [];
   const categoryCounts = new Map();
-  for (const it of topPool) {
-    if (selected.length >= desiredCount) break;
-    const q = it.q;
+  const usedIds = new Set();
+
+  // Ağırlıklı rastgele seçim için toplam skoru hesapla
+  const totalScore = shuffledPool.reduce((sum, it) => sum + Math.max(it.s, 10), 0);
+
+  // İstenen sayıda görev seçene kadar döngü
+  let attempts = 0;
+  const maxAttempts = shuffledPool.length * 3;
+
+  while (selected.length < desiredCount && attempts < maxAttempts) {
+    attempts++;
+
+    // Ağırlıklı rastgele seçim
+    let random = Math.random() * totalScore;
+    let chosenItem = null;
+
+    for (const it of shuffledPool) {
+      if (usedIds.has(it.q.id)) continue;
+      random -= Math.max(it.s, 10); // Minimum 10 puan, herkes şans bulsun
+      if (random <= 0) {
+        chosenItem = it;
+        break;
+      }
+    }
+
+    // Eğer seçim yapılamadıysa, kullanılmamış ilk görevi al
+    if (!chosenItem) {
+      chosenItem = shuffledPool.find(it => !usedIds.has(it.q.id));
+    }
+
+    if (!chosenItem) break;
+
+    const q = chosenItem.q;
     const currentCategoryCount = categoryCounts.get(q.category) || 0;
 
     // Bir kategoriden en fazla 2 görev al
     if (currentCategoryCount < 2) {
       selected.push(q);
       categoryCounts.set(q.category, currentCategoryCount + 1);
+      usedIds.add(q.id);
+    } else {
+      // Bu kategori dolu, bu görevi atla (sonraki iterasyonda başka görev denenecek)
+      usedIds.add(q.id);
     }
   }
+
   return selected;
 }
 

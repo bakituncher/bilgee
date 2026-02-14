@@ -26,6 +26,7 @@ import 'package:taktik/core/utils/exam_utils.dart';
 import 'package:taktik/shared/widgets/full_screen_image_viewer.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:taktik/shared/widgets/custom_back_button.dart';
+import 'package:taktik/features/quests/logic/quest_notifier.dart';
 
 // Basit mesaj modeli
 class SolverMessage {
@@ -382,6 +383,8 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
           _isAnalyzing = false;
           _isChatMode = false; // Henüz sohbet modu kapalı
         });
+        // Quest takibi: Soru Çözücü kullanıldı
+        ref.read(questNotifierProvider.notifier).userUsedQuestionSolver();
       }
     } catch (e) {
       if (mounted) {

@@ -233,27 +233,28 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
   bool _isClaimingReward = false;
 
   // Premium gerektiren route'lar için özel offer verileri
+  // NOT: Soru Çözücü, Zihin Haritası, İçerik Üretici, Soru Kutusu artık ücretsiz
   Map<String, dynamic>? _getPremiumOfferData(String route) {
     switch (route) {
       case '/ai-hub/strategic-planning':
         return {
           'title': 'Haftalık Planlama',
-          'subtitle': 'Hedefine giden en kısa yol.',
-          'icon': Icons.map_rounded,
+          'subtitle': 'Sana özel ders programı.',
+          'iconName': 'calendar_month',
           'color': const Color(0xFF10B981),
-          'marketingTitle': 'Rotanı Çiz!',
-          'marketingSubtitle': 'Rastgele çalışarak vakit kaybetme. Taktik Tavşan senin için en verimli haftalık planı saniyeler içinde oluştursun.',
+          'marketingTitle': 'Programın Hazır!',
+          'marketingSubtitle': 'Eksik konularına ve müsait zamanına göre sana en uygun haftalık ders çalışma programını saniyeler içinde oluştur.',
           'redirectRoute': '/ai-hub/strategic-planning',
         };
       case '/ai-hub/weakness-workshop':
         return {
           'title': 'Etüt Odası',
-          'subtitle': 'Zayıflıkları güce çevir.',
-          'icon': Icons.diamond_rounded,
+          'subtitle': 'Kişiye özel çalışma materyalleri.',
+          'iconName': 'menu_book',
           'color': const Color(0xFF8B5CF6),
           'heroTag': 'weakness-workshop-offer',
-          'marketingTitle': 'Ustalaşmadan Çıkma!',
-          'marketingSubtitle': 'Sadece eksik olduğun konuya odaklan. Taktik Tavşan sana özel sorularla o konuyu halletmeden seni bırakmasın.',
+          'marketingTitle': 'Eksiklerini Kapat!',
+          'marketingSubtitle': 'Taktik, sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
           'redirectRoute': '/ai-hub/weakness-workshop',
         };
       case '/ai-hub/motivation-chat':
@@ -267,6 +268,8 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
           'redirectRoute': '/ai-hub/motivation-chat',
           'imageAsset': 'assets/images/bunnyy.png',
         };
+      // Not: Soru Çözücü, Zihin Haritası, İçerik Üretici (Not Defteri) ve Soru Kutusu
+      // herkese açık özellikler olduğu için tool offer gösterilmiyor.
       default:
         return null;
     }
@@ -287,9 +290,23 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
     final offerData = _getPremiumOfferData(targetRoute);
 
     if (!isPremium && offerData != null) {
-      context.go('/ai-hub/offer', extra: offerData);
-    } else {
+      context.push('/ai-hub/offer', extra: offerData);
+      return;
+    }
+
+    // Tam ekran route'lar (bottom nav ile) -> go kullan
+    // Geri tuşu olan alt ekranlar -> push kullan
+    // NOT: /home/add-test, /home/quests, /home/stats gibi alt route'lar push ile açılmalı
+    final fullScreenRoutes = ['/coach', '/arena', '/profile', '/library'];
+    final homeSubRoutes = ['/home/add-test', '/home/quests', '/home/stats', '/home/weekly-plan', '/home/pomodoro'];
+
+    final isHomeSubRoute = homeSubRoutes.any((r) => targetRoute.startsWith(r));
+    final isFullScreen = !isHomeSubRoute && (targetRoute == '/home' || fullScreenRoutes.any((r) => targetRoute.startsWith(r)));
+
+    if (isFullScreen) {
       context.go(targetRoute);
+    } else {
+      context.push(targetRoute);
     }
   }
 

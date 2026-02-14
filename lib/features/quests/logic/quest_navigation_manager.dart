@@ -35,14 +35,20 @@ class QuestNavigationManager {
       // Context kontrolü
       if (!context.mounted) return;
 
-      // Special case handling
-      if (quest.route == QuestRoute.home) {
-        context.go('/home');
-        return;
-      }
+      // Tam ekran route'lar (bottom nav ile) -> go kullan
+      // Geri tuşu olan alt ekranlar -> push kullan
+      // NOT: /home/add-test, /home/quests, /home/stats gibi alt route'lar push ile açılmalı
+      final fullScreenRoutes = ['/coach', '/arena', '/profile', '/library'];
+      final homeSubRoutes = ['/home/add-test', '/home/quests', '/home/stats', '/home/weekly-plan', '/home/pomodoro'];
 
-      // Ana navigasyon
-      context.go(correctedRoute);
+      final isHomeSubRoute = homeSubRoutes.any((r) => correctedRoute.startsWith(r));
+      final isFullScreen = !isHomeSubRoute && (correctedRoute == '/home' || fullScreenRoutes.any((r) => correctedRoute.startsWith(r)));
+
+      if (isFullScreen) {
+        context.go(correctedRoute);
+      } else {
+        context.push(correctedRoute);
+      }
 
       debugPrint('[QuestNavigation] Navigated to: $correctedRoute for quest: ${quest.title}');
 
@@ -70,11 +76,14 @@ class QuestNavigationManager {
       case QuestRoute.pomodoro:
       case QuestRoute.coach:
       case QuestRoute.weeklyPlan:
+      case QuestRoute.contentGenerator:
         return QuestCategory.study;
 
       case QuestRoute.strategy:
       case QuestRoute.workshop:
       case QuestRoute.arena:
+      case QuestRoute.questionSolver:
+      case QuestRoute.questionBox:
         return QuestCategory.practice;
 
       case QuestRoute.stats:
@@ -84,6 +93,7 @@ class QuestNavigationManager {
       case QuestRoute.motivationChat:
       case QuestRoute.avatar:
       case QuestRoute.library:
+      case QuestRoute.mindMap:
         return QuestCategory.engagement;
 
       case QuestRoute.quests:
@@ -100,7 +110,10 @@ class QuestNavigationManager {
       case QuestType.daily:
         return {
           QuestType.daily: [
-            QuestRoute.pomodoro,
+            QuestRoute.questionSolver,
+            QuestRoute.mindMap,
+            QuestRoute.contentGenerator,
+            QuestRoute.questionBox,
             QuestRoute.coach,
             QuestRoute.addTest,
             QuestRoute.stats,
@@ -116,7 +129,7 @@ class QuestNavigationManager {
 
   /// Route erişilebilirlik kontrolü
   bool isRouteAccessible(QuestRoute route, {required bool isPremiumUser}) {
-    // Premium özellikler
+    // Premium özellikler - Soru Çözücü, Zihin Haritası, İçerik Üretici artık ücretsiz
     const premiumRoutes = {
       QuestRoute.strategy,
       QuestRoute.workshop,

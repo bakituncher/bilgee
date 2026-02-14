@@ -138,15 +138,52 @@ class QuestNotifier extends StateNotifier<bool> {
 
   /// Kullanıcı "Etüt Odası"nda bir quiz bitirdiğinde bu metot çağrılır.
   void userCompletedWorkshopQuiz(String subject, String topic) {
+    // 1. Practice (Ana kategori)
     _reportAction(
       QuestCategory.practice,
       amount: 1,
       route: QuestRoute.workshop,
-      tags: ['workshop', subject.toLowerCase()],
+      tags: ['workshop', subject.toLowerCase(), 'practice'],
     );
+
+    // 2. Engagement (Etüt Odası keşif/oturum görevleri için)
+    // Örn: daily_eng_06_workshop_session, daily_eng_03_workshop_intro
+    _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.workshop,
+      tags: ['workshop', 'discovery', 'review'],
+    );
+
     _updateUserFeatureUsage('workshop');
     if (kDebugMode) {
       debugPrint('[QuestNotifier] Atölye quizi tamamlandı - $subject/$topic');
+    }
+  }
+
+  /// Kullanıcı "Etüt Odası"nda sadece konu anlatımı (study) tamamladığında bu metot çağrılır.
+  /// Quiz olmadan sadece konu çalışıldığında tetiklenir.
+  void userCompletedWorkshopStudy(String subject, String topic) {
+    // 1. Study (Konu anlatımı kategorisi)
+    _reportAction(
+      QuestCategory.study,
+      amount: 1,
+      route: QuestRoute.workshop,
+      tags: ['workshop', subject.toLowerCase(), 'study'],
+    );
+
+    // 2. Engagement (Etüt Odası keşif/oturum görevleri için)
+    // Örn: daily_eng_06_workshop_session, daily_eng_03_workshop_intro
+    _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.workshop,
+      tags: ['workshop', 'discovery', 'review'],
+    );
+
+    _updateUserFeatureUsage('workshop');
+    if (kDebugMode) {
+      debugPrint('[QuestNotifier] Etüt odası konu çalışması tamamlandı - $subject/$topic');
     }
   }
 
@@ -163,11 +200,33 @@ class QuestNotifier extends StateNotifier<bool> {
 
   /// Kullanıcı bir konunun performansını manuel olarak güncellediğinde bu metot çağrılır.
   void userUpdatedTopicPerformance(String subject, String topic, int questionCount) {
+    // Coach'ta çözülen sorular için tüm ilgili görevlerin tag'lerini ekle:
+    // - 100 Soru Maratonu: high_volume, intensive, high_value
+    // - Hafta Sonu Kampı: weekend, high_volume
+    // - 10 Soru Çöz: quick_win, micro_session
+    // - Eksik Konu Çalışması: adaptive, weakness
+    // - Hız Testi: adaptive, strength
+    final tags = <String>[
+      'practice',
+      'topic_update',
+      subject.toLowerCase(),
+      // Yüksek hacimli görevler
+      'high_volume',
+      'intensive',
+      // Hızlı görevler
+      'quick_win',
+      'micro_session',
+      // Adaptif görevler (zayıf/güçlü konu)
+      'adaptive',
+      'weakness',
+      'strength',
+    ];
+
     _reportAction(
       QuestCategory.practice,
       amount: questionCount,
       route: QuestRoute.coach,
-      tags: ['topic_update', subject.toLowerCase()],
+      tags: tags,
     );
     _reportAction(
       QuestCategory.study,
@@ -198,7 +257,7 @@ class QuestNotifier extends StateNotifier<bool> {
     _reportAction(
       QuestCategory.consistency,
       amount: 1,
-      tags: ['login', 'daily'],
+      tags: ['login', 'daily', 'habit', 'streak'],
     );
   }
 
@@ -238,12 +297,22 @@ class QuestNotifier extends StateNotifier<bool> {
 
   /// Kullanıcı stats raporunu görüntülediğinde
   void userViewedStatsReport() {
+    // 1. Study (Analiz inceleme görevleri: daily_tes_02_analysis_pro)
+    _reportAction(
+      QuestCategory.study,
+      amount: 1,
+      route: QuestRoute.stats,
+      tags: ['stats', 'analysis', 'review'],
+    );
+
+    // 2. Engagement (Genel kullanım)
     _reportAction(
       QuestCategory.engagement,
       amount: 1,
       route: QuestRoute.stats,
       tags: ['stats', 'analysis'],
     );
+
     _updateUserFeatureUsage('stats');
   }
 
@@ -269,6 +338,88 @@ class QuestNotifier extends StateNotifier<bool> {
     _updateUserFeatureUsage('motivationChat');
   }
 
+  /// Kullanıcı Soru Çözücü'yü kullandığında
+  void userUsedQuestionSolver() {
+    // 1. Focus (Ana kategori - Günlük görev)
+    _reportAction(
+      QuestCategory.focus,
+      amount: 1,
+      route: QuestRoute.questionSolver,
+      tags: ['question_solver', 'ai_feature', 'practice'],
+    );
+
+    // 2. Engagement (Keşif görevi: daily_eng_04_question_solver_intro)
+    _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.questionSolver,
+      tags: ['question_solver', 'discovery', 'ai_feature'],
+    );
+
+    _updateUserFeatureUsage('questionSolver');
+  }
+
+  /// Kullanıcı Zihin Haritası oluşturduğunda
+  void userUsedMindMap() {
+    // 1. Study (Ana kategori: daily_stu_01_mind_map_study)
+    _reportAction(
+      QuestCategory.study,
+      amount: 1,
+      route: QuestRoute.mindMap,
+      tags: ['mind_map', 'study', 'visualization'],
+    );
+
+    // 2. Focus (Bağlantı görevi: daily_foc_05_mind_map_connect)
+    _reportAction(
+      QuestCategory.focus,
+      amount: 1,
+      route: QuestRoute.mindMap,
+      tags: ['mind_map', 'study', 'connection'],
+    );
+
+    // 3. Engagement (Keşif: daily_eng_08_mind_map_explore)
+    _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.mindMap,
+      tags: ['mind_map', 'discovery', 'visualization'],
+    );
+
+    _updateUserFeatureUsage('mindMap');
+  }
+
+  /// Kullanıcı İçerik Üretici'yi kullandığında
+  void userUsedContentGenerator() {
+    _reportAction(
+      QuestCategory.focus, // Fixed: was study
+      amount: 1,
+      route: QuestRoute.contentGenerator,
+      tags: ['content', 'notes', 'study'],
+    );
+    _updateUserFeatureUsage('contentGenerator');
+  }
+
+  /// Kullanıcı Soru Kutusu'na soru eklediğinde
+  void userUsedQuestionBox() {
+    _reportAction(
+      QuestCategory.focus, // Fixed: was practice (daily_foc_02_question_box is focus)
+      amount: 1,
+      route: QuestRoute.questionBox,
+      tags: ['question_box', 'practice', 'review'],
+    );
+    _updateUserFeatureUsage('questionBox');
+  }
+
+  /// Kullanıcı Soru Kutusu'ndaki bir soruyu incelediğinde (Tekrar)
+  void userReviewedQuestionBox() {
+    _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.questionBox,
+      tags: ['question_box', 'review', 'practice'],
+    );
+  }
+
   /// Kullanıcı profil ekranını ziyaret ettiğinde
   void userVisitedProfile() {
     _reportAction(
@@ -277,6 +428,17 @@ class QuestNotifier extends StateNotifier<bool> {
       route: QuestRoute.home,
       tags: ['profile', 'discovery'],
     );
+  }
+
+  /// Kullanıcı blog yazısı okuduğunda
+  void userReadBlogPost() {
+    _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.blog,
+      tags: ['discovery', 'reading', 'blog'],
+    );
+    _updateUserFeatureUsage('blog');
   }
 
   /// Legacy metod - geriye dönük uyumluluk için
