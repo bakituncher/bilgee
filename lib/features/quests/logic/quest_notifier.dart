@@ -161,6 +161,32 @@ class QuestNotifier extends StateNotifier<bool> {
     }
   }
 
+  /// Kullanıcı "Etüt Odası"nda sadece konu anlatımı (study) tamamladığında bu metot çağrılır.
+  /// Quiz olmadan sadece konu çalışıldığında tetiklenir.
+  void userCompletedWorkshopStudy(String subject, String topic) {
+    // 1. Study (Konu anlatımı kategorisi)
+    _reportAction(
+      QuestCategory.study,
+      amount: 1,
+      route: QuestRoute.workshop,
+      tags: ['workshop', subject.toLowerCase(), 'study'],
+    );
+
+    // 2. Engagement (Etüt Odası keşif/oturum görevleri için)
+    // Örn: daily_eng_06_workshop_session, daily_eng_03_workshop_intro
+    _reportAction(
+      QuestCategory.engagement,
+      amount: 1,
+      route: QuestRoute.workshop,
+      tags: ['workshop', 'discovery', 'review'],
+    );
+
+    _updateUserFeatureUsage('workshop');
+    if (kDebugMode) {
+      debugPrint('[QuestNotifier] Etüt odası konu çalışması tamamlandı - $subject/$topic');
+    }
+  }
+
   /// Kullanıcı yeni bir deneme sonucu eklediğinde bu metot çağrılır.
   void userSubmittedTest() {
     _reportAction(
