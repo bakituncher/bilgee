@@ -15,6 +15,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/core/utils/exam_utils.dart';
 import 'package:taktik/features/mind_map/screens/saved_mind_maps_screen.dart';
+import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
@@ -727,6 +728,9 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
 
       // Bu AI tarafından oluşturulmuş bir harita, kaydedilebilir
       ref.read(isPreMadeMapProvider.notifier).state = false;
+
+      // Quest takibi: Zihin Haritası kullanıldı
+      ref.read(questNotifierProvider.notifier).userUsedMindMap();
 
       // Firestore'da aynı topic ve subject ile kayıt var mı kontrol et
       if (user != null) {

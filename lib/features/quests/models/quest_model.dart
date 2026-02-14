@@ -32,6 +32,7 @@ QuestRoute questRouteFromPath(String path) {
     case '/profile/avatar-selection': return QuestRoute.avatar;
     case '/arena': return QuestRoute.arena;
     case '/library': return QuestRoute.library;
+    case '/profile': return QuestRoute.avatar; // Profile sayfası avatar ile ilişkilendirildi
     case '/ai-hub/motivation-chat': return QuestRoute.motivationChat;
     case '/ai-hub/question-solver': return QuestRoute.questionSolver;
     case '/ai-hub/mind-map': return QuestRoute.mindMap;

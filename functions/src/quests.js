@@ -156,6 +156,10 @@ function evaluateExcludeConditions(template, ctx) {
   if (cond.hasCustomAvatar === true && (ctx.user && (ctx.user.avatarStyle || ctx.user.avatarSeed))) return true;
   if (cond["usedFeatures.workshop"] === true && ctx.user && ctx.user.usedFeatures && ctx.user.usedFeatures.workshop === true) return true;
   if (cond["usedFeatures.pomodoro"] === true && ctx.user && ctx.user.usedFeatures && ctx.user.usedFeatures.pomodoro === true) return true;
+  if (cond["usedFeatures.questionSolver"] === true && ctx.user && ctx.user.usedFeatures && ctx.user.usedFeatures.questionSolver === true) return true;
+  if (cond["usedFeatures.mindMap"] === true && ctx.user && ctx.user.usedFeatures && ctx.user.usedFeatures.mindMap === true) return true;
+  if (cond["usedFeatures.contentGenerator"] === true && ctx.user && ctx.user.usedFeatures && ctx.user.usedFeatures.contentGenerator === true) return true;
+  if (cond["usedFeatures.questionBox"] === true && ctx.user && ctx.user.usedFeatures && ctx.user.usedFeatures.questionBox === true) return true;
 
   return false;
 }

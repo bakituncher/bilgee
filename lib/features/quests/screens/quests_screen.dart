@@ -297,6 +297,16 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
           'marketingSubtitle': 'Ders notlarını yükle, Taktik sana özet çıkarsın. 1 saatlik dersi 10 dakikada tekrar et.',
           'redirectRoute': '/ai-hub/content-generator',
         };
+      case '/question-box':
+        return {
+          'title': 'Soru Kutusu',
+          'subtitle': 'Zorlandığın soruları biriktir.',
+          'icon': Icons.inbox_rounded,
+          'color': Colors.deepOrangeAccent,
+          'marketingTitle': 'Soruları Kutula!',
+          'marketingSubtitle': 'Zorlandığın soruları Soru Kutusuna ekle, sonra toplu tekrar yap.',
+          'redirectRoute': '/question-box',
+        };
       default:
         return null;
     }

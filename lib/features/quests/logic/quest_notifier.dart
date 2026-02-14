@@ -269,6 +269,50 @@ class QuestNotifier extends StateNotifier<bool> {
     _updateUserFeatureUsage('motivationChat');
   }
 
+  /// Kullanıcı Soru Çözücü'yü kullandığında
+  void userUsedQuestionSolver() {
+    _reportAction(
+      QuestCategory.practice,
+      amount: 1,
+      route: QuestRoute.questionSolver,
+      tags: ['question_solver', 'ai_feature', 'practice'],
+    );
+    _updateUserFeatureUsage('questionSolver');
+  }
+
+  /// Kullanıcı Zihin Haritası oluşturduğunda
+  void userUsedMindMap() {
+    _reportAction(
+      QuestCategory.study,
+      amount: 1,
+      route: QuestRoute.mindMap,
+      tags: ['mind_map', 'study', 'visualization'],
+    );
+    _updateUserFeatureUsage('mindMap');
+  }
+
+  /// Kullanıcı İçerik Üretici'yi kullandığında
+  void userUsedContentGenerator() {
+    _reportAction(
+      QuestCategory.study,
+      amount: 1,
+      route: QuestRoute.contentGenerator,
+      tags: ['content', 'notes', 'study'],
+    );
+    _updateUserFeatureUsage('contentGenerator');
+  }
+
+  /// Kullanıcı Soru Kutusu'na soru eklediğinde
+  void userUsedQuestionBox() {
+    _reportAction(
+      QuestCategory.practice,
+      amount: 1,
+      route: QuestRoute.questionBox,
+      tags: ['question_box', 'practice', 'review'],
+    );
+    _updateUserFeatureUsage('questionBox');
+  }
+
   /// Kullanıcı profil ekranını ziyaret ettiğinde
   void userVisitedProfile() {
     _reportAction(

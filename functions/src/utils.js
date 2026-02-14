@@ -47,6 +47,8 @@ function routeKeyFromPath(pathname) {
     return "arena";
   case "/library":
     return "library";
+  case "/profile":
+    return "avatar";
   case "/ai-hub/motivation-chat":
     return "motivationChat";
   case "/ai-hub/question-solver":
