@@ -174,11 +174,33 @@ class QuestNotifier extends StateNotifier<bool> {
 
   /// Kullanıcı bir konunun performansını manuel olarak güncellediğinde bu metot çağrılır.
   void userUpdatedTopicPerformance(String subject, String topic, int questionCount) {
+    // Coach'ta çözülen sorular için tüm ilgili görevlerin tag'lerini ekle:
+    // - 100 Soru Maratonu: high_volume, intensive, high_value
+    // - Hafta Sonu Kampı: weekend, high_volume
+    // - 10 Soru Çöz: quick_win, micro_session
+    // - Eksik Konu Çalışması: adaptive, weakness
+    // - Hız Testi: adaptive, strength
+    final tags = <String>[
+      'practice',
+      'topic_update',
+      subject.toLowerCase(),
+      // Yüksek hacimli görevler
+      'high_volume',
+      'intensive',
+      // Hızlı görevler
+      'quick_win',
+      'micro_session',
+      // Adaptif görevler (zayıf/güçlü konu)
+      'adaptive',
+      'weakness',
+      'strength',
+    ];
+
     _reportAction(
       QuestCategory.practice,
       amount: questionCount,
       route: QuestRoute.coach,
-      tags: ['topic_update', subject.toLowerCase()],
+      tags: tags,
     );
     _reportAction(
       QuestCategory.study,

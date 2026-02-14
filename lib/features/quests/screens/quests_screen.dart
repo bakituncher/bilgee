@@ -257,22 +257,22 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
       case '/ai-hub/strategic-planning':
         return {
           'title': 'Haftalık Planlama',
-          'subtitle': 'Hedefine giden en kısa yol.',
-          'icon': Icons.map_rounded,
+          'subtitle': 'Sana özel ders programı.',
+          'iconName': 'calendar_month',
           'color': const Color(0xFF10B981),
-          'marketingTitle': 'Rotanı Çiz!',
-          'marketingSubtitle': 'Rastgele çalışarak vakit kaybetme. Taktik Tavşan senin için en verimli haftalık planı saniyeler içinde oluştursun.',
+          'marketingTitle': 'Programın Hazır!',
+          'marketingSubtitle': 'Eksik konularına ve müsait zamanına göre sana en uygun haftalık ders çalışma programını saniyeler içinde oluştur.',
           'redirectRoute': '/ai-hub/strategic-planning',
         };
       case '/ai-hub/weakness-workshop':
         return {
           'title': 'Etüt Odası',
-          'subtitle': 'Zayıflıkları güce çevir.',
-          'icon': Icons.diamond_rounded,
+          'subtitle': 'Kişiye özel çalışma materyalleri.',
+          'iconName': 'menu_book',
           'color': const Color(0xFF8B5CF6),
           'heroTag': 'weakness-workshop-offer',
-          'marketingTitle': 'Ustalaşmadan Çıkma!',
-          'marketingSubtitle': 'Sadece eksik olduğun konuya odaklan. Taktik Tavşan sana özel sorularla o konuyu halletmeden seni bırakmasın.',
+          'marketingTitle': 'Eksiklerini Kapat!',
+          'marketingSubtitle': 'Taktik, sadece eksik olduğun konulara özel konu özeti ve test soruları üretsin.',
           'redirectRoute': '/ai-hub/weakness-workshop',
         };
       case '/ai-hub/motivation-chat':
@@ -286,6 +286,8 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
           'redirectRoute': '/ai-hub/motivation-chat',
           'imageAsset': 'assets/images/bunnyy.png',
         };
+      // Not: Soru Çözücü, Zihin Haritası, İçerik Üretici (Not Defteri) ve Soru Kutusu
+      // herkese açık özellikler olduğu için tool offer gösterilmiyor.
       default:
         return null;
     }
