@@ -176,8 +176,7 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
                     ],
                   ),
                 ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.2),
-                SizedBox(
-                  height: 400,
+                Expanded(
                   child: PageView.builder(
                     controller: _pageController,
                     itemCount: weeklyPlan.plan.length,
@@ -190,7 +189,7 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
                     },
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.all(24.0),
                   child: Row(
