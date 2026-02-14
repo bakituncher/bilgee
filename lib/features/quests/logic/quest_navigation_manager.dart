@@ -35,14 +35,20 @@ class QuestNavigationManager {
       // Context kontrolü
       if (!context.mounted) return;
 
-      // Special case handling
-      if (quest.route == QuestRoute.home) {
-        context.go('/home');
-        return;
-      }
+      // Tam ekran route'lar (bottom nav ile) -> go kullan
+      // Geri tuşu olan alt ekranlar -> push kullan
+      // NOT: /home/add-test, /home/quests, /home/stats gibi alt route'lar push ile açılmalı
+      final fullScreenRoutes = ['/coach', '/arena', '/profile', '/library'];
+      final homeSubRoutes = ['/home/add-test', '/home/quests', '/home/stats', '/home/weekly-plan', '/home/pomodoro'];
 
-      // Ana navigasyon
-      context.go(correctedRoute);
+      final isHomeSubRoute = homeSubRoutes.any((r) => correctedRoute.startsWith(r));
+      final isFullScreen = !isHomeSubRoute && (correctedRoute == '/home' || fullScreenRoutes.any((r) => correctedRoute.startsWith(r)));
+
+      if (isFullScreen) {
+        context.go(correctedRoute);
+      } else {
+        context.push(correctedRoute);
+      }
 
       debugPrint('[QuestNavigation] Navigated to: $correctedRoute for quest: ${quest.title}');
 

@@ -308,9 +308,23 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
     final offerData = _getPremiumOfferData(targetRoute);
 
     if (!isPremium && offerData != null) {
-      context.go('/ai-hub/offer', extra: offerData);
-    } else {
+      context.push('/ai-hub/offer', extra: offerData);
+      return;
+    }
+
+    // Tam ekran route'lar (bottom nav ile) -> go kullan
+    // Geri tuşu olan alt ekranlar -> push kullan
+    // NOT: /home/add-test, /home/quests, /home/stats gibi alt route'lar push ile açılmalı
+    final fullScreenRoutes = ['/coach', '/arena', '/profile', '/library'];
+    final homeSubRoutes = ['/home/add-test', '/home/quests', '/home/stats', '/home/weekly-plan', '/home/pomodoro'];
+
+    final isHomeSubRoute = homeSubRoutes.any((r) => targetRoute.startsWith(r));
+    final isFullScreen = !isHomeSubRoute && (targetRoute == '/home' || fullScreenRoutes.any((r) => targetRoute.startsWith(r)));
+
+    if (isFullScreen) {
       context.go(targetRoute);
+    } else {
+      context.push(targetRoute);
     }
   }
 
