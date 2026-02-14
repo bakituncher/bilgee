@@ -1,5 +1,6 @@
 // lib/features/quests/screens/quests_screen.dart
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/features/quests/logic/quest_service.dart';
@@ -82,6 +83,23 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
           ),
         ),
         centerTitle: true,
+        actions: [
+          // Debug modda görevleri yenile butonu
+          if (kDebugMode)
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              tooltip: 'Görevleri Yenile (Debug)',
+              onPressed: () {
+                _refreshQuests();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Görevler yenileniyor...'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              },
+            ),
+        ],
       ),
       body: Stack(
         children: [
@@ -233,6 +251,7 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
   bool _isClaimingReward = false;
 
   // Premium gerektiren route'lar için özel offer verileri
+  // NOT: Soru Çözücü, Zihin Haritası, İçerik Üretici, Soru Kutusu artık ücretsiz
   Map<String, dynamic>? _getPremiumOfferData(String route) {
     switch (route) {
       case '/ai-hub/strategic-planning':
@@ -266,46 +285,6 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
           'marketingSubtitle': 'Netlerin neden artmıyor? Stresle nasıl başa çıkarsın? Taktik Tavşan seni analiz edip nokta atışı yönlendirme yapsın.',
           'redirectRoute': '/ai-hub/motivation-chat',
           'imageAsset': 'assets/images/bunnyy.png',
-        };
-      case '/ai-hub/question-solver':
-        return {
-          'title': 'Soru Çözücü',
-          'subtitle': 'Anında çözüm cebinde.',
-          'icon': Icons.camera_enhance_rounded,
-          'color': Colors.orangeAccent,
-          'marketingTitle': 'Soruda Takılma!',
-          'marketingSubtitle': 'Yapamadığın sorunun fotoğrafını çek, Taktik Tavşan adım adım çözümünü anlatsın.',
-          'redirectRoute': '/ai-hub/question-solver',
-        };
-      case '/ai-hub/mind-map':
-        return {
-          'title': 'Zihin Haritası',
-          'subtitle': 'Karmaşık konuları görselleştir.',
-          'icon': Icons.account_tree_rounded,
-          'color': Colors.tealAccent,
-          'marketingTitle': 'Büyük Resmi Gör!',
-          'marketingSubtitle': 'Konuları Zihin Haritasına dönüştür, bağlantıları tek bakışta anla.',
-          'redirectRoute': '/ai-hub/mind-map',
-        };
-      case '/ai-hub/content-generator':
-        return {
-          'title': 'İçerik Üretici',
-          'subtitle': 'Notlarını hap bilgiye dönüştür.',
-          'icon': Icons.auto_awesome_rounded,
-          'color': Colors.purpleAccent,
-          'marketingTitle': 'Özetini Çıkar!',
-          'marketingSubtitle': 'Ders notlarını yükle, Taktik sana özet çıkarsın. 1 saatlik dersi 10 dakikada tekrar et.',
-          'redirectRoute': '/ai-hub/content-generator',
-        };
-      case '/question-box':
-        return {
-          'title': 'Soru Kutusu',
-          'subtitle': 'Zorlandığın soruları biriktir.',
-          'icon': Icons.inbox_rounded,
-          'color': Colors.deepOrangeAccent,
-          'marketingTitle': 'Soruları Kutula!',
-          'marketingSubtitle': 'Zorlandığın soruları Soru Kutusuna ekle, sonra toplu tekrar yap.',
-          'redirectRoute': '/question-box',
         };
       default:
         return null;

@@ -123,14 +123,11 @@ class QuestNavigationManager {
 
   /// Route erişilebilirlik kontrolü
   bool isRouteAccessible(QuestRoute route, {required bool isPremiumUser}) {
-    // Premium özellikler
+    // Premium özellikler - Soru Çözücü, Zihin Haritası, İçerik Üretici artık ücretsiz
     const premiumRoutes = {
       QuestRoute.strategy,
       QuestRoute.workshop,
       QuestRoute.motivationChat,
-      QuestRoute.questionSolver,
-      QuestRoute.mindMap,
-      QuestRoute.contentGenerator,
     };
 
     if (premiumRoutes.contains(route) && !isPremiumUser) {
