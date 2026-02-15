@@ -11,6 +11,7 @@ import 'package:flutter/gestures.dart';
 import 'package:taktik/shared/widgets/custom_date_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:flutter/services.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -625,6 +626,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 if (value == null || value.isEmpty) {
                   return 'Lütfen bir kullanıcı adı girin.';
                 }
+                if (value.contains(' ')) {
+                  return 'Kullanıcı adı boşluk içeremez.';
+                }
                 if (value.length < 3) {
                   return 'Kullanıcı adı en az 3 karakter olmalıdır.';
                 }
@@ -634,6 +638,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 return null;
               },
               onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
+              inputFormatters: [
+                FilteringTextInputFormatter.deny(RegExp(r'\s')),
+              ],
             ),
             const SizedBox(height: 12),
             Row(

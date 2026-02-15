@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/gestures.dart';
 import 'package:taktik/shared/widgets/custom_date_picker.dart';
+import 'package:flutter/services.dart'; // InputFormatter için gerekli
 
 class ProfileCompletionScreen extends ConsumerStatefulWidget {
   const ProfileCompletionScreen({super.key});
@@ -116,27 +117,25 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
       final newUsername = _usernameController.text.trim();
 
       // 3. Kullanıcı Adı Müsaitlik Kontrolü
-      // excludeUserId parametresi sayesinde, kullanıcı kendi ismini değiştirmeden
-      // kaydetmeye çalışırsa hata almaz.
-      final isAvailable = await firestoreService.checkUsernameAvailability(
-        newUsername,
-        excludeUserId: userId,
-      );
-
-      if (!isAvailable) {
-        if (mounted) {
-          setState(() {
-            _usernameError = 'Bu kullanıcı adı zaten alınmış.';
-            _isLoading = false;
-          });
-          // Formu tekrar validate ederek hatayı input altında göster
-          _formKey.currentState!.validate();
-        }
-        return;
-      }
-
-      // 4. Profil Güncelleme İşlemi
       try {
+        final isAvailable = await firestoreService.checkUsernameAvailability(
+          newUsername,
+          excludeUserId: userId,
+        );
+
+        if (!isAvailable) {
+          if (mounted) {
+            setState(() {
+              _usernameError = 'Bu kullanıcı adı zaten alınmış.';
+              _isLoading = false;
+            });
+            // Formu tekrar validate ederek hatayı input altında göster
+            _formKey.currentState!.validate();
+          }
+          return;
+        }
+
+        // 4. Profil Güncelleme İşlemi
         await firestoreService.updateUserProfileDetails(
           userId: userId,
           username: newUsername,
@@ -144,7 +143,6 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
           dateOfBirth: _dateOfBirth,
         );
         // Başarılı olduğunda yönlendirme (Router) otomatik devreye girecektir.
-        // Ancak yine de loading'i kapatmıyoruz ki geçiş sırasında buton tekrar tıklanmasın.
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -157,15 +155,17 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
   }
 
   Future<void> _selectDate(BuildContext context) async {
+    // Odaklanmayı kaldır (Klavye açıksa kapansın)
+    FocusScope.of(context).unfocus();
+
     final now = DateTime.now();
-    // Kullanıcı en az 13 yaşında olmalı kuralı için üst sınır
     final thirteenYearsAgo = DateTime(now.year - 13, now.month, now.day);
 
     final pickedDate = await CustomDatePicker.show(
       context: context,
-      initialDate: _dateOfBirth,
-      firstDate: DateTime(1950),
-      lastDate: thirteenYearsAgo,
+      initialDate: _dateOfBirth ?? thirteenYearsAgo,
+      firstDate: DateTime(1920), // Daha mantıklı bir alt sınır
+      lastDate: now, // Kullanıcı bugün doğmuş gibi seçebilir ama validate ederken 13 yaş kuralı çalışır
     );
 
     if (pickedDate != null && pickedDate != _dateOfBirth) {
@@ -240,14 +240,19 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
                                   errorText: _usernameError,
                                   helperText: 'Benzersiz bir isim seçin',
                                 ),
+                                // BOŞLUK ENGELLEME (CRITICAL FIX)
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                                ],
                                 maxLength: 30,
                                 buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) return 'Lütfen bir kullanıcı adı girin.';
+                                  if (value.contains(' ')) return 'Kullanıcı adı boşluk içeremez.'; // Ekstra güvenlik
                                   if (value.length < 3) return 'Kullanıcı adı en az 3 karakter olmalı.';
                                   if (value.length > 30) return 'Kullanıcı adı en fazla 30 karakter olabilir.';
                                   // Sadece harf, rakam ve alt çizgiye izin ver
-                                  if (!RegExp(r'^[a-z0-9_]+$', caseSensitive: false).hasMatch(value)) {
+                                  if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value)) {
                                     return 'Sadece harf, rakam ve alt çizgi kullanın.';
                                   }
                                   if (_usernameError != null) return _usernameError;
@@ -369,8 +374,8 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
                                     height: 24,
                                     width: 24,
                                     child: CircularProgressIndicator(
-                                        color: theme.colorScheme.onPrimary,
-                                        strokeWidth: 2.5
+                                      color: theme.colorScheme.onPrimary,
+                                      strokeWidth: 2.5,
                                     ),
                                   )
                                       : const Text('Profili Tamamla'),

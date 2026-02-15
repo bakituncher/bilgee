@@ -6,6 +6,7 @@ import 'package:taktik/features/profile/application/profile_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:taktik/shared/widgets/custom_date_picker.dart';
 import 'package:taktik/shared/widgets/custom_back_button.dart';
+import 'package:flutter/services.dart'; // InputFormatter için gerekli
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -26,7 +27,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   String? _usernameError;
   bool _isCheckingUsername = false;
 
-  // ÇÖZÜM: Original değerleri sakla (form dirty check için)
+  // Form değişikliği kontrolü için orijinal değerler
   String? _originalFirstName;
   String? _originalLastName;
   String? _originalUsername;
@@ -42,13 +43,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _usernameController = TextEditingController();
     _dateOfBirthController = TextEditingController();
 
-    // Listener'lar ekle - form değişikliklerini izle
+    // Değişiklikleri dinle
     _firstNameController.addListener(_checkFormDirty);
     _lastNameController.addListener(_checkFormDirty);
     _usernameController.addListener(_checkFormDirty);
   }
 
-  /// ÇÖZÜM: Form'un değişip değişmediğini kontrol et
+  /// Form'un orijinal halinden farklı olup olmadığını kontrol eder
   void _checkFormDirty() {
     final isDirty = _firstNameController.text.trim() != (_originalFirstName ?? '') ||
         _lastNameController.text.trim() != (_originalLastName ?? '') ||
@@ -63,7 +64,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
   }
 
-
   @override
   void dispose() {
     _firstNameController.dispose();
@@ -73,7 +73,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     super.dispose();
   }
 
-  /// Karakter sayacı - kalan karakter sayısını döndürür
+  /// Karakter sayacı
   String? _getCharacterCountText(TextEditingController controller, int maxLength) {
     final currentLength = controller.text.length;
     final threshold = (maxLength * 0.7).toInt();
@@ -98,7 +98,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       _dateOfBirthController.text = DateFormat('dd/MM/yyyy').format(user.dateOfBirth!);
     }
 
-    // ÇÖZÜM: Original değerleri kaydet
+    // Orijinal değerleri kaydet
     _originalFirstName = user.firstName;
     _originalLastName = user.lastName;
     _originalUsername = user.username;
@@ -108,30 +108,33 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
+    FocusScope.of(context).unfocus(); // Klavyeyi kapat
     final now = DateTime.now();
+
     final DateTime? picked = await CustomDatePicker.show(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(1920),
       lastDate: now,
     );
+
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
         _dateOfBirthController.text = DateFormat('dd/MM/yyyy').format(picked);
       });
-      _checkFormDirty(); // ÇÖZÜM: Tarih değiştiğinde dirty check yap
+      _checkFormDirty(); // Tarih değiştiğinde dirty check tetikle
     }
   }
 
   void _submit() async {
-    // Form validasyonunu kontrol et
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // Kullanıcı adı değişmişse kontrol et
     final newUsername = _usernameController.text.trim();
+
+    // Sadece kullanıcı adı değişmişse müsaitlik kontrolü yap
     if (newUsername != _originalUsername) {
       setState(() {
         _isCheckingUsername = true;
@@ -140,20 +143,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
       final isAvailable = await ref.read(profileControllerProvider.notifier).checkUsernameAvailability(newUsername);
 
-      setState(() {
-        _isCheckingUsername = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isCheckingUsername = false;
+        });
+      }
 
       if (!isAvailable) {
         setState(() {
           _usernameError = 'Bu kullanıcı adı zaten alınmış.';
         });
-        _formKey.currentState!.validate();
+        _formKey.currentState!.validate(); // Hatayı ekranda göstermek için
         return;
       }
     }
 
-    // Her şey yolundaysa güncelle
+    // Güncelleme işlemini başlat
     await ref.read(profileControllerProvider.notifier).updateUserProfile(
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
@@ -165,6 +170,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // İşlem sonucunu dinle (Success/Error)
     ref.listen<AsyncValue<void>>(profileControllerProvider, (previous, next) {
       next.whenOrNull(
         error: (error, stackTrace) {
@@ -177,7 +183,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Profil başarıyla güncellendi!')),
             );
-            // Profil ekranına geri dön
             Navigator.pop(context);
           }
         },
@@ -198,8 +203,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           if (user == null) {
             return const Center(child: Text("Kullanıcı bulunamadı."));
           }
-          // This ensures that the text fields are not re-initialized on every build
-          if (_firstNameController.text.isEmpty && _lastNameController.text.isEmpty) {
+          // Controller'ları sadece ilk açılışta doldur
+          if (_firstNameController.text.isEmpty && _lastNameController.text.isEmpty && !_formIsDirty) {
             _loadUserData(user);
           }
 
@@ -210,21 +215,24 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // --- KULLANICI ADI ALANI ---
                   TextFormField(
                     controller: _usernameController,
                     decoration: InputDecoration(
                       labelText: 'Kullanıcı Adı',
                       prefixIcon: const Icon(Icons.alternate_email),
+                      // Yükleniyor ikonu (kontrol sırasında)
                       suffixIcon: _isCheckingUsername
                           ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: Padding(
-                                padding: EdgeInsets.all(12.0),
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            )
+                        width: 16,
+                        height: 16,
+                        child: Padding(
+                          padding: EdgeInsets.all(12.0),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
                           : null,
+                      // Karakter sayacı (kontrol yoksa göster)
                       suffixText: _isCheckingUsername ? null : _getCharacterCountText(_usernameController, 30),
                       suffixStyle: TextStyle(
                         fontSize: 11,
@@ -233,26 +241,37 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       ),
                       errorText: _usernameError,
                     ),
+                    // BOŞLUK ENGELLEME ÖZELLİĞİ
+                    inputFormatters: [
+                      FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                    ],
                     maxLength: 30,
                     buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
                     onChanged: (value) {
-                      setState(() {});
-                      // Kullanıcı yazarken hatayı temizle
+                      // Hata varsa kullanıcı yazarken temizle
                       if (_usernameError != null) {
                         setState(() {
                           _usernameError = null;
                         });
                       }
+                      // Dirty check zaten listener ile yapılıyor
                     },
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Lütfen bir kullanıcı adı girin.';
+                      }
+                      if (value.contains(' ')) {
+                        return 'Kullanıcı adı boşluk içeremez.';
                       }
                       if (value.length < 3) {
                         return 'Kullanıcı adı en az 3 karakter olmalıdır.';
                       }
                       if (value.length > 30) {
                         return 'Kullanıcı adı en fazla 30 karakter olabilir.';
+                      }
+                      // Sadece harf, rakam ve alt çizgi kontrolü
+                      if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value)) {
+                        return 'Sadece harf, rakam ve alt çizgi kullanın.';
                       }
                       if (_usernameError != null) {
                         return _usernameError;
@@ -261,6 +280,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+
+                  // --- AD & SOYAD ---
                   Row(
                     children: [
                       Expanded(
@@ -278,14 +299,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           ),
                           maxLength: 50,
                           buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
-                          onChanged: (_) => setState(() {}),
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Lütfen adınızı girin.';
-                            }
-                            if (value.length > 50) {
-                              return 'Ad en fazla 50 karakter olabilir.';
-                            }
+                            if (value == null || value.isEmpty) return 'Lütfen adınızı girin.';
+                            if (value.length > 50) return 'Ad çok uzun.';
                             return null;
                           },
                         ),
@@ -306,14 +322,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           ),
                           maxLength: 50,
                           buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
-                          onChanged: (_) => setState(() {}),
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Lütfen soyadınızı girin.';
-                            }
-                            if (value.length > 50) {
-                              return 'Soyad en fazla 50 karakter olabilir.';
-                            }
+                            if (value == null || value.isEmpty) return 'Lütfen soyadınızı girin.';
+                            if (value.length > 50) return 'Soyad çok uzun.';
                             return null;
                           },
                         ),
@@ -321,6 +332,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
+
+                  // --- CİNSİYET & DOĞUM TARİHİ ---
                   Row(
                     children: [
                       Expanded(
@@ -341,14 +354,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             setState(() {
                               _selectedGender = value;
                             });
-                            _checkFormDirty(); // ÇÖZÜM: Cinsiyet değiştiğinde dirty check
+                            _checkFormDirty();
                           },
-                          validator: (value) {
-                            if (value == null) {
-                              return 'Lütfen cinsiyetinizi seçin.';
-                            }
-                            return null;
-                          },
+                          validator: (value) => value == null ? 'Lütfen cinsiyet seçin.' : null,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -361,28 +369,27 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           ),
                           readOnly: true,
                           onTap: () => _selectDate(context),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Lütfen doğum tarihinizi seçin.';
-                            }
-                            return null;
-                          },
+                          validator: (value) => (value == null || value.isEmpty) ? 'Tarih seçin.' : null,
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 32),
+
+                  // --- KAYDET BUTONU ---
                   ElevatedButton(
-                    // ÇÖZÜM: Sadece form dirty ve loading değilse aktif
+                    // Loading ise veya formda değişiklik yoksa disable et
                     onPressed: (isLoading || !_formIsDirty) ? null : _submit,
                     child: isLoading
                         ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                         : Text(_formIsDirty ? 'Değişiklikleri Kaydet' : 'Değişiklik Yapılmadı'),
                   ),
+
+                  // Kullanıcıya bilgi mesajı
                   if (!_formIsDirty && !isLoading)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
