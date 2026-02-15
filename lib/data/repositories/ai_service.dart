@@ -543,29 +543,24 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
             : exam.sections;
       }
 
-      final Map<String, List<String>> candidateTopics = {};
+      // Tüm konuları topla (tamamlananlar hariç)
+      final Map<String, List<String>> topicsMap = {};
 
       for (final sec in sections) {
         sec.subjects.forEach((subjectName, subjectDetails) {
           final allTopics = subjectDetails.topics.map((t) => t.name).toList();
+          // Tamamlanan konuları çıkar
           final remainingTopics = allTopics.where((t) => !completedTopicIds.contains(t)).toList();
 
-          if (remainingTopics.isEmpty) return;
-
-          final nextBatch = remainingTopics.take(3).toList();
-          candidateTopics[subjectName] = nextBatch;
+          if (remainingTopics.isNotEmpty) {
+            topicsMap[subjectName] = remainingTopics; // TÜM konular
+          }
         });
       }
 
-      return jsonEncode({
-        'candidates': candidateTopics,
-        'note': 'Sadece bu listedeki konuları planlayabilirsin. Müfredat sırasını takip et.'
-      });
+      return jsonEncode(topicsMap);
     } catch (e) {
-      return jsonEncode({
-        'candidates': {},
-        'note': 'Müfredat yüklenemedi, genel konulardan plan oluştur.'
-      });
+      return jsonEncode({});
     }
   }
 
@@ -634,51 +629,38 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
       }
     }
 
-    final topicStatus = <String, Map<String, dynamic>>{};
-    int redCount = 0, yellowCount = 0, unknownCount = 0;
+    // Sadece zayıf (red) konuları topla
+    final List<String> weakTopics = [];
     performance.topicPerformances.forEach((subject, topics){
-      final map = <String, String>{};
       topics.forEach((topic, tp){
         final attempts = tp.correctCount + tp.wrongCount;
-        String status;
-        if (tp.questionCount < 8 || attempts < 6) {
-          status = 'unknown';
-          unknownCount++;
-        } else {
+        if (attempts >= 6) {
           final denom = attempts == 0 ? 1 : attempts;
           final acc = tp.correctCount / denom;
-          if (acc < 0.5 || tp.wrongCount >= tp.correctCount) { status = 'red'; redCount++; }
-          else if (acc < 0.7) { status = 'yellow'; yellowCount++; }
-          else { status = 'green'; }
+          if (acc < 0.5 || tp.wrongCount >= tp.correctCount) {
+            weakTopics.add(topic);
+          }
         }
-        map[topic] = status;
       });
-      if (map.isNotEmpty) {
-        topicStatus[subject] = map;
-      }
     });
 
-    final bool isOverwhelmed = backlogActivities.length >= 3 || redCount >= 2;
+    // Sadece gerekli bilgileri gönder
+    final guardrails = <String, dynamic>{};
 
-    final policy = <String, dynamic>{
-      'allowNewTopics': !isOverwhelmed,
-      'priorities': isOverwhelmed
-          ? ['backlog', 'red', 'yellow', 'curriculum']
-          : ['curriculum', 'yellow', 'backlog', 'red'],
-      'notes': isOverwhelmed
-          ? 'Kullanıcı geride kalmaya başladı (Yığılma var). Yeni konu açma, öncelik borçları temizlemek.'
-          : 'Durum stabil. Ufak eksikleri araya sıkıştır ama ana odak müfredatta ilerlemek olsun.'
-    };
+    // Backlog varsa (önceki hafta tamamlanmamış görevler)
+    if (backlogActivities.isNotEmpty) {
+      guardrails['backlog'] = backlogActivities.take(5).toList();
+    }
 
-    final guardrails = {
-      'backlogCount': backlogActivities.length,
-      'backlogSample': backlogActivities.take(5).toList(),
-      'topicStatus': topicStatus,
-      'policy': policy,
-      // Son 30 günde tamamlanan konular (AI'nın anlaması için gerçek konu isimleri)
-      'recentlyCompletedTopics': recentCompletedTopics ?? [],
-      'recentlyCompletedNote': 'Bu konular son 30 günde tamamlandı. Tekrar gerekmedikçe bu konuları plana ekleme, yeni konulara odaklan.',
-    };
+    // Zayıf konular (öncelik verilmeli)
+    if (weakTopics.isNotEmpty) {
+      guardrails['weakTopics'] = weakTopics;
+    }
+
+    // Guardrails boşsa boş JSON döndür
+    if (guardrails.isEmpty) {
+      return '{}';
+    }
 
     return jsonEncode(guardrails);
   }
