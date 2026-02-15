@@ -56,8 +56,8 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
       ref.invalidate(userProfileProvider);
       ref.invalidate(planProvider);
 
-      // Ana ekrana dön
-      if (mounted) context.go('/home');
+      // Ana ekrana dön değil, haftalık plana git
+      if (mounted) context.go('/home/weekly-plan');
     } catch (e) {
       // Hata olursa kullanıcıyı bilgilendir
       if (mounted) {
