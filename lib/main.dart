@@ -29,7 +29,6 @@ import 'package:taktik/core/navigation/app_router.dart';
 import 'package:taktik/core/theme/app_theme.dart';
 import 'package:taktik/core/theme/theme_provider.dart';
 import 'package:taktik/core/prompts/strategy_prompts.dart';
-import 'package:taktik/core/prompts/prompt_remote.dart';
 import 'package:taktik/core/services/revenuecat_service.dart';
 import 'package:taktik/core/services/connectivity_service.dart';
 import 'package:taktik/core/services/firebase_analytics_service.dart';
@@ -194,10 +193,7 @@ void main() async {
 
       // Prompt ve Strateji Preload
       try {
-        await Future.wait([
-          RemotePrompts.preloadAndWatch(),
-          StrategyPrompts.preload(),
-        ]).timeout(const Duration(seconds: 10));
+        await StrategyPrompts.preload().timeout(const Duration(seconds: 10));
       } catch (e) {
         if (kDebugMode) debugPrint('[Preload] Hata: $e');
       }

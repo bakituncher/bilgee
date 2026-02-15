@@ -3,7 +3,6 @@ import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/data/models/test_model.dart';
 import 'package:taktik/features/stats/logic/stats_analysis.dart';
 import 'tone_utils.dart';
-import 'package:taktik/core/prompts/prompt_remote.dart';
 
 class DefaultMotivationPrompts {
   static String _commonHeader(String? examName) =>
@@ -20,17 +19,6 @@ class DefaultMotivationPrompts {
     final userName = user.name ?? 'Komutan';
     final avgNet = (analysis?.averageNet ?? 0).toStringAsFixed(2);
 
-    final remote = RemotePrompts.get('welcome');
-    if (remote != null && remote.isNotEmpty) {
-      return RemotePrompts.fillTemplate(remote, {
-        'USER_NAME': userName,
-        'EXAM_NAME': examName ?? '—',
-        'AVG_NET': avgNet,
-        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
-        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
-        'TONE': ToneUtils.toneByExam(examName),
-      });
-    }
 
     return '''
 ${_commonHeader(examName)}
@@ -50,17 +38,6 @@ Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
     final last = tests.isNotEmpty ? tests.first.totalNet.toStringAsFixed(2) : '—';
     final avgNet = (analysis?.averageNet ?? 0).toStringAsFixed(2);
 
-    final remote = RemotePrompts.get('new_test_bad');
-    if (remote != null && remote.isNotEmpty) {
-      return RemotePrompts.fillTemplate(remote, {
-        'LAST_NET': last,
-        'AVG_NET': avgNet,
-        'EXAM_NAME': examName ?? '—',
-        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
-        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
-        'TONE': ToneUtils.toneByExam(examName),
-      });
-    }
 
     return '''
 ${_commonHeader(examName)}
@@ -81,17 +58,6 @@ Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
     final last = tests.isNotEmpty ? tests.first.totalNet.toStringAsFixed(2) : '—';
     final avgNet = (analysis?.averageNet ?? 0).toStringAsFixed(2);
 
-    final remote = RemotePrompts.get('new_test_good');
-    if (remote != null && remote.isNotEmpty) {
-      return RemotePrompts.fillTemplate(remote, {
-        'LAST_NET': last,
-        'AVG_NET': avgNet,
-        'EXAM_NAME': examName ?? '—',
-        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
-        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
-        'TONE': ToneUtils.toneByExam(examName),
-      });
-    }
 
     return '''
 ${_commonHeader(examName)}
@@ -111,16 +77,6 @@ Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
   }) {
     final streak = user.streak;
 
-    final remote = RemotePrompts.get('proactive_encouragement');
-    if (remote != null && remote.isNotEmpty) {
-      return RemotePrompts.fillTemplate(remote, {
-        'STREAK': streak.toString(),
-        'EXAM_NAME': examName ?? '—',
-        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
-        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
-        'TONE': ToneUtils.toneByExam(examName),
-      });
-    }
 
     return '''
 ${_commonHeader(examName)}
@@ -143,18 +99,6 @@ Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
     final topic = (workshopContext?['topic'] ?? '—').toString();
     final score = (workshopContext?['score'] ?? '—').toString();
 
-    final remote = RemotePrompts.get('workshop_review');
-    if (remote != null && remote.isNotEmpty) {
-      return RemotePrompts.fillTemplate(remote, {
-        'SUBJECT': subject,
-        'TOPIC': topic,
-        'SCORE': score,
-        'EXAM_NAME': examName ?? '—',
-        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
-        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
-        'TONE': ToneUtils.toneByExam(examName),
-      });
-    }
 
     return '''
 ${_commonHeader(examName)}
@@ -175,16 +119,6 @@ Son Mesaj: ${lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim()}
     final firstName = user.firstName.isNotEmpty ? user.firstName : 'Komutan';
     final userName = firstName[0].toUpperCase() + firstName.substring(1).toLowerCase();
 
-    final remote = RemotePrompts.get('user_chat');
-    if (remote != null && remote.isNotEmpty) {
-      return RemotePrompts.fillTemplate(remote, {
-        'USER_NAME': userName,
-        'EXAM_NAME': examName ?? '—',
-        'LAST_USER_MESSAGE': lastUserMessage.trim().isEmpty ? '—' : lastUserMessage.trim(),
-        'CONVERSATION_HISTORY': conversationHistory.trim().isEmpty ? '—' : conversationHistory.trim(),
-        'TONE': ToneUtils.toneByExam(examName),
-      });
-    }
 
     return '''
 ${_commonHeader(examName)}
