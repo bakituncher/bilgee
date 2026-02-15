@@ -884,6 +884,7 @@ class FirestoreService {
     required String dateKey, // yyyy-MM-dd
     required String task,    // '${time}-${activity}'
     required bool isCompleted,
+    String? activity,        // Konu/görev ismi (AI için)
   }) async {
     final dailyRef = _userActivityCollection(userId).doc(dateKey);
     final completedTasksCollection = dailyRef.collection('completed_tasks');
@@ -895,6 +896,7 @@ class FirestoreService {
         'completedAt': FieldValue.serverTimestamp(),
         'taskId': task,
         'userId': userId, // Koleksiyon grubu sorguları için eklendi
+        if (activity != null) 'activity': activity, // Konu ismi (AI haftalık plan için)
       });
     } else {
       // Tamamlanmış görevi geri al (dokümanı sil)

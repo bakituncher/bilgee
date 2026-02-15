@@ -85,10 +85,15 @@ Her görevin tipi şunlardan biri olmalı:
 {{CURRICULUM_JSON}}
 ```
 
-### Guardrails
+### Guardrails (Koruma Kuralları)
 ```json
 {{GUARDRAILS_JSON}}
 ```
+
+**Guardrails Açıklama:**
+- `recentlyCompletedTopics`: Son 30 günde öğrencinin tamamladığı konuların listesi (örn: "Türev", "Limit", "İntegral")
+- Bu konuları tekrar plana ekleme (sadece tekrar gerekiyorsa "review" olarak ekleyebilirsin)
+- Yeni konulara öncelik ver, müfredat sırasını takip et
 
 ## OUTPUT FORMAT
 

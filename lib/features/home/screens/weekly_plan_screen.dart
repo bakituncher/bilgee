@@ -618,6 +618,7 @@ class _TaskListViewState extends ConsumerState<_TaskListView> with AutomaticKeep
                         dateKey: dateKey,
                         task: taskIdentifier,
                         isCompleted: desired,
+                        activity: item.activity,
                       );
                       final newMap = await ref.refresh(completedTasksForWeekProvider(startOfWeek).future);
                       final confirmed = (newMap[dateKey] ?? const <String>[]).contains(taskIdentifier) == desired;

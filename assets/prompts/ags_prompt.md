@@ -78,6 +78,11 @@ Bu sınav iki ana oturumdan oluşur ve plan her ikisini de kapsamalıdır:
 {{GUARDRAILS_JSON}}
 ```
 
+**Guardrails Açıklama:**
+- `recentlyCompletedTopics`: Son 30 günde adayın tamamladığı konuların listesi (örn: "Gelişim Psikolojisi", "Öğrenme Psikolojisi")
+- Bu konuları tekrar plana ekleme (sadece tekrar gerekiyorsa "review" olarak ekleyebilirsin)
+- Yeni konulara öncelik ver, müfredat sırasını takip et
+
 ## OUTPUT FORMAT (SADECE BU JSON)
 ```json
 {

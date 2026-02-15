@@ -91,6 +91,11 @@ Her görevin tipi şunlardan biri olmalı:
 {{GUARDRAILS_JSON}}
 ```
 
+**Guardrails Açıklama:**
+- `recentlyCompletedTopics`: Son 30 günde adayın tamamladığı konuların listesi (örn: "İslamiyet Öncesi Türk Tarihi", "Sayısal Mantık")
+- Bu konuları tekrar plana ekleme (sadece tekrar gerekiyorsa "review" olarak ekleyebilirsin)
+- Yeni konulara öncelik ver, müfredat sırasını takip et
+
 ## OUTPUT FORMAT
 
 Sadece aşağıdaki JSON formatında çıktı ver. Açıklama, yorum YOK:

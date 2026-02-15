@@ -502,6 +502,7 @@ class PomodoroNotifier extends StateNotifier<PomodoroModel> {
         dateKey: dateKey,
         task: state.currentTaskIdentifier!,
         isCompleted: true,
+        activity: state.currentTask,
       );
 
       // Haftalık ve günlük sağlayıcıları yenile
