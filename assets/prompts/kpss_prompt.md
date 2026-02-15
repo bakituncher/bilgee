@@ -9,92 +9,82 @@ Bu adayın {{EXAM_NAME}} atanma hedefi için mevcut zamanını maksimum verimle 
 ## STRICT RULES (MUTLAK KURALLAR)
 
 ### 1. TAM 7 GÜN ZORUNLULUĞU
-- Haftalık plan mutlaka Pazartesi'den Pazar'a 7 günü TAMAMEN içermeli
-- Her günün schedule listesi DOLU olmalı (boş gün yasak)
-- Belirsiz ifadeler yasak: "Serbest çalışma", "...", "[TODO]" gibi
-- Sadece kullanıcının müsait olduğu saatlere görev ata
+- Haftalık plan mutlaka Pazartesi'den Pazar'a 7 günü TAMAMEN içermeli.
+- Her günün schedule listesi DOLU olmalı (boş gün yasak).
+- Belirsiz ifadeler yasak: "Serbest çalışma", "...", "[TODO]" gibi.
+- Sadece kullanıcının müsait olduğu saatlere görev ata.
 
 ### 2. KPSS SINAV TİPİNE ÖZEL İÇERİK
-- {{EXAM_NAME}} için uygun konular seç
-- **GY (Genel Yetenek)**: Sözel Mantık, Sayısal Mantık, İlişkilendirme
-- **GK (Genel Kültür)**: Tarih, Coğrafya, Vatandaşlık, Güncel
-- **Lisans**: Eğitim Bilimleri, Alan Bilgisi
-- Konu isimleri tam ve net olmalı: "İslamiyet Öncesi Türk Tarihi" ✓, "Tarih" ✗
+- {{EXAM_NAME}} için uygun konular seç.
+- **GY (Genel Yetenek)**: Sözel Mantık, Sayısal Mantık, İlişkilendirme.
+- **GK (Genel Kültür)**: Tarih, Coğrafya, Vatandaşlık, Güncel.
+- **Lisans**: Eğitim Bilimleri, Alan Bilgisi (varsa).
+- Konu isimleri tam ve net olmalı: "İslamiyet Öncesi Türk Tarihi" ✓, "Tarih" ✗.
 
 ### 3. EZBER VE TEKRAR STRATEJİSİ (KPSS Özel)
-- Tarih, Coğrafya, Vatandaşlık için "Aralıklı Tekrar" uygula
-- Pazartesi öğrenilen tarihi Çarşamba ve Cuma tekrar et
-- Sözel/Sayısal Mantık için günlük 15-20 soru çözümü
-- Hafta sonu kapsamlı test çözümü
+- Tarih, Coğrafya, Vatandaşlık için "Aralıklı Tekrar" uygula.
+- Pazartesi öğrenilen tarihi Çarşamba ve Cuma tekrar et.
+- Sözel/Sayısal Mantık için günlük 15-20 soru çözümü.
+- Hafta sonu kapsamlı test çözümü.
 
-### 4. MÜFREDAT SIRASI TAKİBİ
-- Aşağıdaki aday konu listesinden seç: {{CURRICULUM_JSON}}
-- Backlog varsa önce onu tamamla: {{GUARDRAILS_JSON}}
-- Ders ortalamaları ve deneme sonuçlarına göre zayıf alanları önceliklendir
-- Gelişim gösteren konular için pekiştirme tekrarları
+### 4. MÜFREDAT VE ÖNCELİKLENDİRME
+- **Konu Seçimi**: {{CURRICULUM_JSON}} içindeki konu listelerinden seç.
+- **Öncelik Sırası**:
+  1. `weakTopics`: {{GUARDRAILS_JSON}} içinde "weakTopics" varsa onlara öncelik ver (zayıf konular).
+  2. `backlog`: {{GUARDRAILS_JSON}} içinde "backlog" varsa onları tamamla (önceki hafta tamamlanmayanlar).
+  3. `curriculum`: Müfredat'tan sırayla yeni konular seç.
+- Gelişim gösteren konular için pekiştirme tekrarları ekle.
 
 ### 5. TEMPO UYUMU (PACING)
-- **intense**: Müsait zamanın %90'ını doldur (çok disiplinli)
-- **moderate**: %70-80'ini doldur (dengeli, sürdürülebilir)
-- **relaxed**: %50-60'ını doldur (rahat tempo)
-- Mevcut tempo: {{PACING}}
-- İş yorgunluğunu dikkate al
+- **intense**: Müsait zamanın %90'ını doldur (çok disiplinli).
+- **moderate**: %70-80'ini doldur (dengeli, sürdürülebilir).
+- **relaxed**: %50-60'ını doldur (rahat tempo).
+- **Mevcut tempo**: {{PACING}}
+- İş yorgunluğunu dikkate al (Yetişkin adaylar için).
 
-### 6. GÖREV ÇEŞİTLİLİĞİ
+### 6. GÖREV ÇEŞİTLİLİĞİ VE TİPLERİ
 Her görevin tipi şunlardan biri olmalı:
-- **study**: Yeni konu öğrenme (45-90 dk)
-- **practice**: Soru çözme (60-120 dk, soru sayısı belirt)
-- **review**: Tekrar/pekiştirme (30-45 dk)
-- **test**: Deneme sınavı (90-120 dk, KPSS formatı)
-- **break**: Mola (isteğe bağlı, kısa)
-- ⚠️ **ÖNEMLİ:** `activity` metnine görev tipini YAZMA! Sadece `type` alanında olmalı (örn: "Anayasa - 40 soru" ✓, "Anayasa (practice)" ✗)
+- `study`: Yeni konu öğrenme (45-90 dk).
+- `practice`: Soru çözme (60-120 dk, soru sayısı belirt).
+- `review`: Tekrar/pekiştirme (30-45 dk).
+- `test`: Deneme sınavı (90-120 dk, KPSS formatı).
+- `break`: Mola (isteğe bağlı, kısa).
+- ⚠️ ÖNEMLİ: activity metnine görev tipini YAZMA! Sadece type alanında olmalı.
 
 ### 7. YETİŞKİN ÖĞRENME PRENSİPLERİ
-- Akşam saatlerine yoğunlaşma (çalışanlar için)
-- Hafta sonu daha uzun oturumlar
-- Pratik ve uygulamaya dayalı içerik
-- Güncel olayları takip (özellikle GK için)
+- Akşam saatlerine yoğunlaşma (çalışanlar için).
+- Hafta sonu daha uzun oturumlar.
+- Pratik ve uygulamaya dayalı içerik.
+- Güncel olayları takip (özellikle GK için).
 
-### 8. KRİTİK UYARI: PLAN YENİLEME KURALI
-⚠️ **HER HAFTA YENİ VE FARKLI PLAN!**
-- Her hafta adayın gelişimine göre farklı konular ve görevler oluştur
-- Aday gelişim gösteriyor, görevlerin zorluğunu ARTIR
-- Farklı soru tipleri, farklı konular, farklı deneme sınavları kullan
-- Çeşitlilik ve ilerlemeci yaklaşım şart
+### 8. PLAN YENİLEME KURALI
+- Her hafta adayın gelişimine göre farklı konular ve görevler oluştur.
+- Aday gelişim gösteriyor, görevlerin zorluğunu ARTIR.
 
 {{REVISION_BLOCK}}
 
-## USER DATA
+## USER DATA (VERİLER)
 
-### Müsaitlik Takvimi
-```json
-{{AVAILABILITY_JSON}}
-```
-
-### Performans Raporu
-- Aday ID: {{USER_ID}}
+### Aday Bilgileri
 - Sınav: {{EXAM_NAME}}
-- Atanmaya Kalan Gün: {{DAYS_UNTIL_EXAM}}
+- Sınava Kalan: {{DAYS_UNTIL_EXAM}} gün
 - Tempo Tercihi: {{PACING}}
 - Toplam Deneme: {{TEST_COUNT}}
 - Ortalama Net: {{AVG_NET}}
-- Alan Hakimiyeti: {{SUBJECT_AVERAGES}}
 
-### Konu Zafiyetleri
-```json
-{{TOPIC_PERFORMANCES_JSON}}
-```
+### Müsaitlik Takvimi
+{{AVAILABILITY_JSON}}
 
+### Ders Ortalamaları
+{{SUBJECT_AVERAGES}}
 
-### Müfredat Sırası & Guardrails
-```json
+### Müfredat (Konu Havuzu)
+{{CURRICULUM_JSON}}
+
+### Öncelikler ve Guardrails
 {{GUARDRAILS_JSON}}
-```
 
-## OUTPUT FORMAT
-
-Sadece aşağıdaki JSON formatında çıktı ver. Açıklama, yorum YOK:
-
+## OUTPUT FORMAT (SADECE BU JSON)
 ```json
 {
   "weeklyPlan": {
@@ -107,50 +97,8 @@ Sadece aşağıdaki JSON formatında çıktı ver. Açıklama, yorum YOK:
       {
         "day": "Pazartesi",
         "schedule": [
-          {"time": "20:00-21:00", "activity": "Tarih: İslamiyet Öncesi Türk Tarihi - Konu", "type": "study"},
-          {"time": "21:15-22:00", "activity": "Sözel Mantık - 20 soru", "type": "practice"}
-        ]
-      },
-      {
-        "day": "Salı",
-        "schedule": [
-          {"time": "19:30-20:30", "activity": "Coğrafya: Türkiye'nin İklimi - Konu", "type": "study"},
-          {"time": "20:45-21:45", "activity": "Coğrafya - 30 soru çözümü", "type": "practice"}
-        ]
-      },
-      {
-        "day": "Çarşamba",
-        "schedule": [
-          {"time": "20:00-20:40", "activity": "İslamiyet Öncesi Türk Tarihi - Tekrar", "type": "review"},
-          {"time": "21:00-22:00", "activity": "Sayısal Mantık - 25 soru", "type": "practice"}
-        ]
-      },
-      {
-        "day": "Perşembe",
-        "schedule": [
-          {"time": "19:00-20:00", "activity": "Vatandaşlık: Anayasa Hukuku - Konu", "type": "study"},
-          {"time": "20:15-21:15", "activity": "Anayasa - 35 soru", "type": "practice"}
-        ]
-      },
-      {
-        "day": "Cuma",
-        "schedule": [
-          {"time": "20:00-20:40", "activity": "İslamiyet Öncesi - Son Tekrar", "type": "review"},
-          {"time": "21:00-22:00", "activity": "Güncel Olaylar Takibi", "type": "study"}
-        ]
-      },
-      {
-        "day": "Cumartesi",
-        "schedule": [
-          {"time": "14:00-16:00", "activity": "Karışık GY-GK Soruları - 80 soru", "type": "practice"},
-          {"time": "17:00-18:30", "activity": "Zayıf konular review", "type": "review"}
-        ]
-      },
-      {
-        "day": "Pazar",
-        "schedule": [
-          {"time": "10:00-12:00", "activity": "KPSS GY-GK Tam Deneme", "type": "test"},
-          {"time": "15:00-17:00", "activity": "Deneme analizi ve eksik konu çalışması", "type": "review"}
+           {"time": "20:00-21:00", "activity": "Tarih: İslamiyet Öncesi Türk Tarihi - Konu", "type": "study"},
+           {"time": "21:15-22:00", "activity": "Sözel Mantık - 20 soru", "type": "practice"}
         ]
       }
     ]
@@ -159,10 +107,8 @@ Sadece aşağıdaki JSON formatında çıktı ver. Açıklama, yorum YOK:
 ```
 
 ## CRITICAL WARNINGS
-- Her günün schedule dizisi DOLU olmalı
-- Boş [] veya belirsiz görevler kesinlikle yasak
-- Müsaitlik takvimindeki saatlere tam uyum şart
-- Konu isimleri spesifik ve net olmalı
-- KPSS dışı konular (TYT, AYT vb.) kesinlikle yasak
-- Yetişkin öğrenciye uygun profesyonel ton
-
+- Her günün schedule dizisi DOLU olmalı.
+- Boş [] veya belirsiz görevler kesinlikle yasak.
+- Müsaitlik takvimindeki saatlere tam uyum şart.
+- Konu isimleri spesifik ve net olmalı.
+- KPSS dışı konular (TYT, AYT vb.) kesinlikle yasak.

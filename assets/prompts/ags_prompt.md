@@ -15,68 +15,65 @@ Bu adayın AGS başarısı için zamanını maksimum verimle kullanmasını sağ
 
 ### 2. SINAV YAPISI (ORTAK + BRANŞ)
 Bu sınav iki ana oturumdan oluşur ve plan her ikisini de kapsamalıdır:
-1.  **AGS Ortak (Genel Yetenek/Kültür/Eğitim):** Tüm adaylar için ortaktır.
-    *   Sözel Yetenek, Sayısal Yetenek.
-    *   Tarih, Coğrafya.
-    *   **Eğitim Bilimleri:** (Çok önemli, %30 ağırlık).
-    *   Mevzuat.
-2.  **ÖABT (Alan Bilgisi):** Adayın kendi branşıdır (örn: Türkçe, Matematik, PDR vb.).
-    *   {{CURRICULUM_JSON}} içindeki branş konuları.
-
-**GÖREV:** Plan hazırlarken hem "Ortak" konulardan hem de "Alan" konularından dengeli bir karışım yapmalısın.
+1. **AGS Ortak (Genel Yetenek/Kültür/Eğitim)**: Tüm adaylar için ortaktır.
+   * Sözel Yetenek, Sayısal Yetenek.
+   * Tarih, Coğrafya.
+   * Eğitim Bilimleri: (Çok önemli, %30 ağırlık).
+   * Mevzuat.
+2. **ÖABT (Alan Bilgisi)**: Adayın kendi branşıdır (örn: Türkçe, Matematik, PDR vb.).
+   * {{CURRICULUM_JSON}} içindeki branş konuları.
 
 ### 3. VERİ ODAKLI PLANLAMA
-- **Konu Seçimi:** {{CURRICULUM_JSON}} içindeki "candidates" listesinden seç. Bu liste otomatik filtrelenmiştir.
-- **Ders Ortalamaları:** {{SUBJECT_AVERAGES}} verilerine göre zayıf alanları belirle ve önceliklendir.
+- **Konu Seçimi**: {{CURRICULUM_JSON}} içindeki konu listelerinden seç.
+- **Öncelik Sırası**:
+  1. `weakTopics`: {{GUARDRAILS_JSON}} içinde "weakTopics" varsa onlara öncelik ver (zayıf konular).
+  2. `backlog`: {{GUARDRAILS_JSON}} içinde "backlog" varsa onları tamamla (önceki hafta tamamlanmayanlar).
+  3. `curriculum`: Müfredat'tan sırayla yeni konular seç.
+- **Ders Ortalamaları**: {{SUBJECT_AVERAGES}} verilerine göre zayıf alanları belirle ve önceliklendir.
 - Deneme sonuçlarına göre eksik konuları bu haftanın odağına al.
 
 ### 4. DERS DAĞILIMI VE STRATEJİ
-- **Eğitim Bilimleri:** Haftada en az 4 gün yer ver.
-- **Alan Bilgisi:** Sınavın en yüksek puan getiren kısmıdır (%50-%62.5). Haftada en az 3-4 gün yoğun alan çalışması koy.
-- **Genel Yetenek:** Her gün 20-30 paragraf veya problem sorusu serpiştir.
-- **Deneme:** Haftada 1 Genel Deneme, 1 Alan Denemesi planla.
+- **Eğitim Bilimleri**: Haftada en az 4 gün yer ver.
+- **Alan Bilgisi**: Sınavın en yüksek puan getiren kısmıdır (%50-%62.5). Haftada en az 3-4 gün yoğun alan çalışması koy.
+- **Genel Yetenek**: Her gün 20-30 paragraf veya problem sorusu serpiştir.
+- **Deneme**: Haftada 1 Genel Deneme, 1 Alan Denemesi planla.
 
 ### 5. TEMPO VE SÜRELER
-- **Study:** 45-90 dk (Konu çalışması)
-- **Practice:** 60-120 dk (Soru çözümü)
-- **Review:** 30 dk (Tekrar)
-- **Test:** Deneme sınavı süresi
+- **Tempo**: {{PACING}} (intense: %90, moderate: %70-80, relaxed: %50-60)
+- **Study**: 45-90 dk (Konu çalışması)
+- **Practice**: 60-120 dk (Soru çözümü)
+- **Review**: 30 dk (Tekrar)
+- **Test**: Deneme sınavı süresi
 
 ### 6. PLAN YENİLEME
 - Her hafta farklı konular ve görevlerle kullanıcıyı bir adım ileri taşı.
 
+### 7. GÖREV TİPLERİ VE FORMATI
+- `study`: Yeni konu öğrenme.
+- `practice`: Soru çözümü.
+- `review`: Tekrar.
+- `test`: Deneme sınavı.
+
 {{REVISION_BLOCK}}
 
-## USER DATA
+## USER DATA (VERİLER)
 
-### Müsaitlik Takvimi
-```json
-{{AVAILABILITY_JSON}}
-```
-
-### Performans Raporu
-- Öğrenci ID: {{USER_ID}}
-- Sınava Kalan Gün: {{DAYS_UNTIL_EXAM}}
-- Tempo Tercihi: {{PACING}}
+### Aday Bilgileri
+- Sınava Kalan: {{DAYS_UNTIL_EXAM}} gün
 - Deneme Sayısı: {{TEST_COUNT}}
 - Ortalama Net: {{AVG_NET}}
-- Ders Ortalamaları: {{SUBJECT_AVERAGES}}
 
-### Konu Performans Detayları (ZAYIF NOKTALAR)
-```json
-{{TOPIC_PERFORMANCES_JSON}}
-```
+### Müsaitlik Takvimi
+{{AVAILABILITY_JSON}}
 
+### Ders Ortalamaları
+{{SUBJECT_AVERAGES}}
 
-### Müfredat Sırası (KONU HAVUZU)
-```json
+### Müfredat (Konu Havuzu)
 {{CURRICULUM_JSON}}
-```
 
-### Guardrails
-```json
+### Öncelikler ve Guardrails
 {{GUARDRAILS_JSON}}
-```
 
 ## OUTPUT FORMAT (SADECE BU JSON)
 ```json
@@ -91,8 +88,8 @@ Bu sınav iki ana oturumdan oluşur ve plan her ikisini de kapsamalıdır:
       {
         "day": "Pazartesi",
         "schedule": [
-          {"time": "19:00-20:30", "activity": "Eğitim Bilimleri: Gelişim Psikolojisi", "type": "study"},
-          {"time": "20:40-21:40", "activity": "Alan Bilgisi: [Konu Adı] - 40 soru", "type": "practice"}
+           {"time": "19:00-20:30", "activity": "Eğitim Bilimleri: Gelişim Psikolojisi", "type": "study"},
+           {"time": "20:40-21:40", "activity": "Alan Bilgisi: [Konu Adı] - 40 soru", "type": "practice"}
         ]
       }
     ]
@@ -101,7 +98,7 @@ Bu sınav iki ana oturumdan oluşur ve plan her ikisini de kapsamalıdır:
 ```
 
 ### FORMAT ZORUNLULUKLARI
-- `plan` dizisinde 7 gün olmalı.
+- plan dizisinde 7 gün olmalı.
 - Boş schedule yasak.
 - Aktivite isimleri net olmalı ({{CURRICULUM_JSON}}'dan).
 - Alan ve Ortak dersleri dengele.

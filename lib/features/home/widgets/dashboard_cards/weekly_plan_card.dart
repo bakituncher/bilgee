@@ -427,6 +427,7 @@ class _TaskTile extends ConsumerWidget {
                   dateKey: dateKey,
                   task: taskIdentifier,
                   isCompleted: !isCompleted,
+                  activity: item.activity,
                 );
                 await ref.refresh(completedTasksForWeekProvider(startOfWeek).future);
                 ref.invalidate(completedTasksForDateProvider(dateForTile));

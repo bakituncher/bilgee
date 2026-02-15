@@ -192,30 +192,88 @@ class AiService {
   String _yyyyMmDd(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
+  /// Son N günde tamamlanan görevlerin ID'lerini döndürür (müfredat kontrolü için)
   Future<Set<String>> _loadRecentCompletedTaskIdsOnly(String userId, {int days = 365}) async {
     try {
       final cutoff = DateTime.now().subtract(Duration(days: days));
       final svc = _ref.read(firestoreServiceProvider);
-      final snap = await svc.usersCollection
-          .doc(userId)
-          .collection('completedTasks')
+
+      // Yeni yapı: activity/{dateKey}/completed_tasks koleksiyonundan oku
+      final snap = await svc.db
+          .collectionGroup('completed_tasks')
+          .where('userId', isEqualTo: userId)
           .where('completedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(cutoff))
           .get();
 
       final Set<String> taskIds = {};
       for (var doc in snap.docs) {
         final data = doc.data();
-        final taskId = data['taskId'] as String?;
-        if (taskId != null && taskId.isNotEmpty) {
-          taskIds.add(taskId);
+        // Önce activity alanını kontrol et (gerçek konu ismi)
+        final activity = data['activity'] as String?;
+        if (activity != null && activity.isNotEmpty) {
+          // Activity'den konu ismini çıkar (örn: "Türev - 35 soru" -> "Türev")
+          final topicName = _extractTopicName(activity);
+          taskIds.add(topicName);
         } else {
-          taskIds.add(doc.id);
+          // Eski kayıtlar için taskId kullan
+          final taskId = data['taskId'] as String?;
+          if (taskId != null && taskId.isNotEmpty) {
+            taskIds.add(taskId);
+          }
         }
       }
       return taskIds;
     } catch (_) {
       return {};
     }
+  }
+
+  /// Son N günde tamamlanan konuların listesini döndürür (AI haftalık plan için)
+  Future<List<String>> _loadRecentCompletedTopics(String userId, {int days = 90}) async {
+    try {
+      final cutoff = DateTime.now().subtract(Duration(days: days));
+      final svc = _ref.read(firestoreServiceProvider);
+
+      final snap = await svc.db
+          .collectionGroup('completed_tasks')
+          .where('userId', isEqualTo: userId)
+          .where('completedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(cutoff))
+          .get();
+
+      final Set<String> topics = {};
+      for (var doc in snap.docs) {
+        final data = doc.data();
+        final activity = data['activity'] as String?;
+        if (activity != null && activity.isNotEmpty) {
+          final topicName = _extractTopicName(activity);
+          topics.add(topicName);
+        }
+      }
+      return topics.toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Activity string'inden konu ismini çıkarır
+  /// Örn: "Türev - 35 soru" -> "Türev"
+  /// Örn: "AYT Mat: Limit - Temel Kavramlar" -> "Limit"
+  String _extractTopicName(String activity) {
+    // ":" sonrası varsa onu al (ders adını atla)
+    String cleaned = activity;
+    if (activity.contains(':')) {
+      cleaned = activity.split(':').last.trim();
+    }
+
+    // "-" ile soru sayısı veya detay ayrılmışsa sadece ilk kısmı al
+    if (cleaned.contains(' - ')) {
+      cleaned = cleaned.split(' - ').first.trim();
+    }
+
+    // Parantez içindeki açıklamaları kaldır
+    cleaned = cleaned.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim();
+
+    return cleaned;
   }
 
   Future<String> _callGemini(
@@ -333,13 +391,16 @@ class AiService {
 
     final completedTopicIds = await _loadRecentCompletedTaskIdsOnly(user.id, days: 365);
 
+    // Son 365 günde tamamlanan konuları yükle (AI'ya anlamlı isimlerle gönderilecek)
+    final recentCompletedTopics = await _loadRecentCompletedTopics(user.id);
+
     final candidateTopicsJson = await _buildNextStudyTopicsJson(
         examType,
         user.selectedExamSection,
         completedTopicIds
     );
 
-    final guardrailsJson = _buildGuardrailsJson(planDoc?.weeklyPlan, completedTopicIds, performance);
+    final guardrailsJson = _buildGuardrailsJson(planDoc?.weeklyPlan, completedTopicIds, performance, recentCompletedTopics);
 
     String prompt;
     switch (examType) {
@@ -451,8 +512,10 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
 
     prompt += densityInstruction;
 
+
     return _callGemini(prompt, expectJson: true, requestType: 'weekly_plan');
   }
+
 
   Future<String> _buildNextStudyTopicsJson(
       ExamType examType,
@@ -482,29 +545,24 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
             : exam.sections;
       }
 
-      final Map<String, List<String>> candidateTopics = {};
+      // Tüm konuları topla (tamamlananlar hariç)
+      final Map<String, List<String>> topicsMap = {};
 
       for (final sec in sections) {
         sec.subjects.forEach((subjectName, subjectDetails) {
           final allTopics = subjectDetails.topics.map((t) => t.name).toList();
+          // Tamamlanan konuları çıkar
           final remainingTopics = allTopics.where((t) => !completedTopicIds.contains(t)).toList();
 
-          if (remainingTopics.isEmpty) return;
-
-          final nextBatch = remainingTopics.take(3).toList();
-          candidateTopics[subjectName] = nextBatch;
+          if (remainingTopics.isNotEmpty) {
+            topicsMap[subjectName] = remainingTopics; // TÜM konular
+          }
         });
       }
 
-      return jsonEncode({
-        'candidates': candidateTopics,
-        'note': 'Sadece bu listedeki konuları planlayabilirsin. Müfredat sırasını takip et.'
-      });
+      return jsonEncode(topicsMap);
     } catch (e) {
-      return jsonEncode({
-        'candidates': {},
-        'note': 'Müfredat yüklenemedi, genel konulardan plan oluştur.'
-      });
+      return jsonEncode({});
     }
   }
 
@@ -547,7 +605,7 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
     }
   }
 
-  String _buildGuardrailsJson(Map<String, dynamic>? weeklyPlanRaw, Set<String> completedTopicIds, PerformanceSummary performance){
+  String _buildGuardrailsJson(Map<String, dynamic>? weeklyPlanRaw, Set<String> completedTopicIds, PerformanceSummary performance, [List<String>? recentCompletedTopics]){
     final backlogActivities = <String>[];
     if (weeklyPlanRaw != null) {
       try {
@@ -573,48 +631,44 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
       }
     }
 
-    final topicStatus = <String, Map<String, dynamic>>{};
-    int redCount = 0, yellowCount = 0, unknownCount = 0;
+    // Sadece zayıf (red) konuları topla
+    final List<String> weakTopics = [];
     performance.topicPerformances.forEach((subject, topics){
-      final map = <String, String>{};
       topics.forEach((topic, tp){
         final attempts = tp.correctCount + tp.wrongCount;
-        String status;
-        if (tp.questionCount < 8 || attempts < 6) {
-          status = 'unknown';
-          unknownCount++;
-        } else {
+        if (attempts >= 6) {
           final denom = attempts == 0 ? 1 : attempts;
           final acc = tp.correctCount / denom;
-          if (acc < 0.5 || tp.wrongCount >= tp.correctCount) { status = 'red'; redCount++; }
-          else if (acc < 0.7) { status = 'yellow'; yellowCount++; }
-          else { status = 'green'; }
+          if (acc < 0.5 || tp.wrongCount >= tp.correctCount) {
+            weakTopics.add(topic);
+          }
         }
-        map[topic] = status;
       });
-      if (map.isNotEmpty) {
-        topicStatus[subject] = map;
-      }
     });
 
-    final bool isOverwhelmed = backlogActivities.length >= 3 || redCount >= 2;
+    // Sadece gerekli bilgileri gönder
+    final guardrails = <String, dynamic>{};
 
-    final policy = <String, dynamic>{
-      'allowNewTopics': !isOverwhelmed,
-      'priorities': isOverwhelmed
-          ? ['backlog', 'red', 'yellow', 'curriculum']
-          : ['curriculum', 'yellow', 'backlog', 'red'],
-      'notes': isOverwhelmed
-          ? 'Kullanıcı geride kalmaya başladı (Yığılma var). Yeni konu açma, öncelik borçları temizlemek.'
-          : 'Durum stabil. Ufak eksikleri araya sıkıştır ama ana odak müfredatta ilerlemek olsun.'
-    };
+    // Backlog varsa (önceki hafta tamamlanmamış görevler)
+    if (backlogActivities.isNotEmpty) {
+      guardrails['backlog'] = backlogActivities.take(5).toList();
+    }
 
-    final guardrails = {
-      'backlogCount': backlogActivities.length,
-      'backlogSample': backlogActivities.take(5).toList(),
-      'topicStatus': topicStatus,
-      'policy': policy,
-    };
+    // Zayıf konular (öncelik verilmeli)
+    if (weakTopics.isNotEmpty) {
+      guardrails['weakTopics'] = weakTopics;
+    }
+
+    // Son tamamlananlar (Review/Tekrar planlaması için gerekli)
+    if (recentCompletedTopics != null && recentCompletedTopics.isNotEmpty) {
+      // Emniyet limiti: En son biten 250 konuyu gönder
+      guardrails['completed'] = recentCompletedTopics.take(250).toList();
+    }
+
+    // Guardrails boşsa boş JSON döndür
+    if (guardrails.isEmpty) {
+      return '{}';
+    }
 
     return jsonEncode(guardrails);
   }

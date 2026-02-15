@@ -2,7 +2,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:taktik/data/models/user_model.dart';
-import 'package:taktik/core/prompts/prompt_remote.dart';
 
 class StrategyPrompts {
   static String? _yksTemplate;
@@ -11,10 +10,10 @@ class StrategyPrompts {
   static String? _agsTemplate;
 
   static Future<void> preload() async {
-    _yksTemplate = RemotePrompts.get('yks_prompt') ?? await rootBundle.loadString('assets/prompts/yks_prompt.md');
-    _lgsTemplate = RemotePrompts.get('lgs_prompt') ?? await rootBundle.loadString('assets/prompts/lgs_prompt.md');
-    _kpssTemplate = RemotePrompts.get('kpss_prompt') ?? await rootBundle.loadString('assets/prompts/kpss_prompt.md');
-    _agsTemplate = RemotePrompts.get('ags_prompt') ?? await rootBundle.loadString('assets/prompts/ags_prompt.md');
+    _yksTemplate = await rootBundle.loadString('assets/prompts/yks_prompt.md');
+    _lgsTemplate = await rootBundle.loadString('assets/prompts/lgs_prompt.md');
+    _kpssTemplate = await rootBundle.loadString('assets/prompts/kpss_prompt.md');
+    _agsTemplate = await rootBundle.loadString('assets/prompts/ags_prompt.md');
   }
 
   static String _revisionBlock(String? revisionRequest) {
