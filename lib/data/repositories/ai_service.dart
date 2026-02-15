@@ -229,7 +229,7 @@ class AiService {
   }
 
   /// Son N günde tamamlanan konuların listesini döndürür (AI haftalık plan için)
-  Future<List<String>> _loadRecentCompletedTopics(String userId, {int days = 30}) async {
+  Future<List<String>> _loadRecentCompletedTopics(String userId, {int days = 90}) async {
     try {
       final cutoff = DateTime.now().subtract(Duration(days: days));
       final svc = _ref.read(firestoreServiceProvider);
@@ -391,8 +391,8 @@ class AiService {
 
     final completedTopicIds = await _loadRecentCompletedTaskIdsOnly(user.id, days: 365);
 
-    // Son 30 günde tamamlanan konuları yükle (AI'ya anlamlı isimlerle gönderilecek)
-    final recentCompletedTopics = await _loadRecentCompletedTopics(user.id, days: 30);
+    // Son 365 günde tamamlanan konuları yükle (AI'ya anlamlı isimlerle gönderilecek)
+    final recentCompletedTopics = await _loadRecentCompletedTopics(user.id);
 
     final candidateTopicsJson = await _buildNextStudyTopicsJson(
         examType,
@@ -512,7 +512,70 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
 
     prompt += densityInstruction;
 
+    // 🔴🔴🔴 DEBUG: AI GÖNDERİLEN VERİLERİ DETAYLI YAZDIR 🔴🔴🔴
+    try {
+      print('\n' + '=' * 100);
+      print('🚀 AI HAFTALIK PLAN İSTEĞİ BAŞLATIYOR... (${DateTime.now()})');
+      print('=' * 100);
+      print('👤 KULLANICI BİLGİLERİ:');
+      print('   • ID: ${user.id}');
+      print('   • Sınav: ${examType.displayName}');
+      print('   • Bölüm: ${user.selectedExamSection ?? "Belirtilmemiş"}');
+      print('   • Tempo: $pacing');
+      print('   • Kalan Gün: $daysUntilExam');
+      print('   • Deneme Sayısı: ${user.testCount}');
+      print('   • Ortalama Net: $avgNet');
+
+      print('\n📅 MÜSAİTLİK DURUMU (availabilityJson):');
+      _printLongLog(availabilityJson);
+
+      print('\n📚 MÜFREDAT KONULARI (candidateTopicsJson):');
+      _printLongLog(candidateTopicsJson);
+
+      print('\n🛡️ GUARDRAILS & ZAYIF NOKTALAR (guardrailsJson):');
+      _printLongLog(guardrailsJson);
+
+      print('\n📊 DERS ORTALAMALARI:');
+      _printLongLog(jsonEncode(subjectAverages));
+
+      print('\n✅ SON 90 GÜNDE TAMAMLANAN GÖREVLER (${recentCompletedTopics.length} adet):');
+      if (recentCompletedTopics.isEmpty) {
+        print('   (Liste BOŞ - Son 90 günde tamamlanan görev bulunamadı)');
+      } else {
+        for (int i = 0; i < recentCompletedTopics.length; i++) {
+          print('   ${i + 1}. ${recentCompletedTopics[i]}');
+        }
+      }
+
+      print('\n📝 GÖNDERİLEN PROMPT (Tam Metin - Parçalı):');
+      print('   (Toplam Uzunluk: ${prompt.length} karakter)');
+      print('-' * 50);
+      _printLongLog(prompt);
+      print('-' * 50);
+
+      print('=' * 100 + '\n');
+    } catch (e) {
+      print('❌ DEBUG YAZDIRMA HATASI: $e');
+    }
+    // 🔴🔴🔴 DEBUG SONU 🔴🔴🔴
+
     return _callGemini(prompt, expectJson: true, requestType: 'weekly_plan');
+  }
+
+  /// Uzun metinleri konsolda kesilmemesi için parçalara bölerek yazdırır
+  void _printLongLog(String text) {
+    const int chunkSize = 800; // Güvenli log limiti
+    if (text.length <= chunkSize) {
+      print(text);
+      return;
+    }
+    int startIndex = 0;
+    while (startIndex < text.length) {
+      int endIndex = startIndex + chunkSize;
+      if (endIndex > text.length) endIndex = text.length;
+      print(text.substring(startIndex, endIndex));
+      startIndex = endIndex;
+    }
   }
 
   Future<String> _buildNextStudyTopicsJson(
@@ -655,6 +718,12 @@ Sadece en kritik konulara odaklan. Müsait zamanın %50-60'ını doldurman yeter
     // Zayıf konular (öncelik verilmeli)
     if (weakTopics.isNotEmpty) {
       guardrails['weakTopics'] = weakTopics;
+    }
+
+    // Son tamamlananlar (Review/Tekrar planlaması için gerekli)
+    if (recentCompletedTopics != null && recentCompletedTopics.isNotEmpty) {
+      // Emniyet limiti: En son biten 250 konuyu gönder
+      guardrails['completed'] = recentCompletedTopics.take(250).toList();
     }
 
     // Guardrails boşsa boş JSON döndür
