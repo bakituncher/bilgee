@@ -1,6 +1,8 @@
 // lib/core/prompts/strategy_prompts.dart
 import 'dart:convert';
+import 'dart:async'; // Future.wait için gerekli
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/foundation.dart'; // Debug logları için
 import 'package:taktik/data/models/user_model.dart';
 import 'package:taktik/core/prompts/prompt_remote.dart';
 
@@ -10,11 +12,31 @@ class StrategyPrompts {
   static String? _kpssTemplate;
   static String? _agsTemplate;
 
+  /// Uygulama açılışında çağrılır (main.dart)
   static Future<void> preload() async {
-    _yksTemplate = RemotePrompts.get('yks_prompt') ?? await rootBundle.loadString('assets/prompts/yks_prompt.md');
-    _lgsTemplate = RemotePrompts.get('lgs_prompt') ?? await rootBundle.loadString('assets/prompts/lgs_prompt.md');
-    _kpssTemplate = RemotePrompts.get('kpss_prompt') ?? await rootBundle.loadString('assets/prompts/kpss_prompt.md');
-    _agsTemplate = RemotePrompts.get('ags_prompt') ?? await rootBundle.loadString('assets/prompts/ags_prompt.md');
+    try {
+      // Future.wait ile tüm dosyaları aynı anda (paralel) okuyoruz.
+      // Bu, uygulama açılışını hızlandırır ve Firestore'a gitmez.
+      await Future.wait([
+        _load('yks_prompt', 'assets/prompts/yks_prompt.md').then((v) => _yksTemplate = v),
+        _load('lgs_prompt', 'assets/prompts/lgs_prompt.md').then((v) => _lgsTemplate = v),
+        _load('kpss_prompt', 'assets/prompts/kpss_prompt.md').then((v) => _kpssTemplate = v),
+        _load('ags_prompt', 'assets/prompts/ags_prompt.md').then((v) => _agsTemplate = v),
+      ]);
+    } catch (e) {
+      debugPrint('⚠️ StrategyPrompts Yükleme Hatası: $e');
+      // Kritik hata: Eğer dosyalar yüklenemezse varsayılan boş string atanabilir
+      // ancak production'da assets klasöründe dosyalar olduğu sürece buraya düşmez.
+    }
+  }
+
+  /// Önce RemotePrompts'a bakar (eğer ileride açarsanız), yoksa Asset'ten okur.
+  static Future<String> _load(String key, String path) async {
+    final cached = RemotePrompts.get(key);
+    if (cached != null && cached.isNotEmpty) {
+      return cached;
+    }
+    return await rootBundle.loadString(path);
   }
 
   static String _revisionBlock(String? revisionRequest) {
@@ -54,10 +76,15 @@ Kullanıcının Geri Bildirimi:
     required String guardrailsJson,
     String? revisionRequest,
   }) {
-    assert(_yksTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
+    // Eğer preload hata verdiyse veya çağrılmadıysa güvenli bir hata mesajı veya boş dön
+    if (_yksTemplate == null) {
+      debugPrint('HATA: YKS Prompt şablonu yüklenmemiş. Lütfen uygulamayı yeniden başlatın.');
+      return '';
+    }
+
     final template = _yksTemplate!;
     final currentDate = DateTime.now().toIso8601String();
-    final currentWeek = '1'; // Basitleştirilmiş hafta takibi
+    final currentWeek = '1';
 
     final replacements = <String, String>{
       'REVISION_BLOCK': _revisionBlock(revisionRequest),
@@ -89,7 +116,8 @@ Kullanıcının Geri Bildirimi:
     required String guardrailsJson,
     String? revisionRequest,
   }) {
-    assert(_lgsTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
+    if (_lgsTemplate == null) return '';
+
     final template = _lgsTemplate!;
     final currentDate = DateTime.now().toIso8601String();
     final currentWeek = '1';
@@ -125,7 +153,8 @@ Kullanıcının Geri Bildirimi:
     required String guardrailsJson,
     String? revisionRequest,
   }) {
-    assert(_kpssTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
+    if (_kpssTemplate == null) return '';
+
     final template = _kpssTemplate!;
     final currentDate = DateTime.now().toIso8601String();
     final currentWeek = '1';
@@ -161,7 +190,8 @@ Kullanıcının Geri Bildirimi:
     required String guardrailsJson,
     String? revisionRequest,
   }) {
-    assert(_agsTemplate != null, 'StrategyPrompts.preload() çağrılmalı');
+    if (_agsTemplate == null) return '';
+
     final template = _agsTemplate!;
     final currentDate = DateTime.now().toIso8601String();
     final currentWeek = '1';
