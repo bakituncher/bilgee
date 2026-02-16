@@ -37,6 +37,11 @@ class _FAQScreenState extends State<FAQScreen> {
       answer:
           "Taktik zaten öğrenciler için geliştirilmiş bir platform! Fiyatlandırmamız, öğrencilerin bütçesine uygun ve alternatif eğitim hizmetlerine göre çok daha ekonomik olarak tasarlanmıştır. Ayrıca periyodik olarak kampanyalar düzenliyoruz.",
     ),
+    FAQItem(
+      question: "\"Sınırsız\" gerçekten sınırsız mı?",
+      answer:
+          "Adil Kullanım Kotası gereği sistem güvenliği için oldukça yüksek bir üst sınırımız var. Korkma! Bu sınıra ulaşmak neredeyse imkansız.\n\nEğer ulaşmayı başarırsan, sen bizim için bir \"Derece Öğrencisi\" adayısın demektir. Destek ekibimize ulaş, bu başarını kutlayalım ve hesabına hemen ücretsiz ek hak yükleyelim. Biz çalışanın her zaman yanındayız! 🏆",
+    ),
 
     // Genel
     FAQItem(
@@ -57,7 +62,7 @@ class _FAQScreenState extends State<FAQScreen> {
           "Taktik, girdiğiniz test sonuçlarını, çalışma alışkanlıklarınızı ve hedeflerinizi analiz ederek size özel öneriler sunuyor. Her test sonucu, her sohbet ve her etkileşimle sizi daha iyi tanıyor. Güçlü ve zayıf konularınızı, çalışma ritminizi öğreniyor ve zamanla daha isabetli tavsiyelerde bulunuyor.",
     ),
     FAQItem(
-      question: "AI'nın ürettiği içeriklere güvenebilir miyim?",
+      question: "Üretilen içeriklere güvenebilir miyim?",
       answer:
           "Taktik, gelişmiş yapay zeka modellerini sınav müfredatları ve akademik kaynaklarla destekleyerek çalışır. İçerikler düzenli olarak gözden geçirilir ve optimize edilir. Yine de AI'nın bir yardımcı araç olduğunu, ana kaynağınızın ders kitaplarınız ve öğretmenleriniz olması gerektiğini unutmayın.",
     ),
