@@ -98,7 +98,7 @@ class _FAQScreenState extends State<FAQScreen> {
       FAQItem(
         question: "Verilerim güvende mi?",
         answer:
-        "Kesinlikle. Tüm verileriniz şifrelenmiş güvenli sunucularda saklanır. Kişisel bilgileriniz reklam amacıyla üçüncü şahıslarla asla paylaşılmaz.",
+        "Kesinlikle. Tüm verileriniz güvenli sunucularda saklanır. Verileriniz üçüncü şahıslarla asla paylaşılmaz.",
       ),
       FAQItem(
         question: "Hesabımı nasıl silebilirim?",
