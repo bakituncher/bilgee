@@ -344,7 +344,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                         'marketingTitle': 'Koçun Cebinde!',
                         'marketingSubtitle': 'Sınav sadece bilgi değil, mentalitedir. Taktik Tavşan seni mental olarak sınava hazırlar.',
                         'redirectRoute': '/ai-hub/motivation-chat',
-                        'imageAsset': 'assets/images/bunnyy.png',
+                        'imageAsset': 'assets/images/bunnyy.webp',
                       }),
                     ),
                   ),
@@ -830,7 +830,7 @@ class _MentorBentoCard extends StatelessWidget {
                 child: Opacity(
                   opacity: 0.15,
                   child: Image.asset(
-                    'assets/images/bunnyy.png',
+                    'assets/images/bunnyy.webp',
                     width: 120,
                     height: 120,
                     fit: BoxFit.contain,

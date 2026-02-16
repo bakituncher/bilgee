@@ -102,7 +102,7 @@ class _AiHubWelcomeSheetState extends ConsumerState<AiHubWelcomeSheet>
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: Image.asset(
-                    'assets/images/bunnyy.png',
+                    'assets/images/bunnyy.webp',
                     fit: BoxFit.cover,
                   ),
                 ),

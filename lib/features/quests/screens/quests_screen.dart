@@ -266,7 +266,7 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
           'marketingTitle': 'Koçun Cebinde!',
           'marketingSubtitle': 'Netlerin neden artmıyor? Stresle nasıl başa çıkarsın? Taktik Tavşan seni analiz edip nokta atışı yönlendirme yapsın.',
           'redirectRoute': '/ai-hub/motivation-chat',
-          'imageAsset': 'assets/images/bunnyy.png',
+          'imageAsset': 'assets/images/bunnyy.webp',
         };
       // Not: Soru Çözücü, Zihin Haritası, İçerik Üretici (Not Defteri) ve Soru Kutusu
       // herkese açık özellikler olduğu için tool offer gösterilmiyor.

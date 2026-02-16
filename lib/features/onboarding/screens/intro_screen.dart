@@ -22,7 +22,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
     _IntroContent(
       title: "Selam! Ben Taktik Tavşan",
       description: "Sınav maratonunda senin en büyük destekçin, seni zirveye taşıyacak dijital koçunum. Hazır mısın?",
-      imagePath: 'assets/images/bunnyy.png',
+      imagePath: 'assets/images/bunnyy.webp',
       isAssetImage: true,
       color: const Color(0xFF6366F1),
     ),

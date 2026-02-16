@@ -87,7 +87,7 @@ class _PreAuthWelcomeScreenState extends ConsumerState<PreAuthWelcomeScreen>
           // 1. ARKA PLAN GÖRSELİ
           Positioned.fill(
             child: Image.asset(
-              'assets/images/giris.png',
+              'assets/images/giris.webp',
               fit: BoxFit.cover,
             ),
           ),

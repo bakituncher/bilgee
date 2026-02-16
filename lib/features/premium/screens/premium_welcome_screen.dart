@@ -53,7 +53,7 @@ class _PremiumWelcomeScreenState extends ConsumerState<PremiumWelcomeScreen> {
         children: [
           // 1. KATMAN: Arka Plan Görseli (elele.png)
           Image.asset(
-            'assets/images/elele.png',
+            'assets/images/elele.webp',
             fit: BoxFit.cover,
             height: double.infinity,
             width: double.infinity,

@@ -1151,7 +1151,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                     ],
                   ),
                   child: Image.asset(
-                    'assets/images/bunnyy.png',
+                    'assets/images/bunnyy.webp',
                     height: 56,
                     width: 56,
                   ),
@@ -1470,7 +1470,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.asset('assets/images/bunnyy.png', width: 16, height: 16),
+                  Image.asset('assets/images/bunnyy.webp', width: 16, height: 16),
                   const SizedBox(width: 4),
                   Text(
                     "Taktik Tavşan",

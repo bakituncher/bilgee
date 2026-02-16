@@ -232,7 +232,7 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
 
     // Açılışta gecikmeyi önlemek için büyük görselleri önbelleğe al
     try {
-      precacheImage(const AssetImage('assets/images/giris.png'), context);
+      precacheImage(const AssetImage('assets/images/giris.webp'), context);
       precacheImage(const AssetImage('assets/images/splash.png'), context);
     } catch (e) {
       // Görsel yüklenemezse akışı bozma

@@ -223,7 +223,7 @@ class _AnimatedBunnyButtonState extends State<_AnimatedBunnyButton> with TickerP
       child: Container(
         decoration: BoxDecoration(shape: BoxShape.circle, color: cardColor),
         padding: const EdgeInsets.all(5),
-        child: ClipOval(child: Image.asset('assets/images/bunnyy.png', fit: BoxFit.cover)),
+        child: ClipOval(child: Image.asset('assets/images/bunnyy.webp', fit: BoxFit.cover)),
       ),
     );
 

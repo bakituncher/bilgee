@@ -184,7 +184,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Image.asset(
-                              'assets/images/bunnyy.png',
+                              'assets/images/bunnyy.webp',
                               width: 24,
                               height: 24,
                               fit: BoxFit.contain,

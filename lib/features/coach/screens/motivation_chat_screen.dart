@@ -594,7 +594,7 @@ class _SmartBriefingView extends ConsumerWidget {
                           child: const CircleAvatar(
                             backgroundColor: Colors.transparent,
                             radius: 32,
-                            backgroundImage: AssetImage('assets/images/bunnyy.png'),
+                            backgroundImage: AssetImage('assets/images/bunnyy.webp'),
                           ),
                         ).animate().fadeIn(delay: 100.ms).scale(curve: Curves.elasticOut),
                         const SizedBox(height: 16),
@@ -995,7 +995,7 @@ class _MessageBubbleState extends State<_MessageBubble> {
                 child: const CircleAvatar(
                   backgroundColor: Colors.transparent,
                   radius: 16,
-                  backgroundImage: AssetImage('assets/images/bunnyy.png'),
+                  backgroundImage: AssetImage('assets/images/bunnyy.webp'),
                 ),
               ),
             if (!isUser) const SizedBox(width: 10),
@@ -1140,7 +1140,7 @@ class _TypingBubble extends StatelessWidget {
               child: const CircleAvatar(
                 backgroundColor: Colors.transparent,
                 radius: 16,
-                backgroundImage: AssetImage('assets/images/bunnyy.png'),
+                backgroundImage: AssetImage('assets/images/bunnyy.webp'),
               ),
             ),
             const SizedBox(width: 10),
@@ -1303,7 +1303,7 @@ class _SuggestionView extends StatelessWidget {
                     child: const CircleAvatar(
                       backgroundColor: Colors.transparent,
                       radius: 32,
-                      backgroundImage: AssetImage('assets/images/bunnyy.png'),
+                      backgroundImage: AssetImage('assets/images/bunnyy.webp'),
                     ),
                   ),
                   const SizedBox(height: 16),

@@ -138,7 +138,7 @@ class PremiumHeroCard extends StatelessWidget {
                             child: Padding(
                               padding: const EdgeInsets.all(5.0),
                               child: Image.asset(
-                                'assets/images/bunnyy.png',
+                                'assets/images/bunnyy.webp',
                                 fit: BoxFit.contain,
                               ),
                             ),

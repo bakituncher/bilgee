@@ -670,7 +670,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                 ),
                 child: Center(
                   child: Image.asset(
-                    'assets/images/bunnyy.png',
+                    'assets/images/bunnyy.webp',
                     width: 60,
                     height: 60,
                     errorBuilder: (_, __, ___) => Text(

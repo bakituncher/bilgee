@@ -148,7 +148,7 @@ class TestResultSummaryScreen extends ConsumerWidget {
                         'color': Colors.indigoAccent,
                         'heroTag': 'motivation-chat-offer',
                         'redirectRoute': '/ai-hub/motivation-chat',
-                        'imageAsset': 'assets/images/bunnyy.png',
+                        'imageAsset': 'assets/images/bunnyy.webp',
                       });
                     }
                   },
