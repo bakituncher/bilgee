@@ -42,7 +42,7 @@ class _FAQScreenState extends State<FAQScreen> {
       FAQItem(
         question: "Bir özel ders yerine Taktik'i neden tercih etmeliyim?",
         answer:
-        "Taktik, özel dersin yerini almaktan ziyade, onu tamamlayan çok daha ekonomik ve ulaşılabilir bir 'Dijital Koç'tur. Bir saatlik özel ders ücretine, bir yıl boyunca PRO özelliklere sınırsız erişim sağlarsınız. Taktik, hocanızın yanınızda olmadığı her an size destek olmak için oradadır.",
+        "Taktik, özel dersin yerini almaktan ziyade, onu tamamlayan çok daha ekonomik ve ulaşılabilir bir 'Dijital Koç'tur. Bir saatlik özel ders ücretine, bir yıl boyunca PRO özelliklere sınırsız erişim kazanırsınız. Taktik, hocanızın yanınızda olmadığı her an size destek olmak için oradadır.",
       ),
       FAQItem(
         question: "PRO'yu ücretsiz deneyebilir miyim?",
