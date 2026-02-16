@@ -14,6 +14,7 @@ import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
+import 'package:taktik/shared/widgets/pro_badge.dart';
 
 class PremiumScreen extends ConsumerStatefulWidget {
   const PremiumScreen({super.key});
@@ -129,6 +130,24 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   }
 
   // --- LOGIC ---
+
+  void _showComparisonBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => _ComparisonBottomSheet(
+        primaryPink: _primaryPink,
+        accentPink: _accentPink,
+        deepPink: _deepPink,
+        purpleAccent: _purpleAccent,
+        successColor: _successColor,
+        textPrimary: _textPrimary,
+        textSecondary: _textSecondary,
+        bgLight: _bgLight,
+      ),
+    );
+  }
 
   Future<void> _handleBack() async {
     try {
@@ -359,24 +378,32 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                   ),
                                 ),
                                 SizedBox(height: isSmallScreen ? 6 : 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: _primaryPink.withOpacity(0.08),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: _primaryPink.withOpacity(0.2)),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.local_cafe_rounded, color: _deepPink, size: 16),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        "1 kahve fiyatına",
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(color: _deepPink, fontSize: 13, fontWeight: FontWeight.w600),
-                                      ),
-                                    ],
+                                GestureDetector(
+                                  onTap: () {
+                                    HapticFeedback.mediumImpact();
+                                    _showComparisonBottomSheet();
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: _primaryPink.withOpacity(0.08),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(color: _primaryPink.withOpacity(0.2)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.local_cafe_rounded, color: _deepPink, size: 16),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          "1 kahve fiyatına",
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(color: _deepPink, fontSize: 13, fontWeight: FontWeight.w600),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Icon(Icons.info_outline, color: _deepPink, size: 14),
+                                      ],
+                                    ),
                                   ),
                                 ),
                                 SizedBox(height: isSmallScreen ? 12 : 16),
@@ -1113,3 +1140,293 @@ class _TrustBadgeSmall extends StatelessWidget {
     );
   }
 }
+
+// Comparison Bottom Sheet
+class _ComparisonBottomSheet extends StatelessWidget {
+  final Color primaryPink;
+  final Color accentPink;
+  final Color deepPink;
+  final Color purpleAccent;
+  final Color successColor;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color bgLight;
+
+  const _ComparisonBottomSheet({
+    required this.primaryPink,
+    required this.accentPink,
+    required this.deepPink,
+    required this.purpleAccent,
+    required this.successColor,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.bgLight,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: bgLight,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      constraints: BoxConstraints(
+        maxHeight: screenHeight * 0.9,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle Bar
+          Container(
+            margin: const EdgeInsets.only(top: 12, bottom: 8),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: textSecondary.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          // Header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(Icons.local_cafe_rounded, color: deepPink, size: 22),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          "Neden mi TAKTİK PRO?",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(Icons.close_rounded, color: textPrimary, size: 24),
+                  style: IconButton.styleFrom(
+                    backgroundColor: textPrimary.withOpacity(0.05),
+                    padding: const EdgeInsets.all(8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Subtitle
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                "Tüm ücretsiz özelliklere ek, 1 kahve fiyatına sınırları kaldır",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: textSecondary,
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Scrollable Content
+          Flexible(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: textSecondary.withOpacity(0.1)),
+                  ),
+                  child: Column(
+                    children: [
+                      // Header Row
+                      Container(
+                        decoration: BoxDecoration(
+                          color: primaryPink.withOpacity(0.05),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              flex: 2,
+                              child: Text(
+                                "Özellikler",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF666666),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                "Ücretsiz",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: textSecondary,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Center(
+                                child: ProBadge(
+                                  fontSize: 10,
+                                  horizontalPadding: 6,
+                                  verticalPadding: 3,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Feature Rows
+                      _buildFeatureRow(
+                        "Soru Çözücü",
+                        free: "3 soru/gün",
+                        pro: true,
+                      ),
+                      _buildFeatureRow(
+                        "Haftalık Planlama",
+                        free: false,
+                        pro: true,
+                      ),
+                      _buildFeatureRow(
+                        "Zihin Haritaları",
+                        free: false,
+                        pro: true,
+                      ),
+                      _buildFeatureRow(
+                        "Not Defteri",
+                        free: "3 hak/gün",
+                        pro: true,
+                      ),
+                      _buildFeatureRow(
+                        "Sınırsız Test Çözümü",
+                        free: false,
+                        pro: true,
+                      ),
+                      _buildFeatureRow(
+                        "Özel Konu Özetleri",
+                        free: false,
+                        pro: true,
+                      ),
+                      _buildFeatureRow(
+                        "Detaylı Hata Analizi",
+                        free: false,
+                        pro: true,
+                      ),
+                      _buildFeatureRow(
+                        "Etütleri Kaydet",
+                        free: false,
+                        pro: true,
+                      ),
+                      _buildFeatureRow(
+                        "Reklamlar",
+                        free: "Var",
+                        pro: "Yok",
+                        isLast: true,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          SizedBox(height: 16 + bottomPadding),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureRow(String feature, {dynamic free, dynamic pro, bool isLast = false}) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: isLast
+            ? BorderSide.none
+            : BorderSide(color: textSecondary.withOpacity(0.1)),
+        ),
+        borderRadius: isLast
+          ? const BorderRadius.vertical(bottom: Radius.circular(16))
+          : null,
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      child: Row(
+        children: [
+          // Feature Name
+          Expanded(
+            flex: 2,
+            child: Text(
+              feature,
+              style: TextStyle(
+                fontSize: 11,
+                color: textPrimary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+
+          // Free Column
+          Expanded(
+            child: _buildCellContent(free),
+          ),
+
+          // Pro Column
+          Expanded(
+            child: _buildCellContent(pro, isPro: true),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCellContent(dynamic value, {bool isPro = false}) {
+    if (value is bool) {
+      return Center(
+        child: Icon(
+          value ? Icons.check_circle_rounded : Icons.cancel_rounded,
+          size: 18,
+          color: value
+            ? (isPro ? successColor : textSecondary)
+            : textSecondary.withOpacity(0.3),
+        ),
+      );
+    } else if (value is String) {
+      return Text(
+        value,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 10,
+          color: isPro ? deepPink : textSecondary,
+          fontWeight: isPro ? FontWeight.w700 : FontWeight.w500,
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+}
+
