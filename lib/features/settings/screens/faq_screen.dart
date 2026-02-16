@@ -298,20 +298,53 @@ class _ProComparisonTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      margin: const EdgeInsets.only(top: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-          width: 1,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Başlık - Şık Kutu
+        Container(
+          margin: const EdgeInsets.only(top: 8, bottom: 16),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF1565C0).withValues(alpha: 0.1),
+                const Color(0xFF1976D2).withValues(alpha: 0.05),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFF1565C0).withValues(alpha: 0.3),
+              width: 1.5,
+            ),
+          ),
+          child: Text(
+            "Tüm ücretsiz özelliklere ek, 1 kahve fiyatına sınırları kaldırır",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+              letterSpacing: 0.5,
+            ),
+          ),
         ),
-      ),
-      child: Column(
-        children: [
-          // Header
-          Container(
+        // Tablo
+        Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              // Header
+              Container(
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
@@ -364,6 +397,8 @@ class _ProComparisonTable extends StatelessWidget {
           _buildRow(theme, "Reklamlar", "Var", "Yok", isLast: true),
         ],
       ),
+        ),
+      ],
     );
   }
 
