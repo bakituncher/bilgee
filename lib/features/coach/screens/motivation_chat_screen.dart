@@ -738,7 +738,7 @@ class _SmartBriefingView extends ConsumerWidget {
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
-                                  'Rehberlik amaçlıdır, tıbbi tedavi yerine geçmez.',
+                                  'Tıbbi tedavi yerine geçmez.',
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     fontSize: 11,
                                     color: colorScheme.onSurfaceVariant,
