@@ -62,7 +62,7 @@ class _FAQScreenState extends State<FAQScreen> {
       FAQItem(
         question: "\"Sınırsız\" gerçekten sınırsız mı?",
         answer:
-        "Adil Kullanım Kotası (AKK) gereği, sistem güvenliğini sağlamak amacıyla günlük çok yüksek bir işlem limiti bulunur. Bu limit, normal bir insan çalışma temposunun çok üzerindedir. Eğer bu sınıra ulaşırsan, gerçekten olağanüstü bir çalışma azmine sahipsin demektir! 🏆",
+        "Adil Kullanım Kotası gereği sistem güvenliği için oldukça yüksek bir üst sınırımız var. Korkma! Bu sınıra ulaşmak neredeyse imkansız.\n\nEğer ulaşmayı başarırsan, sen bizim için bir \"Derece Öğrencisi\" adayısın demektir. Destek ekibimize ulaş, bu başarını kutlayalım ve hesabına hemen ücretsiz ek hak yükleyelim. Biz çalışanın her zaman yanındayız! 🏆",
       ),
 
       // --- GENEL ---
