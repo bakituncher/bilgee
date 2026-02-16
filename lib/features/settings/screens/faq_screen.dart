@@ -108,7 +108,7 @@ class _FAQScreenState extends State<FAQScreen> {
       FAQItem(
         question: "Hangi cihazlarda çalışır?",
         answer:
-        "Taktik; iOS 13.0 ve üzeri iPhone/iPad cihazlarda (ve Silicon Mac'lerde), Android 7.0 ve üzeri tüm Android telefonlarda sorunsuz çalışır.",
+        "Taktik; iOS 13.0 ve üzeri iPhone/iPad cihazlarda (ve Silicon Mac'lerde), Android 7.0 ve üzeri tüm Android cihazlarda sorunsuz çalışır.",
       ),
     ];
   }
