@@ -99,7 +99,7 @@ class _GeneralOverviewScreenState extends ConsumerState<GeneralOverviewScreen> {
             Text(
               'Genel Bakış',
               style: TextStyle(
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 fontSize: 18,
                 color: isDark ? Colors.white : const Color(0xFF0F172A),
                 letterSpacing: -0.5,

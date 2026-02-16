@@ -321,7 +321,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 const SizedBox(height: 24),
                 Text(
                   'Arşivin Henüz Boş',
-                  style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800, fontSize: 24, letterSpacing: -0.5),
+                  style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, fontSize: 24, letterSpacing: -0.5),
                   textAlign: TextAlign.center,
                 ).animate(delay: 200.ms).fadeIn(duration: 400.ms).slideY(begin: 0.1, duration: 500.ms),
                 const SizedBox(height: 12),

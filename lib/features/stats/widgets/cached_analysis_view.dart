@@ -313,7 +313,7 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
               Text(
                 description,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isDark ? Colors.white60 : Colors.black54),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? Colors.white60 : Colors.black54),
               ).animate().fadeIn(delay: 150.ms),
               const SizedBox(height: 16),
 
@@ -348,7 +348,7 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
                         child: const Icon(Icons.lock_open_rounded, color: Colors.white, size: 16),
                       ),
                       const SizedBox(width: 10),
-                      const Text('Kilidi Aç', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
+                      const Text('Kilidi Aç', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
                       const SizedBox(width: 6),
                       const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
                     ],
@@ -405,7 +405,7 @@ class _CachedAnalysisViewState extends ConsumerState<CachedAnalysisView> with Si
                   feature.subtitle,
                   style: TextStyle(
                     fontSize: 10,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     color: isDark ? Colors.white.withOpacity(0.5) : Colors.black45,
                   ),
                 ),

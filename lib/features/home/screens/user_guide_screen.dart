@@ -118,7 +118,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.white.withOpacity(0.9),
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                           letterSpacing: 0.2,
                         ),
                       ),
@@ -215,7 +215,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
           style: const TextStyle(
             fontSize: 13,
             height: 1.4,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             color: Colors.grey,
           ),
         ),
@@ -273,7 +273,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
                         title,
                         style: TextStyle(
                           fontSize: 15,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           color: isDark ? Colors.white : const Color(0xFF2D3436),
                         ),
                       ),
@@ -370,7 +370,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
               Text(
                 'Taktik ile hedefine ulaş',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
+                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -487,7 +487,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
               SizedBox(height: 4),
               Text(
                 'Başarılı öğrenciler planlı çalışır',
-                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
+                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -614,7 +614,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
               SizedBox(height: 4),
               Text(
                 'Her deneme bir fırsat, her analiz bir adım',
-                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
+                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -743,7 +743,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
               SizedBox(height: 4),
               Text(
                 'Zayıf noktalar aslında en büyük potansiyelindir',
-                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
+                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -897,7 +897,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
               SizedBox(height: 4),
               Text(
                 'Çalış, kazan, yarış',
-                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
+                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -1079,7 +1079,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
               SizedBox(height: 4),
               Text(
                 'Veriye dayalı başarı',
-                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
+                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -1262,7 +1262,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
                 style: TextStyle(
                   color: color,
                   fontSize: 11,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   height: 1.1,
                 ),
                 textAlign: TextAlign.center,
@@ -1347,7 +1347,7 @@ class _UserGuideScreenState extends State<UserGuideScreen> with SingleTickerProv
               text: TextSpan(
                 style: const TextStyle(color: Colors.grey, fontSize: 12),
                 children: [
-                  TextSpan(text: "$title: ", style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.deepPurple)),
+                  TextSpan(text: "$title: ", style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.deepPurple)),
                   TextSpan(text: desc),
                 ],
               ),

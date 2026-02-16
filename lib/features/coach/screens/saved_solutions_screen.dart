@@ -756,7 +756,7 @@ class _SavedSolutionsScreenState extends ConsumerState<SavedSolutionsScreen> {
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
                       fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),

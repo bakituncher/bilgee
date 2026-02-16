@@ -339,7 +339,7 @@ class HeroHeader extends ConsumerWidget {
                                                 softWrap: false,
                                                 style: theme.textTheme.labelSmall?.copyWith(
                                                   color: Colors.white,
-                                                  fontWeight: FontWeight.w800,
+                                                  fontWeight: FontWeight.w700,
                                                   fontSize: 11,
                                                   height: 1.2,
                                                 ),
@@ -489,7 +489,7 @@ class _UltraCompactRankCard extends StatelessWidget {
             rankInfo.current.name,
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               fontSize: 13,
               letterSpacing: -0.2,
               height: 1.1,
@@ -707,7 +707,7 @@ class _UltraCompactQuestCardState extends ConsumerState<_UltraCompactQuestCard>
                       color: hasClaimable
                           ? Colors.white
                           : theme.colorScheme.secondary,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       fontSize: 13,
                       letterSpacing: -0.2,
                       height: 1.1,
@@ -758,7 +758,7 @@ class _UltraCompactQuestCardState extends ConsumerState<_UltraCompactQuestCard>
                         '🎁 Ödül Al!',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.secondary,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           fontSize: 9,
                         ),
                       ),

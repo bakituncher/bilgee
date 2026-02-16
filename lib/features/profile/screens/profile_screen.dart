@@ -500,7 +500,7 @@ class _ProfileView extends ConsumerWidget {
                                     child: Text(
                                       user.name ?? 'İsimsiz Savaşçı',
                                       style: theme.textTheme.headlineSmall?.copyWith(
-                                        fontWeight: FontWeight.w800,
+                                        fontWeight: FontWeight.w700,
                                         letterSpacing: 0.5,
                                         fontSize: 20,
                                         height: 1.2,
@@ -686,7 +686,7 @@ class _ProfileView extends ConsumerWidget {
                                     'Taktik App',
                                     style: theme.textTheme.titleSmall?.copyWith(
                                       color: colorScheme.primary,
-                                      fontWeight: FontWeight.w800,
+                                      fontWeight: FontWeight.w700,
                                       fontSize: 14,
                                       letterSpacing: 0.5,
                                     ),
@@ -1292,7 +1292,7 @@ class _RankPillState extends State<_RankPill> {
               Text(
                 widget.rank.name,
                 style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 0.5,
                   fontSize: 13,
                 ),
@@ -1333,7 +1333,7 @@ class _NeoXpBar extends StatelessWidget {
             Text(
               'Taktik Puanı',
               style: theme.textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 fontSize: 12,
                 letterSpacing: 0.3,
               ),
@@ -1694,7 +1694,7 @@ class _ActionNeoState extends State<_ActionNeo> {
               Text(
                 widget.label,
                 style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   fontSize: 14,
                   letterSpacing: 0.3,
                   color: _pressed

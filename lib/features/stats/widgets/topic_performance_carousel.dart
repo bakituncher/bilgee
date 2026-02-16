@@ -233,7 +233,7 @@ class _TopicPerformanceCarouselState extends ConsumerState<TopicPerformanceCarou
                         'Hangi konuda zayıfsın?',
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           color: widget.isDark ? Colors.white : const Color(0xFF0F172A),
                         ),
                       ),
@@ -243,7 +243,7 @@ class _TopicPerformanceCarouselState extends ConsumerState<TopicPerformanceCarou
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                           color: widget.isDark
                               ? Colors.white.withOpacity(0.6)
                               : Colors.black.withOpacity(0.5),
@@ -281,7 +281,7 @@ class _TopicPerformanceCarouselState extends ConsumerState<TopicPerformanceCarou
                                 'Pro\'ya Geç',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w700,
                                   color: Colors.black87,
                                 ),
                               ),
@@ -561,7 +561,7 @@ class _TopicStatCard extends StatelessWidget {
                       stat.name,
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
                         letterSpacing: -0.3,
                         height: 1.2,
@@ -711,7 +711,7 @@ class _TopicStatCard extends StatelessWidget {
                             'Uzman',
                             style: TextStyle(
                               fontSize: 9,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                               color: Colors.amber.shade700,
                             ),
                           ),
@@ -756,7 +756,7 @@ class _MiniStat extends StatelessWidget {
           value,
           style: TextStyle(
             fontSize: 11,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             color: isDark ? Colors.white.withOpacity(0.8) : Colors.black.withOpacity(0.7),
           ),
         ),
@@ -846,7 +846,7 @@ class _FilterChip extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                 color: isSelected
                     ? AppTheme.primaryBrandColor
                     : (isDark ? Colors.white.withOpacity(0.7) : Colors.black.withOpacity(0.6)),

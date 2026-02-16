@@ -72,7 +72,7 @@ class ForceUpdateScreen extends StatelessWidget {
                           child: Text(
                             'İyi Haber!',
                             style: theme.textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                               color: Colors.white,
                               letterSpacing: -0.3,
                             ),
@@ -86,7 +86,7 @@ class ForceUpdateScreen extends StatelessWidget {
                           child: Text(
                             'Uygulamanın yeni bir sürümü var.',
                             style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                               color: Colors.white,
                               letterSpacing: -0.3,
                             ),

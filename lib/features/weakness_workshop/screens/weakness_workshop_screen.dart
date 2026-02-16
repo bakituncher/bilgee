@@ -2466,7 +2466,7 @@ class _ManualTopicSelectorSheetState extends ConsumerState<_ManualTopicSelectorS
                 child: Text(
                   topic,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),

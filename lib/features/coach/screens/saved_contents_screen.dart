@@ -57,7 +57,7 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
           'Kaydedilenler',
           style: TextStyle(
             fontSize: 17,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             color: colorScheme.onSurface,
             letterSpacing: -0.3,
           ),
@@ -734,7 +734,7 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
                             '${index + 1}',
                             style: const TextStyle(
                               color: Colors.white,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                               fontSize: 16,
                             ),
                           ),
@@ -790,7 +790,7 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
                     style: TextStyle(
                       fontSize: 15,
                       height: 1.6,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       color: colorScheme.onSurface,
                     ),
                   ),
@@ -1011,7 +1011,7 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
         styleSheet: MarkdownStyleSheet(
           h1: TextStyle(
             fontSize: 20,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             color: colorScheme.onSurface,
             height: 1.3,
           ),

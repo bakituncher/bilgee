@@ -190,7 +190,7 @@ class _HeaderBar extends ConsumerWidget {
         const SizedBox(width:10),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
           Row(children: [
-            Text('Haftalık Plan', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, fontSize: 13)),
+            Text('Haftalık Plan', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700, fontSize: 13)),
             if (isExpired) ...[
               const SizedBox(width: 6),
               Container(

@@ -128,7 +128,7 @@ class EnhancedActivityCard extends StatelessWidget {
                       'Son 30 günlük çalışma ritmin',
                       style: TextStyle(
                         fontSize: 11,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                         color: isDark
                             ? Colors.white.withOpacity(0.6)
                             : Colors.black.withOpacity(0.5),

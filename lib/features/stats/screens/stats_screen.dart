@@ -89,7 +89,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                     ? 'Kale Henüz İnşa Edilmedi'
                     : 'Daha Fazla Veri Gerekli',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   fontSize: 24,
                   letterSpacing: -0.5,
                 ),
@@ -165,7 +165,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                       Text(
                         'Deneme Ekle',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           fontSize: 18,
                           letterSpacing: -0.3,
                         ),
@@ -175,7 +175,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                       Text(
                         'Analizini başlatmak için ilk denemeni ekle',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                           fontSize: 13,
                           height: 1.3,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -376,7 +376,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                       Text(
                         'Performans takibi',
                         style: TextStyle(
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                           fontSize: 10,
                           color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                         ),

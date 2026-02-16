@@ -56,7 +56,7 @@ class TestResultSummaryScreen extends ConsumerWidget {
         title: Text(
           "Deneme Raporu",
           style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             fontSize: 17,
             letterSpacing: 0.5,
           ),
@@ -626,7 +626,7 @@ class _BalancedSubjectList extends StatelessWidget {
                         net.toStringAsFixed(1),
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           fontSize: 13,
                           color: isDark ? const Color(0xFF8B8FFF) : const Color(0xFF2E3192),
                         ),
@@ -759,7 +759,7 @@ Future<bool> _showPremiumDetailGateDialog({
                   'Detaylı Analiz',
                   style: TextStyle(
                     fontSize: 20,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: isDark ? Colors.white : deepBlue,
                     letterSpacing: -0.3,
                   ),
@@ -770,7 +770,7 @@ Future<bool> _showPremiumDetailGateDialog({
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     color: isDark ? Colors.white54 : Colors.black54,
                   ),
                 ),

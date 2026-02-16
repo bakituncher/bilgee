@@ -75,7 +75,7 @@ class TestManagementCard extends ConsumerWidget {
                 child: Text(
                   'Hızlı Aksiyonlar',
                   style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: -0.3,
                     fontSize: 13,
                   ),
@@ -195,7 +195,7 @@ class _ActionButton extends StatelessWidget {
               label,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: Colors.white,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 fontSize: 9.5,
                 letterSpacing: -0.2,
                 shadows: [

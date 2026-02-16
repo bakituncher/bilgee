@@ -120,7 +120,7 @@ class _PremiumWelcomeScreenState extends ConsumerState<PremiumWelcomeScreen> {
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.95),
                       fontSize: 17,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       height: 1.5,
                       letterSpacing: -0.2,
                     ),
@@ -214,7 +214,7 @@ class _PremiumWelcomeScreenState extends ConsumerState<PremiumWelcomeScreen> {
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 19,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 0.5,
                   ),
                 ),

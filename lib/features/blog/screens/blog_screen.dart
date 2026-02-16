@@ -616,14 +616,14 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                             style: const TextStyle(
                                 fontFamily: 'Montserrat',
                                 fontSize: 15,
-                                fontWeight: FontWeight.w500
+                                fontWeight: FontWeight.w600
                             ),
                             decoration: InputDecoration(
                               hintText: 'Ara...',
                               hintStyle: TextStyle(
                                 fontFamily: 'Montserrat',
                                 fontSize: 15,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                                 color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
                               ),
                               prefixIcon: Icon(
@@ -968,7 +968,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                                   style: TextStyle(
                                                     fontFamily: 'Montserrat',
                                                     fontSize: 20,
-                                                    fontWeight: FontWeight.w800,
+                                                    fontWeight: FontWeight.w700,
                                                     height: 1.2,
                                                     letterSpacing: -0.3,
                                                     color: Theme.of(context).colorScheme.onSurface,
@@ -1004,7 +1004,7 @@ class _BlogScreenState extends ConsumerState<BlogScreen> {
                                                       style: TextStyle(
                                                         fontFamily: 'Montserrat',
                                                         fontSize: 12,
-                                                        fontWeight: FontWeight.w500,
+                                                        fontWeight: FontWeight.w600,
                                                         color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.8),
                                                       ),
                                                     ),

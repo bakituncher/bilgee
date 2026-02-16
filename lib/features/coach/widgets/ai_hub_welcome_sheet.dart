@@ -134,7 +134,7 @@ class _AiHubWelcomeSheetState extends ConsumerState<AiHubWelcomeSheet>
                             'PRO',
                             style: TextStyle(
                               fontSize: 9,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                               color: Colors.black,
                               letterSpacing: 0.5,
                             ),
@@ -278,7 +278,7 @@ class _AiHubWelcomeSheetState extends ConsumerState<AiHubWelcomeSheet>
                         '7 gün ücretsiz dene, istediğin zaman iptal et',
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                           color: textPrimary,
                         ),
                       ),

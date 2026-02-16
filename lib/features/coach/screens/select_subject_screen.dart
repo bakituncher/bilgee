@@ -126,7 +126,7 @@ class SelectSubjectScreen extends ConsumerWidget {
             'Test eklemek istediğin dersi seç',
             style: theme.textTheme.titleSmall?.copyWith(
               color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               letterSpacing: -0.2,
             ),
             maxLines: 1,
@@ -379,7 +379,7 @@ class _SectionHeader extends StatelessWidget {
             child: Text(
               title,
               style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 color: cs.onSurface,
                 letterSpacing: -0.2,
               ),
@@ -456,7 +456,7 @@ class _ExamGroupHeader extends StatelessWidget {
               child: Text(
                 title,
                 style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   color: cs.onSurface,
                   letterSpacing: -0.4,
                 ),
@@ -635,7 +635,7 @@ class _LoadingStateWidget extends StatelessWidget {
               'Lütfen bekle',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
             ),
           ],
@@ -714,7 +714,7 @@ class _EmptyStateWidget extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                       height: 1.5,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                 textAlign: TextAlign.center,
               ),

@@ -556,7 +556,7 @@ class _NeoXpBar extends StatelessWidget {
             Text(
               'Taktik Puanı',
               style: theme.textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 fontSize: 12,
                 letterSpacing: 0.3,
               ),

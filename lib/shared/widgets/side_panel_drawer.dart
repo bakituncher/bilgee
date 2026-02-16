@@ -237,7 +237,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
           child: Text(
             'BİZİ TAKİP EDİN',
             style: theme.textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: colorScheme.onSurfaceVariant.withOpacity(0.7),
               letterSpacing: 0.5,
               fontSize: 10,
@@ -322,7 +322,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
           child: Text(
             'UYGULAMAYI SEVDİN Mİ?',
             style: theme.textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: colorScheme.onSurfaceVariant.withOpacity(0.7),
               letterSpacing: 0.5,
               fontSize: 10,
@@ -462,7 +462,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                 child: Text(
                   title,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                     fontSize: 13.5,
                     color: selected ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
                   ),
@@ -487,7 +487,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                         'PRO',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: colorScheme.primary,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           fontSize: 10,
                         ),
                       ),
@@ -563,7 +563,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                 child: Text(
                   'Haftalık Plan',
                   style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                     fontSize: 13.5,
                     color: selected ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
                   ),

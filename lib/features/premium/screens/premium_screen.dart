@@ -593,7 +593,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
                                                 _selectedPackage?.storeProduct.introductoryPrice?.price == 0
                                                     ? "ÜCRETSİZ BAŞLA"
                                                     : "HEMEN BAŞLA",
-                                                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                                                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: 0.5),
                                               ),
                                             ],
                                           ),
@@ -867,7 +867,7 @@ class _ModernPricingCardState extends State<_ModernPricingCard> {
                           isAnnual ? "Yıllık Plan" : "Aylık Plan",
                           style: TextStyle(
                               color: const Color(0xFF1A1A1A),
-                              fontWeight: widget.isSelected ? FontWeight.w800 : FontWeight.w600,
+                              fontWeight: widget.isSelected ? FontWeight.w700 : FontWeight.w600,
                               fontSize: 17
                           ),
                         ),
@@ -1000,7 +1000,7 @@ class _ModernPricingCardState extends State<_ModernPricingCard> {
         style: TextStyle(
           color: Colors.white,
           fontSize: 9,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
           letterSpacing: 0.2,
         ),
       ),
@@ -1033,7 +1033,7 @@ class _ModernPricingCardState extends State<_ModernPricingCard> {
         style: const TextStyle(
           color: Colors.white,
           fontSize: 9,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
           letterSpacing: 0.2,
         ),
       ),
@@ -1106,7 +1106,7 @@ class _TrustBadgeSmall extends StatelessWidget {
           style: TextStyle(
             color: const Color(0xFF666666),
             fontSize: 11,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],

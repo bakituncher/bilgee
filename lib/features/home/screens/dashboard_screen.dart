@@ -189,7 +189,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 Row(children: [
                   Icon(Icons.auto_awesome_rounded, color: colorScheme.primary, size: 28),
                   const SizedBox(width: 8),
-                  const Expanded(child: Text('Yeni Haftayı Mühürleyelim', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)))
+                  const Expanded(child: Text('Yeni Haftayı Mühürleyelim', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)))
                 ]),
                 const SizedBox(height: 8),
                 Text(

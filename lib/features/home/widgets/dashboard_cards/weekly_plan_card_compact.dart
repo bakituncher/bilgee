@@ -158,7 +158,7 @@ class _CompactPlanContent extends ConsumerWidget {
                     Text(
                       'Haftalık Plan',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         fontSize: 13,
                         letterSpacing: 0.2,
                       ),
@@ -199,7 +199,7 @@ class _CompactPlanContent extends ConsumerWidget {
                   Text(
                     '%${(ratio * 100).round()}',
                     style: TextStyle(
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       fontSize: 10,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
@@ -402,7 +402,7 @@ class _EmptyPlanCard extends ConsumerWidget {
           Text(
             'Haftalık Planın Yok',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               fontSize: 13,
             ),
           ),

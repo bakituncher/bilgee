@@ -183,7 +183,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget> with SingleTickerProv
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 28,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         height: 1.2,
                         letterSpacing: -0.5,
                       ),
@@ -288,7 +288,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget> with SingleTickerProv
                           fontSize: 18,
                           height: 1.6,
                           color: colorScheme.onSurface.withOpacity(0.9),
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                         ),
                         strong: TextStyle(
                           color: widget.color,

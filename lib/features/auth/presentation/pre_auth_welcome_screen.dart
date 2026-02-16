@@ -166,7 +166,7 @@ class _PreAuthWelcomeScreenState extends ConsumerState<PreAuthWelcomeScreen>
                           text: 'Yolun Zorlu,\nAma Yalnız Değilsin',
                           textAlign: TextAlign.start,
                           style: textTheme.headlineLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                             fontSize: 32,
                             height: 1.1,
                             color: Colors.white,

@@ -238,7 +238,7 @@ class EnhancedSubjectRow extends StatelessWidget {
                 stat.subject,
                 style: TextStyle(
                   fontSize: 14,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   color: isDark ? Colors.white : const Color(0xFF0F172A),
                 ),
                 overflow: TextOverflow.ellipsis,

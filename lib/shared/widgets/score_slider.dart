@@ -160,7 +160,7 @@ class ScoreSlider extends StatelessWidget {
                 style: TextStyle(
                   color: color.withOpacity(0.8),
                   fontSize: 11,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
           ],

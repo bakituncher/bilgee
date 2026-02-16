@@ -703,7 +703,7 @@ class _ToolOfferScreenState extends ConsumerState<ToolOfferScreen>
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 18,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -1149,7 +1149,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                                 widget.title,
                                 style: TextStyle(
                                   color: isDark ? Colors.white : const Color(0xFF1A1A1A),
-                                  fontWeight: widget.isSelected ? FontWeight.w800 : FontWeight.w600,
+                                  fontWeight: widget.isSelected ? FontWeight.w700 : FontWeight.w600,
                                   fontSize: 16.5,
                                 ),
                               ),
@@ -1179,7 +1179,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
                                             : const Color(0xFF888888),
                                         fontSize: 12,
                                         height: 1.2,
-                                        fontWeight: FontWeight.w500,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ),
@@ -1269,7 +1269,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
         style: TextStyle(
           color: Colors.white,
           fontSize: 9.5,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
           letterSpacing: 0.3,
         ),
       ),
@@ -1302,7 +1302,7 @@ class _PurchaseOptionCardState extends State<_PurchaseOptionCard>
         style: const TextStyle(
           color: Colors.white,
           fontSize: 9.5,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
           letterSpacing: 0.3,
         ),
       ),
@@ -1333,7 +1333,7 @@ class _TrustBadgeCompact extends StatelessWidget {
           style: const TextStyle(
             color: Color(0xFF666666),
             fontSize: 11,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],

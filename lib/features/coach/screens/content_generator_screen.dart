@@ -176,7 +176,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                           style: TextStyle(
                             color: AppTheme.accentBrandColor,
                             fontSize: 13,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -570,7 +570,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                       _getContentTypeShortName(type),
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                         color: isSelected
                             ? AppTheme.secondaryBrandColor
                             : colorScheme.onSurface.withOpacity(0.6),
@@ -825,7 +825,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                       style: TextStyle(
                         fontSize: 12,
                         color: colorScheme.onSurface.withOpacity(0.5),
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -903,7 +903,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                               '${index + 1}',
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w700,
                                 fontSize: 16,
                               ),
                             ),
@@ -959,7 +959,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                       style: TextStyle(
                         fontSize: 15,
                         height: 1.6,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                         color: colorScheme.onSurface,
                       ),
                     ),
@@ -1172,7 +1172,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             'Daha fazla pratik yap!',
             style: TextStyle(
               fontSize: 17,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: colorScheme.onSurface,
             ),
           ),
@@ -1503,7 +1503,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                       style: TextStyle(
                         fontSize: 12,
                         color: colorScheme.onSurface.withOpacity(0.5),
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -1759,7 +1759,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                       style: TextStyle(
                         fontSize: 12,
                         color: colorScheme.onSurface.withOpacity(0.5),
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -1794,7 +1794,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
               // Ana başlık
               h1: TextStyle(
                 fontSize: 22,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 color: colorScheme.onSurface,
                 height: 1.3,
                 letterSpacing: -0.5,

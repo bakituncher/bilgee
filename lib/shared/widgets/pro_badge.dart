@@ -38,7 +38,7 @@ class ProBadge extends StatelessWidget {
           fontSize: fontSize,
           // w900 yerine w800 veya FontWeight.bold kullanmak,
           // font ailesinde 'Black' ağırlığı eksik olsa bile kalın görünmesini garantiler.
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
           color: Colors.amber,
           letterSpacing: 0.5, // Daha şık durması için hafif harf aralığı
         ),

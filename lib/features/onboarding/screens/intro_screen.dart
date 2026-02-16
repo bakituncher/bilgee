@@ -455,7 +455,7 @@ class _IntroSlide extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                             color: colorScheme.onSurface,
                             letterSpacing: -0.5,
                             height: 1.2,

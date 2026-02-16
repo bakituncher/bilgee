@@ -186,7 +186,7 @@ class SwipeablePerformanceCard extends StatelessWidget {
                               trendText,
                               style: TextStyle(
                                 fontSize: 9,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w700,
                                 color: trendColor,
                               ),
                             ),
@@ -231,7 +231,7 @@ class SwipeablePerformanceCard extends StatelessWidget {
                             '${trend > 0 ? '+' : ''}${trend.toStringAsFixed(1)}',
                             style: TextStyle(
                               fontSize: 10,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                               color: trendColor,
                             ),
                           ),

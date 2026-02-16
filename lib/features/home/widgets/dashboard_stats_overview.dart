@@ -105,7 +105,7 @@ class DashboardStatsOverview extends ConsumerWidget {
                       child: Text(
                         'Genel Bakış',
                         style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           letterSpacing: -0.3,
                           fontSize: 13,
                         ),

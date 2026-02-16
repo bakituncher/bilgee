@@ -80,7 +80,7 @@ class PomodoroTimerView extends ConsumerWidget {
                     pomodoro.currentTask,
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.9),
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
                     overflow: TextOverflow.ellipsis,

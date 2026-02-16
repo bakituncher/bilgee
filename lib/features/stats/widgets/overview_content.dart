@@ -106,7 +106,7 @@ class OverviewContent extends ConsumerWidget {
                               'Performans Trendleri',
                               style: TextStyle(
                                 fontSize: 15,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w700,
                                 color: isDark ? Colors.white : const Color(0xFF0F172A),
                                 letterSpacing: -0.3,
                               ),
@@ -116,7 +116,7 @@ class OverviewContent extends ConsumerWidget {
                               'Ana sınavlardaki gelişimini takip et',
                               style: TextStyle(
                                 fontSize: 11,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                                 color: isDark
                                     ? Colors.white.withOpacity(0.5)
                                     : Colors.black.withOpacity(0.45),
@@ -225,7 +225,7 @@ class OverviewContent extends ConsumerWidget {
                               'Branş Denemesi Trendleri',
                               style: TextStyle(
                                 fontSize: 15,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w700,
                                 color: isDark ? Colors.white : const Color(0xFF0F172A),
                                 letterSpacing: -0.3,
                               ),
@@ -235,7 +235,7 @@ class OverviewContent extends ConsumerWidget {
                               'Ders bazlı performansını takip et',
                               style: TextStyle(
                                 fontSize: 11,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                                 color: isDark
                                     ? Colors.white.withOpacity(0.5)
                                     : Colors.black.withOpacity(0.45),
@@ -373,7 +373,7 @@ class OverviewContent extends ConsumerWidget {
                 'Henüz Analiz Verisi Yok',
                 style: TextStyle(
                   fontSize: 24,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   color: isDark ? Colors.white : const Color(0xFF0F172A),
                   letterSpacing: -0.5,
                 ),
@@ -389,7 +389,7 @@ class OverviewContent extends ConsumerWidget {
                 'İstatistiklerini ve performans analizini görmek için test veya deneme ekle, Taktik senin için analiz etsin.',
                 style: TextStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                   color: isDark
                     ? Colors.white.withOpacity(0.6)
                     : Colors.black.withOpacity(0.5),
@@ -442,7 +442,7 @@ class OverviewContent extends ConsumerWidget {
   double _calculateFontSize(String text, double maxWidth, {
     double minFontSize = 11.0,
     double maxFontSize = 15.0,
-    FontWeight fontWeight = FontWeight.w800,
+    FontWeight fontWeight = FontWeight.w700,
   }) {
     for (double fontSize = maxFontSize; fontSize >= minFontSize; fontSize -= 0.5) {
       final textPainter = TextPainter(
@@ -488,7 +488,7 @@ class OverviewContent extends ConsumerWidget {
           maxWidth,
           maxFontSize: 12.0,
           minFontSize: 10.0,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
         );
 
         final isSmallScreen = constraints.maxWidth < 160;

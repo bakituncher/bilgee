@@ -214,7 +214,7 @@ class AiInsightCard extends StatelessWidget {
                               color: Theme.of(context).colorScheme.onSurface,
                               height: 1.6,
                               fontSize: 13.5,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),

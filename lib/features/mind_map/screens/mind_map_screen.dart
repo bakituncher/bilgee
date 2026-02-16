@@ -1699,7 +1699,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> with TickerProvid
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                           letterSpacing: 1.2,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),

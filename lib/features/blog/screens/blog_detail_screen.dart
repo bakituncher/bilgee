@@ -336,7 +336,7 @@ class BlogDetailScreen extends ConsumerWidget {
                       h2: const TextStyle(
                         fontFamily: 'Montserrat',
                         fontSize: 24,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         height: 1.25,
                         letterSpacing: -0.3,
                       ),

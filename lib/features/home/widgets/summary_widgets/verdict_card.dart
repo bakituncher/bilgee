@@ -79,7 +79,7 @@ class VerdictCard extends StatelessWidget {
                     Text(
                       wisdomScore.toStringAsFixed(0),
                       style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         color: scoreColor,
                         fontSize: 17,
                       ),

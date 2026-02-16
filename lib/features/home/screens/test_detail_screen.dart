@@ -44,7 +44,7 @@ class TestDetailScreen extends StatelessWidget {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         leading: const CustomBackButton(),
-        title: Text("Detaylı Analiz", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, fontSize: 17, letterSpacing: 0.5)),
+        title: Text("Detaylı Analiz", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, fontSize: 17, letterSpacing: 0.5)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -175,7 +175,7 @@ class _StatItem extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(value, style: TextStyle(fontSize: isHighlighted ? 22 : 20, fontWeight: FontWeight.w800, color: color)),
+        Text(value, style: TextStyle(fontSize: isHighlighted ? 22 : 20, fontWeight: FontWeight.w700, color: color)),
         const SizedBox(height: 4),
         Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: isDark ? Colors.white54 : Colors.black54)),
       ],
@@ -349,7 +349,7 @@ class _SubjectDetailsList extends StatelessWidget {
                       width: 50,
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                       decoration: BoxDecoration(color: isDark ? const Color(0xFF2E3192).withOpacity(0.2) : const Color(0xFF2E3192).withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
-                      child: Text(net.toStringAsFixed(1), textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: isDark ? const Color(0xFF8B8FFF) : const Color(0xFF2E3192))),
+                      child: Text(net.toStringAsFixed(1), textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: isDark ? const Color(0xFF8B8FFF) : const Color(0xFF2E3192))),
                     ),
                   ],
                 ),

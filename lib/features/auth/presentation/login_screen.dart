@@ -198,7 +198,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       children: [
                         Image.asset('assets/images/splash.png', height: 100),
                         const SizedBox(height: 12),
-                        Text('Hoş Geldin!', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+                        Text('Hoş Geldin!', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
                         const SizedBox(height: 6),
                         Text('Hesabına giriş yap ve kaldığın yerden devam et.', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyMedium),
                       ],
@@ -301,7 +301,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     'Şifremi Unuttum',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      fontWeight: FontWeight.w500,
+                                      fontWeight: FontWeight.w600,
                                       color: Theme.of(context).colorScheme.primary,
                                     ),
                                   ),

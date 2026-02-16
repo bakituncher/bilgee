@@ -244,7 +244,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             hintText: confirmationText,
                             hintStyle: TextStyle(
                               color: theme.colorScheme.onSurface.withValues(alpha: 0.25),
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                               letterSpacing: 1.1,
                             ),
                             errorMaxLines: 2,

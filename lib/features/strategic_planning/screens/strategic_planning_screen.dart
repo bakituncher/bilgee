@@ -225,7 +225,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                       "Plan Oluşturuluyor",
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         letterSpacing: -0.5,
                       ),
                     ),
@@ -245,7 +245,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         height: 1.5,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -405,7 +405,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                                 isExpired ? "Plan Yenileme Zamanı!" : "Haftalık Plan Aktif",
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w700,
                                   letterSpacing: -0.5,
                                   color: isExpired
                                       ? (isDark ? Colors.amber : Colors.orange.shade800)
@@ -440,7 +440,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                                           "Yeni bir haftalık plan oluşturarak güncel hedeflerinle devam edin",
                                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                             color: isDark ? Colors.orange.shade200 : Colors.orange.shade900,
-                                            fontWeight: FontWeight.w500,
+                                            fontWeight: FontWeight.w600,
                                             height: 1.4,
                                           ),
                                         ),
@@ -472,7 +472,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                                       "Oluşturulma: ${DateFormat.yMMMMd('tr').format(weeklyPlan.creationDate)}",
                                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                         color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                        fontWeight: FontWeight.w500,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ],
@@ -847,7 +847,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                       maxLines: 1,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
                     ),
@@ -947,7 +947,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                   Text(
                     "Haftalık Tempo Seçin",
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: -0.5,
                     ),
                     textAlign: TextAlign.center,
@@ -957,7 +957,7 @@ class StrategicPlanningScreen extends ConsumerWidget {
                     "Planınız seçtiğiniz tempoya göre optimize edilecek",
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                     textAlign: TextAlign.center,
                   ),

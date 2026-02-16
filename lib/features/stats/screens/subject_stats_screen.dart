@@ -157,7 +157,7 @@ class SubjectStatsScreen extends StatelessWidget {
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontSize: testCount > 50 ? 10 : 11,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w600,
                           ),
                           maxLines: 1,
                         ),

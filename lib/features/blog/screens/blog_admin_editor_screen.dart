@@ -74,7 +74,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Theme.of(c).colorScheme.surfaceContainerHighest.withOpacity(0.6), borderRadius: BorderRadius.circular(2)))),
-                Text('İçe Aktar', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                Text('İçe Aktar', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
                 option(
                   icon: Icons.upload_file_rounded,
@@ -546,7 +546,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Theme.of(c).colorScheme.surfaceContainerHighest.withOpacity(0.6), borderRadius: BorderRadius.circular(2)))),
-                    Text('Hangi gruba göndermek istersiniz?', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                    Text('Hangi gruba göndermek istersiniz?', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                     const SizedBox(height: 8),
                     Text('Seçiminize göre yazı ilgili öğrencilerin akışına düşer.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(c).colorScheme.onSurfaceVariant)),
                     const SizedBox(height: 12),
@@ -643,7 +643,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                   ),
                 ),
               const SizedBox(height: 12),
-              Text(title.isEmpty ? 'Başlık (önizleme)' : title, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+              Text(title.isEmpty ? 'Başlık (önizleme)' : title, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
               const SizedBox(height: 6),
               Row(children: [
                 Icon(Icons.person_outline_rounded, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -677,13 +677,13 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                 h1: const TextStyle(
                     fontFamily: 'Montserrat',
                     fontSize: 26,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     height: 1.25
                 ),
                 h2: const TextStyle(
                     fontFamily: 'Montserrat',
                     fontSize: 22,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     height: 1.3
                 ),
                 h3: const TextStyle(
@@ -819,7 +819,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Başlık ve Kapak', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+                      Text('Başlık ve Kapak', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _titleCtrl,
@@ -876,7 +876,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                           ),
                         ),
                       const SizedBox(height: 16),
-                      Text('Etiketler ve Dil', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+                      Text('Etiketler ve Dil', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _tagsCtrl,
@@ -899,7 +899,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                         decoration: const InputDecoration(labelText: 'Dil'),
                       ),
                       const SizedBox(height: 16),
-                      Text('Yayın Süresi', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+                      Text('Yayın Süresi', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
                         initialValue: _expiryType,
@@ -931,7 +931,7 @@ class _BlogAdminEditorScreenState extends ConsumerState<BlogAdminEditorScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      Text('İçerik', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+                      Text('İçerik', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
                       _buildFormatToolbar(),
                       const SizedBox(height: 6),

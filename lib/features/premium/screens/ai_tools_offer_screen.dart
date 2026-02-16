@@ -196,7 +196,7 @@ class _AIToolsOfferScreenState extends ConsumerState<AIToolsOfferScreen> with Ti
           "Kişisel asistanın Taktik Tavşan'la hedeflerine ulaş",
           style: theme.textTheme.bodyMedium?.copyWith(
             color: colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             fontSize: 13,
           ),
           textAlign: TextAlign.center,
@@ -404,7 +404,7 @@ class _CompactFeaturesList extends StatelessWidget {
                 child: Text(
                   'Premium Özellikler',
                   style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: -0.3,
                   ),
                 ),

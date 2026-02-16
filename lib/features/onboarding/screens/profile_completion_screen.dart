@@ -204,7 +204,7 @@ class _ProfileCompletionScreenState extends ConsumerState<ProfileCompletionScree
                     Text(
                       'Son Bir Adım!',
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 6),
                     Text(

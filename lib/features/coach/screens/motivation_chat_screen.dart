@@ -611,7 +611,7 @@ class _SmartBriefingView extends ConsumerWidget {
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                             height: 1.5,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w600,
                           ),
                           textAlign: TextAlign.center,
                         ).animate().fadeIn(delay: 300.ms),
@@ -1440,7 +1440,7 @@ class _SuggestionChip extends StatelessWidget {
                 child: Text(
                   text,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     height: 1.4,
                   ),
                 ),

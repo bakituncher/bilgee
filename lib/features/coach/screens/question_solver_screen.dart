@@ -1163,7 +1163,7 @@ class _QuestionSolverScreenState extends ConsumerState<QuestionSolverScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 19,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: theme.colorScheme.onSurface,
                     letterSpacing: -0.3,
                     height: 1.15,

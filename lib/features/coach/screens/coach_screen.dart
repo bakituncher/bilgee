@@ -704,7 +704,7 @@ class _CompactStat extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 12,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
             height: 1.1,
           ),
@@ -789,7 +789,7 @@ class _StatChip extends StatelessWidget {
                 value,
                 style: TextStyle(
                   fontSize: valueFontSize,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   color: primaryColor,
                   letterSpacing: -0.5,
                   height: 1,
@@ -1012,7 +1012,7 @@ class _SearchBar extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Konu ara...',

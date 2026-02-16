@@ -88,7 +88,7 @@ class _CompactStat extends StatelessWidget {
           value,
           style: TextStyle(
             fontSize: 20,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             color: color,
           ),
         ),

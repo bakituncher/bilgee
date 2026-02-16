@@ -202,7 +202,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> with SingleTickerPr
                     color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 16,
                     height: 1.6,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
