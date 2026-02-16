@@ -42,12 +42,12 @@ class _FAQScreenState extends State<FAQScreen> {
       FAQItem(
         question: "Bir özel ders yerine Taktik'i neden tercih etmeliyim?",
         answer:
-        "Taktik, özel dersin yerini almaktan ziyade, onu tamamlayan çok daha ekonomik ve ulaşılabilir bir 'Dijital Koç'tur. Bir saatlik özel ders ücretine, Taktik ile tüm ay boyunca 7/24 soru çözümü, konu analizi ve rehberlik alabilirsiniz. Taktik, hocanızın yanınızda olmadığı her an size destek olmak için oradadır.",
+        "Taktik, özel dersin yerini almaktan ziyade, onu tamamlayan çok daha ekonomik ve ulaşılabilir bir 'Dijital Koç'tur. Bir saatlik özel ders ücretine, bir yıl boyunca PRO özelliklere sınırsız erişim sağlarsınız. Taktik, hocanızın yanınızda olmadığı her an size destek olmak için oradadır.",
       ),
       FAQItem(
-        question: "Ücretsiz deneme süresi var mı?",
+        question: "PRO'yu ücretsiz deneyebilir miyim?",
         answer:
-        "Evet. Taktik'e ilk kaydolduğunuzda PRO özelliklerin tümünü ücretsiz deneyebilirsiniz. Bu sürede yapay zeka koçluğunun, sınırsız soru çözümünün ve detaylı analizlerin çalışma veriminizi nasıl artırdığını bizzat test edebilirsiniz.",
+        "Evet! PRO özelliklerin tümünü 1 hafta ücretsiz deneyebilirsiniz. Bu sürede Taktik PRO araçlarının çalışma veriminizi nasıl artırdığını bizzat test edebilirsiniz.",
       ),
       FAQItem(
         question: "PRO iptali sonrası ne olur?",
