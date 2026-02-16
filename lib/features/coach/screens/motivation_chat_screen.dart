@@ -732,20 +732,21 @@ class _SmartBriefingView extends ConsumerWidget {
                             children: [
                               Icon(
                                 Icons.info_outline_rounded,
-                                size: 14,
-                                color: colorScheme.primary,
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  'Tıbbi tedavi yerine geçmez.',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    fontSize: 11,
-                                    color: colorScheme.onSurfaceVariant,
-                                    height: 1.3,
-                                  ),
+                              size: 14,
+                              color: colorScheme.primary,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'Tıbbi tedavi yerine geçmez',
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontSize: 11,
+                                  color: colorScheme.onSurfaceVariant,
+                                  height: 1.3,
                                 ),
                               ),
+                            ),
                             ],
                           ),
                         ).animate().fadeIn(delay: 650.ms),

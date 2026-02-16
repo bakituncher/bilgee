@@ -879,6 +879,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsCard(
             children: [
               SettingsTile(
+                icon: Icons.question_answer_rounded,
+                title: "Sıkça Sorulan Sorular",
+                subtitle: "En çok merak edilenleri burada bulabilirsiniz",
+                onTap: () => context.push(AppRoutes.faq),
+              ),
+              const Divider(height: 1, indent: 56),
+              SettingsTile(
                 icon: Icons.help_outline_rounded,
                 title: "Taktik Rehberi",
                 subtitle: "Uygulama kullanım kılavuzu",

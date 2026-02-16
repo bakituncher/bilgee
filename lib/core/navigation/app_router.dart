@@ -35,6 +35,7 @@ import 'package:taktik/shared/widgets/splash_screen.dart';
 import 'package:taktik/data/providers/admin_providers.dart';
 import 'transition_utils.dart';
 import 'package:taktik/features/home/screens/user_guide_screen.dart';
+import 'package:taktik/features/settings/screens/faq_screen.dart';
 import 'package:taktik/features/coach/screens/question_solver_screen.dart';
 import 'package:taktik/features/coach/screens/saved_solutions_screen.dart'; // YENİ EKLENEN IMPORT
 import 'package:taktik/features/coach/screens/saved_contents_screen.dart'; // Kaydedilen İçerikler
@@ -211,6 +212,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           context: context,
           state: state,
           child: const UserGuideScreen(),
+        ),
+      ),
+      // Sıkça Sorulan Sorular
+      GoRoute(
+        path: AppRoutes.faq,
+        name: 'FAQ',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) => buildPageWithFadeTransition(
+          context: context,
+          state: state,
+          child: const FAQScreen(),
         ),
       ),
       // Blog ve Premium (üst seviye sayfalar)

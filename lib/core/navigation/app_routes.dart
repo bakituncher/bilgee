@@ -42,4 +42,5 @@ class AppRoutes {
   static const String aiToolsOffer = '/ai-tools-offer'; // AI araçları tanıtım ekranı
   static const String selectSubject = 'select-subject';
   static const String userGuide = '/user-guide'; // Kullanım kılavuzu
+  static const String faq = '/faq'; // Sıkça Sorulan Sorular
 }
