@@ -107,7 +107,7 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
       'Mükemmeliyetçilik beni engelliyor',
       'Her şeyi erteliyorum, başlayamıyorum',
       'Yalnız hissediyorum, ne yapabilirim?'
-      'Kimseyle konuşasım gelmiyor',
+          'Kimseyle konuşasım gelmiyor',
     ],
     'motivation_corner': [
       'Bugün hiç çalışmak istemiyorum',
@@ -377,32 +377,32 @@ class _MotivationChatScreenState extends ConsumerState<MotivationChatScreen> wit
                         : RepaintBoundary(
                       child: history.isEmpty && _showSuggestions
                           ? _SuggestionView(
-                              promptType: _currentPromptType,
-                              suggestions: _currentSuggestions,
-                              onSuggestionTap: (text) => _sendMessage(quickReply: text),
-                            )
+                        promptType: _currentPromptType,
+                        suggestions: _currentSuggestions,
+                        onSuggestionTap: (text) => _sendMessage(quickReply: text),
+                      )
                           : ListView.builder(
-                              controller: _scrollController,
-                              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                              cacheExtent: 300,
-                              addAutomaticKeepAlives: false,
-                              addRepaintBoundaries: true,
-                              addSemanticIndexes: false,
-                              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                              itemCount: history.length + (_isTyping ? 1 : 0),
-                              itemBuilder: (context, index) {
-                                if (_isTyping && index == history.length) {
-                                  return const _TypingBubble();
-                                }
-                                final message = history[index];
-                                final bool isLastRealMessage = index == history.length - 1;
-                                return _MessageBubble(
-                                  message: message,
-                                  animate: isLastRealMessage,
-                                  scrollController: isLastRealMessage && !message.isUser ? _scrollController : null,
-                                );
-                              },
-                            ),
+                        controller: _scrollController,
+                        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                        cacheExtent: 300,
+                        addAutomaticKeepAlives: false,
+                        addRepaintBoundaries: true,
+                        addSemanticIndexes: false,
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                        itemCount: history.length + (_isTyping ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (_isTyping && index == history.length) {
+                            return const _TypingBubble();
+                          }
+                          final message = history[index];
+                          final bool isLastRealMessage = index == history.length - 1;
+                          return _MessageBubble(
+                            message: message,
+                            animate: isLastRealMessage,
+                            scrollController: isLastRealMessage && !message.isUser ? _scrollController : null,
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -541,187 +541,223 @@ class _SmartBriefingView extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return SafeArea(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 36, 20, 36),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight - 72),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Premium Hero Section
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: isDark
-                            ? [
-                          colorScheme.primaryContainer.withOpacity(0.25),
-                          colorScheme.tertiaryContainer.withOpacity(0.15),
-                        ]
-                            : [
-                          colorScheme.primaryContainer.withOpacity(0.5),
-                          colorScheme.tertiaryContainer.withOpacity(0.3),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.primary.withOpacity(0.1),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
-                        ),
+      child: Stack(
+        children: [
+          // Hero Section (Scrollable)
+          SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 450),
+            child: Column(
+              children: [
+                // Premium Hero Section
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: isDark
+                          ? [
+                        colorScheme.primaryContainer.withOpacity(0.25),
+                        colorScheme.tertiaryContainer.withOpacity(0.15),
+                      ]
+                          : [
+                        colorScheme.primaryContainer.withOpacity(0.5),
+                        colorScheme.tertiaryContainer.withOpacity(0.3),
                       ],
                     ),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: colorScheme.surface,
-                            boxShadow: [
-                              BoxShadow(
-                                color: colorScheme.secondary.withOpacity(0.2),
-                                blurRadius: 12,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                          child: const CircleAvatar(
-                            backgroundColor: Colors.transparent,
-                            radius: 32,
-                            backgroundImage: AssetImage('assets/images/bunnyy.webp'),
-                          ),
-                        ).animate().fadeIn(delay: 100.ms).scale(curve: Curves.elasticOut),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Mentörun Taktik Tavşan',
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.primary.withOpacity(0.1),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: colorScheme.surface,
+                          boxShadow: [
+                            BoxShadow(
+                              color: colorScheme.secondary.withOpacity(0.2),
+                              blurRadius: 8,
+                              spreadRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: const CircleAvatar(
+                          backgroundColor: Colors.transparent,
+                          radius: 26,
+                          backgroundImage: AssetImage('assets/images/bunnyy.webp'),
+                        ),
+                      ).animate().fadeIn(delay: 100.ms).scale(curve: Curves.elasticOut),
+                      const SizedBox(height: 10),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Mentörün Taktik Tavşan',
                           style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w700,
                             letterSpacing: -0.3,
                           ),
-                        ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Motivasyon, strateji, analiz ve destek... Taktik Tavşan sınav yolculuğunda her alanda yanında! 🚀',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            height: 1.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          textAlign: TextAlign.center,
-                        ).animate().fadeIn(delay: 300.ms),
-                      ],
-                    ),
-                  ).animate().fadeIn(delay: 50.ms).scale(),
-
-                  const SizedBox(height: 24),
-
-                  // Feature Cards
-                  _BriefingButton(
-                    icon: Icons.favorite_rounded,
-                    title: 'Dostça Destek',
-                    subtitle: 'Sınav kaygısı veya yorgunluk... Yargılamak yok, çözüm var. Anlat, rahatla ve odaklan.',
-                    onTap: () => onPromptSelected('psych_support'),
-                    delay: 400.ms,
-                    gradient: LinearGradient(
-                      colors: isDark
-                          ? [const Color(0xFF7B1FA2), const Color(0xFF9C27B0)]
-                          : [const Color(0xFFE91E63), const Color(0xFFF06292)],
-                    ),
-                    accentColor: isDark ? const Color(0xFFBA68C8) : const Color(0xFFC2185B),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  _BriefingButton(
-                    icon: Icons.bolt_rounded,
-                    title: 'Motivasyon Köşesi',
-                    subtitle: 'Düşük pille çalışma! Seni anında masaya kilitleyecek güç konuşması için tıkla. ⚡',
-                    onTap: () => onPromptSelected('motivation_corner'),
-                    delay: 500.ms,
-                    gradient: LinearGradient(
-                      colors: isDark
-                          ? [const Color(0xFFE65100), const Color(0xFFF57C00)]
-                          : [const Color(0xFFFF9800), const Color(0xFFFFB74D)],
-                    ),
-                    accentColor: isDark ? const Color(0xFFFFAB40) : const Color(0xFFF57C00),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  _BriefingButton(
-                    icon: Icons.analytics_rounded,
-                    title: 'Deneme Analizi',
-                    subtitle: 'Hatalarını keşfet. Eksiklerini MR gibi tarayalım, netlerini artıralım. 💡',
-                    onTap: () => onPromptSelected('trial_review'),
-                    delay: 550.ms,
-                    gradient: LinearGradient(
-                      colors: isDark
-                          ? [const Color(0xFF6B4226), const Color(0xFF8B5A2B)]
-                          : [const Color(0xFFFFD54F), const Color(0xFFFFB300)],
-                    ),
-                    accentColor: isDark ? const Color(0xFFFFD54F) : const Color(0xFFFF8F00),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  _BriefingButton(
-                    icon: Icons.rocket_launch_rounded,
-                    title: 'Strateji Danışma',
-                    subtitle: 'Stratejik program ve kişiye özel yol haritası. Planla ve kazan! 🔥',
-                    onTap: () => onPromptSelected('strategy_consult'),
-                    delay: 600.ms,
-                    gradient: LinearGradient(
-                      colors: isDark
-                          ? [const Color(0xFF1A4D6D), const Color(0xFF2563A8)]
-                          : [const Color(0xFF42A5F5), const Color(0xFF1E88E5)],
-                    ),
-                    accentColor: isDark ? const Color(0xFF64B5F6) : const Color(0xFF0D47A1),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Disclaimer
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: colorScheme.outline.withOpacity(0.2),
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.info_outline_rounded,
-                          size: 18,
-                          color: colorScheme.primary,
+                          maxLines: 1,
+                          overflow: TextOverflow.visible,
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Taktik Tavşan senin dijital akademik koçundur. Burada sunulanlar rehberlik amaçlıdır, tıbbi tedavi yerine geçmez. Ciddi sağlık durumlarında lütfen uzmana danış.',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                              height: 1.4,
+                      ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Motivasyon, strateji, analiz ve destek... Taktik Tavşan sınav yolculuğunda her alanda yanında! 🚀',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          height: 1.3,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ).animate().fadeIn(delay: 300.ms),
+                    ],
+                  ),
+                ).animate().fadeIn(delay: 50.ms).scale(),
+              ],
+            ),
+          ),
+
+          // Fixed Bottom Panel with Feature Cards
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    colorScheme.surface.withOpacity(0.0),
+                    colorScheme.surface.withOpacity(0.8),
+                    colorScheme.surface,
+                    colorScheme.surface,
+                  ],
+                  stops: const [0.0, 0.1, 0.3, 1.0],
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: [
+                        // Feature Cards
+                        _BriefingButton(
+                          icon: Icons.favorite_rounded,
+                          title: 'Dostça Destek',
+                          subtitle: 'Sınav kaygısı veya yorgunluk... Yargılamak yok, çözüm var. Anlat, rahatla ve odaklan.',
+                          onTap: () => onPromptSelected('psych_support'),
+                          delay: 400.ms,
+                          gradient: LinearGradient(
+                            colors: isDark
+                                ? [const Color(0xFF7B1FA2), const Color(0xFF9C27B0)]
+                                : [const Color(0xFFE91E63), const Color(0xFFF06292)],
+                          ),
+                          accentColor: isDark ? const Color(0xFFBA68C8) : const Color(0xFFC2185B),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        _BriefingButton(
+                          icon: Icons.bolt_rounded,
+                          title: 'Motivasyon Köşesi',
+                          subtitle: 'Düşük pille çalışma! Seni anında masaya kilitleyecek güç konuşması için tıkla. ⚡',
+                          onTap: () => onPromptSelected('motivation_corner'),
+                          delay: 500.ms,
+                          gradient: LinearGradient(
+                            colors: isDark
+                                ? [const Color(0xFFE65100), const Color(0xFFF57C00)]
+                                : [const Color(0xFFFF9800), const Color(0xFFFFB74D)],
+                          ),
+                          accentColor: isDark ? const Color(0xFFFFAB40) : const Color(0xFFF57C00),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        _BriefingButton(
+                          icon: Icons.analytics_rounded,
+                          title: 'Deneme Analizi',
+                          subtitle: 'Hatalarını keşfet. Eksiklerini MR gibi tarayalım, netlerini artıralım. 💡',
+                          onTap: () => onPromptSelected('trial_review'),
+                          delay: 550.ms,
+                          gradient: LinearGradient(
+                            colors: isDark
+                                ? [const Color(0xFF6B4226), const Color(0xFF8B5A2B)]
+                                : [const Color(0xFFFFD54F), const Color(0xFFFFB300)],
+                          ),
+                          accentColor: isDark ? const Color(0xFFFFD54F) : const Color(0xFFFF8F00),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        _BriefingButton(
+                          icon: Icons.rocket_launch_rounded,
+                          title: 'Strateji Danışma',
+                          subtitle: 'Stratejik program ve kişiye özel yol haritası. Planla ve kazan! 🔥',
+                          onTap: () => onPromptSelected('strategy_consult'),
+                          delay: 600.ms,
+                          gradient: LinearGradient(
+                            colors: isDark
+                                ? [const Color(0xFF1A4D6D), const Color(0xFF2563A8)]
+                                : [const Color(0xFF42A5F5), const Color(0xFF1E88E5)],
+                          ),
+                          accentColor: isDark ? const Color(0xFF64B5F6) : const Color(0xFF0D47A1),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Disclaimer
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: colorScheme.outline.withOpacity(0.2),
                             ),
                           ),
-                        ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded,
+                                size: 14,
+                                color: colorScheme.primary,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  'Rehberlik amaçlıdır, tıbbi tedavi yerine geçmez.',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontSize: 11,
+                                    color: colorScheme.onSurfaceVariant,
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ).animate().fadeIn(delay: 650.ms),
                       ],
                     ),
-                  ).animate().fadeIn(delay: 650.ms),
+                  ),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
@@ -755,22 +791,22 @@ class _BriefingButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             gradient: gradient,
             boxShadow: [
               BoxShadow(
                 color: accentColor.withOpacity(0.2),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
                 spreadRadius: 0,
               ),
               BoxShadow(
                 color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
-                blurRadius: 8,
+                blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
             ],
@@ -779,23 +815,23 @@ class _BriefingButton extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white.withOpacity(isDark ? 0.15 : 0.25),
                   border: Border.all(
                     color: Colors.white.withOpacity(0.3),
-                    width: 1.5,
+                    width: 1.2,
                   ),
                 ),
                 child: Icon(
                   icon,
-                  size: 24,
+                  size: 22,
                   color: isDark ? Colors.white : Colors.white.withOpacity(0.95),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -810,14 +846,14 @@ class _BriefingButton extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       subtitle,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: isDark
                             ? Colors.white.withOpacity(0.85)
                             : Colors.white.withOpacity(0.9),
-                        height: 1.3,
+                        height: 1.25,
                         fontWeight: FontWeight.w400,
                       ),
                       maxLines: 2,
@@ -826,7 +862,7 @@ class _BriefingButton extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 16,
