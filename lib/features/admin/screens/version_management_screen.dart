@@ -88,6 +88,14 @@ class _VersionManagementScreenState extends ConsumerState<VersionManagementScree
   Future<void> _saveAndroidConfig() async {
     if (!_androidFormKey.currentState!.validate()) return;
 
+    // Onay diyalogu göster
+    final confirmed = await _showConfirmationDialog(
+      platform: 'Android',
+      forceUpdate: _androidForceUpdate,
+    );
+
+    if (confirmed != true) return;
+
     setState(() => _loading = true);
     try {
       await VersionCheckService.updateVersionConfig(
@@ -119,6 +127,14 @@ class _VersionManagementScreenState extends ConsumerState<VersionManagementScree
   Future<void> _saveIosConfig() async {
     if (!_iosFormKey.currentState!.validate()) return;
 
+    // Onay diyalogu göster
+    final confirmed = await _showConfirmationDialog(
+      platform: 'iOS',
+      forceUpdate: _iosForceUpdate,
+    );
+
+    if (confirmed != true) return;
+
     setState(() => _loading = true);
     try {
       await VersionCheckService.updateVersionConfig(
@@ -145,6 +161,127 @@ class _VersionManagementScreenState extends ConsumerState<VersionManagementScree
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<bool?> _showConfirmationDialog({
+    required String platform,
+    required bool forceUpdate,
+  }) async {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: forceUpdate ? theme.colorScheme.error : theme.colorScheme.primary,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Onayla',
+                  style: TextStyle(fontSize: 18),
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$platform konfigürasyonu kaydedilecek.',
+                  style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 12),
+                if (forceUpdate) ...[
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: theme.colorScheme.error.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.block,
+                          color: theme.colorScheme.error,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Zorunlu güncelleme AÇIK!\nEski kullanıcılar uygulamaya giremeyecek.',
+                            style: TextStyle(
+                              color: theme.colorScheme.error,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ] else ...[
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline,
+                          color: theme.colorScheme.primary,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Zorunlu güncelleme kapalı.\nTüm kullanıcılar normal giriş yapabilir.',
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('İptal'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: forceUpdate ? theme.colorScheme.error : theme.colorScheme.primary,
+                foregroundColor: forceUpdate ? theme.colorScheme.onError : theme.colorScheme.onPrimary,
+              ),
+              child: const Text('ONAYLA'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
