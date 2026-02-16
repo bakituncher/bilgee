@@ -221,6 +221,25 @@ class BilgeAiApp extends ConsumerStatefulWidget {
 class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObserver {
   VoidCallback? _routerListener;
 
+  // --------------------------------------------------------------------------
+  // GÖRSEL PRE-CACHE (ÖN YÜKLEME) İŞLEMİ
+  // Uygulama ağacına bağımlılıklar oturduğunda (context hazır olduğunda) çalışır.
+  // Büyük arka plan görsellerini burada hafızaya alıyoruz.
+  // --------------------------------------------------------------------------
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Açılışta gecikmeyi önlemek için büyük görselleri önbelleğe al
+    try {
+      precacheImage(const AssetImage('assets/images/giris.png'), context);
+      precacheImage(const AssetImage('assets/images/splash.png'), context);
+    } catch (e) {
+      // Görsel yüklenemezse akışı bozma
+      if (kDebugMode) debugPrint('[Precache] Görsel ön yükleme hatası: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
