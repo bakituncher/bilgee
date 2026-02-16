@@ -568,7 +568,7 @@ class _DailyLimitDialogState extends State<DailyLimitDialog> with SingleTickerPr
       } else {
         // X for false
         return Icon(
-          Icons.cancel_rounded,
+          Icons.remove_circle_outline_rounded,
           color: Colors.grey.withValues(alpha: 0.4),
           size: 16,
         );

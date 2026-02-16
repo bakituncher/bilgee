@@ -1408,7 +1408,7 @@ class _ComparisonBottomSheet extends StatelessWidget {
     if (value is bool) {
       return Center(
         child: Icon(
-          value ? Icons.check_circle_rounded : Icons.cancel_rounded,
+          value ? Icons.check_circle_rounded : Icons.remove_circle_outline_rounded,
           size: 18,
           color: value
             ? (isPro ? successColor : textSecondary)
