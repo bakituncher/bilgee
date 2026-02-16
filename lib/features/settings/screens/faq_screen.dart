@@ -57,7 +57,7 @@ class _FAQScreenState extends State<FAQScreen> {
       FAQItem(
         question: "Öğrenci indirimi var mı?",
         answer:
-        "Taktik zaten öğrenciler için geliştirildiğinden, fiyatlandırmamız piyasa koşullarının çok altında, bir öğrencinin harçlığıyla karşılayabileceği en ekonomik seviyede tutulmuştur.",
+        "Taktik zaten öğrenciler ve mesleğe yeni adım atacak kullanıcılarımız için geliştirildiğinden, fiyatlandırmamız piyasa koşullarının çok altında, harçlıkla karşılanabilecek en ekonomik seviyede tutulmuştur.",
       ),
       FAQItem(
         question: "\"Sınırsız\" gerçekten sınırsız mı?",
