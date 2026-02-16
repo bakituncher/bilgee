@@ -25,12 +25,12 @@ class _FAQScreenState extends State<FAQScreen> {
     FAQItem(
       question: "Ücretsiz deneme süresi var mı?",
       answer:
-          "Evet! Taktik'e kaydolduğunuzda premium özelliklerimizi ücretsiz deneyebilirsiniz. Bu süre zarfında tüm yapay zeka araçlarına, kişisel koçluk özelliklerine ve içerik üretimine tam erişim sağlayabilirsiniz. Böylece Taktik'in size ne kadar değer katacağını kendiniz deneyimleyebilirsiniz.",
+          "Evet! Taktik'e kaydolduğunuzda PRO özelliklerimizi ücretsiz deneyebilirsiniz. Bu süre zarfında tüm yapay zeka araçlarına, kişisel koçluk özelliklerine ve içerik üretimine tam erişim sağlayabilirsiniz. Böylece Taktik'in size ne kadar değer katacağını kendiniz deneyimleyebilirsiniz.",
     ),
     FAQItem(
-      question: "Premium iptali sonrası ne olur?",
+      question: "PRO iptali sonrası ne olur?",
       answer:
-          "Aboneliğinizi iptal ettiğinizde, mevcut abonelik döneminizin sonuna kadar tüm premium özellikleri kullanmaya devam edebilirsiniz. Abonelik döneminiz sona erdiğinde premium özelliklere erişiminiz kısıtlanır. Test geçmişiniz ve performans verileriniz korunur. İstediğiniz zaman tekrar premium'a geçerek tüm özelliklere erişebilirsiniz.",
+          "Aboneliğinizi iptal ettiğinizde, mevcut abonelik döneminizin sonuna kadar tüm PRO özellikleri kullanmaya devam edebilirsiniz. Abonelik döneminiz sona erdiğinde PRO özelliklere erişiminiz kısıtlanır. Test geçmişiniz ve performans verileriniz korunur. İstediğiniz zaman tekrar PRO'ya geçerek tüm özelliklere erişebilirsiniz.",
     ),
     FAQItem(
       question: "Öğrenci indirimi var mı?",
