@@ -18,43 +18,57 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
   int _currentPage = 0;
   bool _isLoading = false;
 
+  // İçerik listesi, AiHub ve özellik ekranlarındaki işlevlere göre güncellendi.
   final List<_IntroContent> _contents = [
+    // 1. Karşılama ve Mentör (Taktik Tavşan)
     _IntroContent(
       title: "Selam! Ben Taktik Tavşan",
-      description: "Sınav maratonunda senin en büyük destekçin, seni zirveye taşıyacak dijital koçunum. Hazır mısın?",
+      description: "Sınav maratonunda sadece bir uygulama değil, seni başarıya taşıyacak yol arkadaşınım. Zirveye giden yolda motivasyonun ve stratejin benden sorulur!",
       imagePath: 'assets/images/bunnyy.webp',
       isAssetImage: true,
-      color: const Color(0xFF6366F1),
+      color: const Color(0xFF6366F1), // Indigo - Marka rengi
     ),
+    // 2. Haftalık Plan (WeeklyPlanScreen referanslı)
     _IntroContent(
-      title: "Akıllı Analiz Sistemi",
-      description: "Sen deneme ve test verilerini ekledikçe zayıf noktalarını tespit ederim. Kritik konuları belirler, eksiklerini kapatman için sana özel stratejiler üretirim.",
-      iconData: Icons.insights_rounded,
-      color: const Color(0xFF0EA5E9),
+      title: "Haftalık Plan",
+      description: "Senin hızına, eksiklerine ve boş günlerine göre hazırlanan nokta atışı ders programı. Neyi ne zaman çalışacağını dert etme, rotanı ben çizerim.",
+      iconData: Icons.calendar_month_rounded,
+      color: const Color(0xFF10B981), // Emerald - Plan rengi
     ),
+    // 3. Soru Çözücü (QuestionSolverScreen referanslı)
     _IntroContent(
       title: "Soru Çözücü",
-      description: "Takıldığın sorunun fotoğrafını çek, saniyeler içinde adım adım çözümünü ve mantığını anlatayım. Özel ders artık cebinde!",
+      description: "Takıldığın sorunun fotoğrafını çek, saniyeler içinde çözümünü ve mantığını anlatayım. Sadece cevabı değil, işin sırrını öğren. Özel ders artık cebinde!",
       iconData: Icons.camera_enhance_rounded,
-      color: const Color(0xFFF59E0B),
+      color: const Color(0xFFF59E0B), // Amber - Çözüm rengi
     ),
+    // 4. Etüt Odası (AiHubScreen referanslı)
     _IntroContent(
-      title: "Akıllı Not Defteri",
-      description: "PDF veya görsel yükle, saniyeler içinde sana bilgi kartları, özetler veya test hazırlayayım. Çalışmanı verimli hale getireceğim!",
-      iconData: Icons.bolt,
-      color: const Color(0xFF0EA5E9),
+      title: "Etüt Odası",
+      description: "Tamamen senin eksiklerine odaklanan kişisel çalışma alanın. Zayıf olduğun konulara özel özetler ve testlerle eksiklerini en güçlü silahına dönüştür.",
+      iconData: Icons.menu_book_rounded,
+      color: const Color(0xFF8B5CF6), // Violet - Etüt rengi
     ),
+    // 5. Not Defteri (AiHubScreen referanslı)
+    _IntroContent(
+      title: "Not Defteri",
+      description: "Ders notlarını veya kitap sayfalarını yükle; senin için anında özetler, bilgi kartları ve testler hazırlayayım. Verimli çalışmanın en teknolojik hali.",
+      iconData: Icons.bolt,
+      color: const Color(0xFF0EA5E9), // Sky - Teknoloji/Hız rengi
+    ),
+    // 6. Zihin Haritası (MindMapScreen referanslı)
     _IntroContent(
       title: "Zihin Haritası",
-      description: "Karmaşık konuları görsel zihin haritalarına dönüştüreyim. Daha iyi anla, daha kolay hatırla!",
+      description: "Karmaşık konuları görselleştirerek hafızana kazı. Bilgiyi organize et, büyük resmi gör ve öğrenmeyi kalıcı hale getir.",
       iconData: Icons.account_tree_rounded,
-      color: const Color(0xFF6366F1),
+      color: const Color(0xFF6366F1), // Indigo - Zihin yapısı
     ),
+    // 7. Akıllı Analiz Sistemi (GeneralOverviewScreen referanslı)
     _IntroContent(
-      title: "Rekabet ve Zafer",
-      description: "Diğer adaylarla arenada yarış, liglerde yüksel ve başarılarını madalyalarla taçlandır. Seni hep motive tutacağım!",
-      iconData: Icons.emoji_events_rounded,
-      color: const Color(0xFFEC4899),
+      title: "Akıllı Analiz Sistemi",
+      description: "Gelişimini adım adım takip ederim. Deneme sonuçlarını analiz eder, hangi konuda ne kadar ilerlediğini raporlarım. Başarı tesadüf değildir!",
+      iconData: Icons.insights_rounded,
+      color: const Color(0xFF06B6D4), // Cyan - Analiz rengi
     ),
   ];
 
@@ -273,7 +287,8 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: activeContent.color,
                             foregroundColor: Colors.white,
-                            elevation: 0,
+                            elevation: 8,
+                            shadowColor: activeContent.color.withOpacity(0.4),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
@@ -390,6 +405,13 @@ class _IntroSlide extends StatelessWidget {
                           color: Colors.white.withOpacity(isDark ? 0.1 : 0.5),
                           width: 1,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: content.color.withOpacity(0.15),
+                            blurRadius: 30,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(40),
@@ -455,7 +477,7 @@ class _IntroSlide extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
                             color: colorScheme.onSurface,
                             letterSpacing: -0.5,
                             height: 1.2,
@@ -473,8 +495,9 @@ class _IntroSlide extends StatelessWidget {
                             overflow: TextOverflow.visible,
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: colorScheme.onSurfaceVariant,
-                              height: 1.45,
-                              fontSize: 15.5,
+                              height: 1.5,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
                             ),
                           )
                               .animate()
@@ -493,4 +516,3 @@ class _IntroSlide extends StatelessWidget {
     );
   }
 }
-
