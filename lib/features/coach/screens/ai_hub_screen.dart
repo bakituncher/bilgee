@@ -95,7 +95,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
         ),
         TutorialStep(
           highlightKey: _coachKey,
-          title: "Mentörün Taktik Tavşan",
+          title: "Koçun Taktik Tavşan",
           text: "Motivasyon, strateji, analiz ve destek... Sınav yolculuğunda her alanda yanında olacak Taktik koçun!",
           buttonText: "Keşfet",
         ),

@@ -599,7 +599,7 @@ class _SmartBriefingView extends ConsumerWidget {
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
-                          'Mentörün Taktik Tavşan',
+                          'Koçun Taktik Tavşan',
                           style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w700,
                             letterSpacing: -0.3,
