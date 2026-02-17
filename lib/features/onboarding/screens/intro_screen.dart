@@ -45,7 +45,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
     // 4. Etüt Odası (AiHubScreen referanslı)
     _IntroContent(
       title: "Etüt Odası",
-      description: "Her eksik konun için özel içerik üretir, test hazırlar ve seni adım adım ustalaştırırım.",
+      description: "Sıkıcı testleri unut! Reels kaydırır gibi soru çöz, eksik konularını eğlenceli bir alışkanlığa dönüştür. Zayıf noktalarını tespit edip özel içeriklerle ustalaştırırım.",
       iconData: Icons.menu_book_rounded,
       color: const Color(0xFF8B5CF6), // Violet - Etüt rengi
     ),
