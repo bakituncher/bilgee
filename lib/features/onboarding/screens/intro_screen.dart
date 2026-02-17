@@ -45,7 +45,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
     // 4. Etüt Odası (AiHubScreen referanslı)
     _IntroContent(
       title: "Etüt Odası",
-      description: "Tamamen senin eksiklerine odaklanan kişisel çalışma alanın. Zayıf olduğun konulara özel özetler ve testlerle eksiklerini en güçlü silahına dönüştür.",
+      description: "Her eksik konun için özel içerik üretir, test hazırlar ve seni adım adım ustalaştırırım.",
       iconData: Icons.menu_book_rounded,
       color: const Color(0xFF8B5CF6), // Violet - Etüt rengi
     ),
@@ -59,7 +59,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
     // 6. Zihin Haritası (MindMapScreen referanslı)
     _IntroContent(
       title: "Zihin Haritası",
-      description: "Karmaşık konuları görselleştirerek hafızana kazı. Bilgiyi organize et, büyük resmi gör ve öğrenmeyi kalıcı hale getir.",
+      description: "Karmaşık konuları görselleştirerek hafızana kazıyorum. Bilgiyi senin için organize edip büyük resmi gösteriyor, öğrenmeyi kalıcı hale getiriyorum.",
       iconData: Icons.account_tree_rounded,
       color: const Color(0xFF6366F1), // Indigo - Zihin yapısı
     ),
@@ -471,16 +471,18 @@ class _IntroSlide extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Text(
-                          content.title,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: colorScheme.onSurface,
-                            letterSpacing: -0.5,
-                            height: 1.2,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            content.title,
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: colorScheme.onSurface,
+                              letterSpacing: -0.5,
+                              height: 1.2,
+                            ),
                           ),
                         )
                             .animate()
