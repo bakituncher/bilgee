@@ -75,7 +75,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     },
     {
       'icon': Icons.auto_stories_rounded,
-      'title': "Koçun Taktik Tavşan",
+      'title': "Koçum Taktik Tavşan",
       'desc': "Sınav sadece bilgi değil, mental bir savaştır. Taktik Tavşan ile strateji geliştir ve motivasyonunu hep zirvede tut."
     },
     {
