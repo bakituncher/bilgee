@@ -1319,7 +1319,7 @@ class _ComparisonBottomSheet extends StatelessWidget {
                         pro: true,
                       ),
                       _buildFeatureRow(
-                        "Koçum Taktik Tavşan",
+                        "Koçun Taktik Tavşan",
                         free: false,
                         pro: true,
                       ),
