@@ -81,7 +81,7 @@ class _FAQScreenState extends State<FAQScreen> {
       FAQItem(
         question: "Taktik beni nasıl tanıyor?",
         answer:
-        "Taktik, çözdüğünüz testleri, çalışma sıklığınızı ve hedeflerinizi analiz eder. Hangi derste zorlandığınızı, hangi saatlerde verimli olduğunuzu öğrenir ve size buna göre kişiselleştirilmiş öneriler sunar.",
+        "Taktik, senin başarı yolculuğundaki en yakın çalışma arkadaşın ve dijital koçundur. Seni tanımak için sisteme girdiğin her deneme sonucunu, ders bazlı net verilerini ve konu performanslarını titizlikle analiz eder. Sen veri girdikçe Taktik; hangi konularda parladığını, hangi konularda ise biraz daha desteğe ihtiyacın olduğunu öğrenir. Kısacası; sen hedeflerine doğru ilerlerken, Taktik de senin verilerinle gelişimini takip eder ve tamamen sana özel bir çalışma stratejisi geliştirir.",
       ),
       FAQItem(
         question: "Üretilen içeriklere güvenebilir miyim?",
@@ -388,12 +388,11 @@ class _ProComparisonTable extends StatelessWidget {
           ),
           // Rows
           _buildRow(theme, "Soru Çözücü", "3 soru/gün", "Sınırsız"),
-          _buildRow(theme, "Akıllı Notlar", "3 hak/gün", "Sınırsız"),
+          _buildRow(theme, "Not Defteri", "3 hak/gün", "Sınırsız"),
           _buildRow(theme, "Haftalık Plan", false, true),
           _buildRow(theme, "Zihin Haritaları", false, true),
-          _buildRow(theme, "Detaylı Analiz", false, true),
-          _buildRow(theme, "Deneme Arşivi", false, true),
-          _buildRow(theme, "Konu Özetleri", false, true),
+          _buildRow(theme, "Etüt Odası", false, true),
+          _buildRow(theme, "Koçun Taktik Tavşan", false, true),
           _buildRow(theme, "Reklamlar", "Var", "Yok", isLast: true),
         ],
       ),

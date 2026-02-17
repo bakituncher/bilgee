@@ -50,48 +50,38 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
   final List<Map<String, dynamic>> _features = [
     {
       'icon': Icons.camera_enhance_rounded,
-      'title': "Saniyeler İçinde Çözdür",
-      'desc': "Sorunun fotoğrafını çek, anında çözüm al."
+      'title': "Soru Çözücü",
+      'desc': "Taktik Tavşan ile çözemediğin soru kalmasın! Fotoğrafını çek, Tavşan sana her adımı tek tek anlatarak öğretsin."
     },
     {
       'icon': Icons.calendar_month_rounded,
-      'title': "Haftalık Akıllı Planlama",
-      'desc': "Sana özel hızlandırılmış programla hedefine %300 daha hızlı ulaş."
+      'title': "Haftalık Plan",
+      'desc': "Taktik Tavşan senin için en verimli rotayı çizsin. Ne çalışacağım diye düşünme, Tavşan'ın planıyla hedefe odaklan!"
     },
     {
       'icon': Icons.account_tree_rounded,
       'title': "Zihin Haritaları",
-      'desc': "Görsel zihin haritalarıyla konuları daha kolay öğren ve hatırla."
+      'desc': "Konuların içinde kaybolma! Taktik Tavşan en karmaşık dersleri bile senin için tek bakışta çözeceğin bir haritaya dönüştürür."
     },
     {
       'icon': Icons.bolt,
       'title': "Not Defteri",
-      'desc': "Görsel veya dosya yükle, Taktik sana bilgi kartları, soru kartları veya özet üretsin."
+      'desc': "Notlarını yükle; Taktik senin için saniyeler içinde özetler, bilgi kartları ve çalışma soruları çıkarsın."
     },
     {
       'icon': Icons.quiz_rounded,
-      'title': "Sınırsız Test Çözümü",
-      'desc': "Reels kaydırır gibi test çöz, kendini sına."
+      'title': "Etüt Odası",
+      'desc': "Sıkıcı testleri unut! Reels kaydırır gibi soru çöz, sınav pratiğini eğlenceli bir alışkanlığa dönüştür."
     },
     {
       'icon': Icons.auto_stories_rounded,
-      'title': "Özel Konu Özetleri",
-      'desc': "Her konuyu özetlenmiş haliyle hızlıca öğren."
-    },
-    {
-      'icon': Icons.analytics_rounded,
-      'title': "Detaylı Hata Analizi",
-      'desc': "Nerede yanlış yaptığını gör, netlerini artır."
-    },
-    {
-      'icon': Icons.save_rounded,
-      'title': "Etütleri Kaydet",
-      'desc': "Etüt odasındaki çalışmalarını kaydet, istediğin zaman tekrar et."
+      'title': "Koçun Taktik Tavşan",
+      'desc': "Sınav sadece bilgi değil, mental bir savaştır. Taktik Tavşan ile strateji geliştir ve motivasyonunu hep zirvede tut."
     },
     {
       'icon': Icons.block_rounded,
       'title': "Reklamları Yok Et",
-      'desc': "Kesintisiz odaklanma. Sadece dersine odaklan."
+      'desc': "Reklamları ve dikkat dağıtıcı her şeyi yok et. Sadece hedefinle senin arandaki engelleri kaldır."
     },
   ];
 
@@ -1309,7 +1299,7 @@ class _ComparisonBottomSheet extends StatelessWidget {
                         pro: true,
                       ),
                       _buildFeatureRow(
-                        "Haftalık Planlama",
+                        "Haftalık Plan",
                         free: false,
                         pro: true,
                       ),
@@ -1324,22 +1314,12 @@ class _ComparisonBottomSheet extends StatelessWidget {
                         pro: true,
                       ),
                       _buildFeatureRow(
-                        "Sınırsız Test Çözümü",
+                        "Etüt Odası",
                         free: false,
                         pro: true,
                       ),
                       _buildFeatureRow(
-                        "Özel Konu Özetleri",
-                        free: false,
-                        pro: true,
-                      ),
-                      _buildFeatureRow(
-                        "Detaylı Hata Analizi",
-                        free: false,
-                        pro: true,
-                      ),
-                      _buildFeatureRow(
-                        "Etütleri Kaydet",
+                        "Koçum Taktik Tavşan",
                         free: false,
                         pro: true,
                       ),
