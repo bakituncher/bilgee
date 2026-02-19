@@ -374,7 +374,7 @@ class _RankCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Flexible(
+                    Expanded(
                       child: Text(
                         username,
                         style: textTheme.titleSmall?.copyWith(
