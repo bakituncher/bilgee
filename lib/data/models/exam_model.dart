@@ -9,6 +9,7 @@ enum ExamType {
   kpssOnlisans,
   kpssOrtaogretim,
   ags,
+  dgs,
 }
 
 extension ExamTypeExtension on ExamType {
@@ -26,6 +27,8 @@ extension ExamTypeExtension on ExamType {
         return 'KPSS Ortaöğretim';
       case ExamType.ags:
         return 'AGS'; // "AGS - ÖABT" yerine sadeleştirildi
+      case ExamType.dgs:
+        return 'DGS';
     }
   }
 }
@@ -196,6 +199,10 @@ class ExamData {
         final exam = await _loadExam(type, 'assets/data/ags.json');
         _cache[type] = exam;
         return exam;
+      case ExamType.dgs:
+        final exam = await _loadExam(type, 'assets/data/dgs.json');
+        _cache[type] = exam;
+        return exam;
       case ExamType.kpssLisans:
       case ExamType.kpssOnlisans:
       case ExamType.kpssOrtaogretim:
@@ -205,8 +212,6 @@ class ExamData {
         _cache[ExamType.kpssOnlisans] = exam;
         _cache[ExamType.kpssOrtaogretim] = exam;
         return exam;
-      default:
-        throw Exception('$type için sınav verisi bulunamadı.');
     }
   }
 }

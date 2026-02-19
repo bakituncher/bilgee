@@ -1,0 +1,353 @@
+{
+  "maps": [
+    {
+      "id": "dgs_mat_1",
+      "topic": "Temel Kavramlar (Sayılar)",
+      "subject": "Matematik",
+      "label": "Temel Kavramlar (Sayılar)",
+      "description": "Doğal sayılar, tam sayılar ve rasyonel sayılar",
+      "children": [
+        {
+          "label": "Doğal Sayılar",
+          "description": "Sıfır ve pozitif tam sayılar: $\\mathbb{N} = \\{0, 1, 2, 3, ...\\}$"
+        },
+        {
+          "label": "Tam Sayılar",
+          "description": "Pozitif, negatif ve sıfır: $\\mathbb{Z} = \\{..., -2, -1, 0, 1, 2, ...\\}$"
+        },
+        {
+          "label": "Rasyonel Sayılar",
+          "description": "Kesirli sayılar: $\\mathbb{Q} = \\{\\frac{a}{b} | a, b \\in \\mathbb{Z}, b \\neq 0\\}$"
+        }
+      ]
+    },
+    {
+      "id": "dgs_mat_2",
+      "topic": "Üslü ve Köklü Sayılar",
+      "subject": "Matematik",
+      "label": "Üslü ve Köklü Sayılar",
+      "description": "Üslü ve köklü ifadelerin özellikleri",
+      "children": [
+        {
+          "label": "Üslü Sayılar",
+          "description": "$a^m \\times a^n = a^{m+n}$",
+          "children": [
+            {
+              "label": "Çarpma",
+              "description": "$a^m \\times a^n = a^{m+n}$"
+            },
+            {
+              "label": "Bölme",
+              "description": "$\\frac{a^m}{a^n} = a^{m-n}$"
+            }
+          ]
+        },
+        {
+          "label": "Köklü Sayılar",
+          "description": "$\\sqrt[n]{a^m} = a^{\\frac{m}{n}}$",
+          "children": [
+            {
+              "label": "Çarpma",
+              "description": "$\\sqrt[n]{a} \\times \\sqrt[n]{b} = \\sqrt[n]{a \\times b}$"
+            },
+            {
+              "label": "Bölme",
+              "description": "$\\frac{\\sqrt[n]{a}}{\\sqrt[n]{b}} = \\sqrt[n]{\\frac{a}{b}}$"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dgs_mat_3",
+      "topic": "Kombinasyon ve Permütasyon",
+      "subject": "Matematik",
+      "label": "Kombinasyon ve Permütasyon",
+      "description": "Seçme ve sıralama yöntemleri",
+      "children": [
+        {
+          "label": "Permütasyon",
+          "description": "Sıralama önemli: $P(n,r) = \\frac{n!}{(n-r)!}$"
+        },
+        {
+          "label": "Kombinasyon",
+          "description": "Seçim önemli: $C(n,r) = \\frac{n!}{r!(n-r)!}$"
+        },
+        {
+          "label": "Faktöriyel",
+          "description": "$n! = n \\times (n-1) \\times ... \\times 2 \\times 1$"
+        }
+      ]
+    },
+    {
+      "id": "dgs_mat_4",
+      "topic": "Olasılık",
+      "subject": "Matematik",
+      "label": "Olasılık",
+      "description": "Olayların gerçekleşme ihtimali",
+      "children": [
+        {
+          "label": "Temel Olasılık",
+          "description": "$P(A) = \\frac{\\text{İstenen Durum}}{\\text{Tüm Durumlar}}$"
+        },
+        {
+          "label": "Birleşim Olasılığı",
+          "description": "$P(A \\cup B) = P(A) + P(B) - P(A \\cap B)$"
+        },
+        {
+          "label": "Bağımsız Olaylar",
+          "description": "$P(A \\cap B) = P(A) \\times P(B)$"
+        }
+      ]
+    },
+    {
+      "id": "dgs_mat_5",
+      "topic": "Üçgenler",
+      "subject": "Matematik",
+      "label": "Üçgenler",
+      "description": "Üçgenlerin özellikleri ve teoremleri",
+      "children": [
+        {
+          "label": "Üçgen Çeşitleri",
+          "description": "Kenar ve açılarına göre sınıflandırma",
+          "children": [
+            {
+              "label": "Kenar Açısından",
+              "description": "Eşkenar, ikizkenar, çeşitkenar"
+            },
+            {
+              "label": "Açı Açısından",
+              "description": "Dar, dik, geniş açılı"
+            }
+          ]
+        },
+        {
+          "label": "Pisagor Teoremi",
+          "description": "$a^2 + b^2 = c^2$ (Dik üçgende)"
+        },
+        {
+          "label": "Üçgende Alan",
+          "description": "$A = \\frac{a \\times h}{2}$"
+        }
+      ]
+    },
+    {
+      "id": "dgs_mat_6",
+      "topic": "Dörtgenler",
+      "subject": "Matematik",
+      "label": "Dörtgenler",
+      "description": "Dörtgenlerin özellikleri ve alan formülleri",
+      "children": [
+        {
+          "label": "Paralelkenar",
+          "description": "Karşılıklı kenarlar paralel ve eşit",
+          "children": [
+            {
+              "label": "Alan",
+              "description": "$A = a \\times h$"
+            }
+          ]
+        },
+        {
+          "label": "Dikdörtgen",
+          "description": "Tüm açılar 90°",
+          "children": [
+            {
+              "label": "Alan",
+              "description": "$A = a \\times b$"
+            }
+          ]
+        },
+        {
+          "label": "Kare",
+          "description": "Tüm kenarlar eşit, tüm açılar 90°",
+          "children": [
+            {
+              "label": "Alan",
+              "description": "$A = a^2$"
+            }
+          ]
+        },
+        {
+          "label": "Yamuk",
+          "description": "İki kenar paralel",
+          "children": [
+            {
+              "label": "Alan",
+              "description": "$A = \\frac{(a+b) \\times h}{2}$"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dgs_mat_7",
+      "topic": "Çember ve Daire",
+      "subject": "Matematik",
+      "label": "Çember ve Daire",
+      "description": "Çember ve daire ile ilgili formüller",
+      "children": [
+        {
+          "label": "Çevre",
+          "description": "$C = 2\\pi r$"
+        },
+        {
+          "label": "Alan",
+          "description": "$A = \\pi r^2$"
+        },
+        {
+          "label": "Yay Uzunluğu",
+          "description": "$l = \\frac{\\alpha}{360} \\times 2\\pi r$"
+        },
+        {
+          "label": "Daire Dilimi Alanı",
+          "description": "$A = \\frac{\\alpha}{360} \\times \\pi r^2$"
+        }
+      ]
+    },
+    {
+      "id": "dgs_mat_8",
+      "topic": "Katı Cisimler",
+      "subject": "Matematik",
+      "label": "Katı Cisimler",
+      "description": "Üç boyutlu geometrik şekiller",
+      "children": [
+        {
+          "label": "Prizma",
+          "description": "Hacim: $V = \\text{Taban Alanı} \\times \\text{Yükseklik}$"
+        },
+        {
+          "label": "Silindir",
+          "description": "Hacim: $V = \\pi r^2 h$"
+        },
+        {
+          "label": "Piramit",
+          "description": "Hacim: $V = \\frac{1}{3} \\times \\text{Taban Alanı} \\times \\text{Yükseklik}$"
+        },
+        {
+          "label": "Küre",
+          "description": "Hacim: $V = \\frac{4}{3}\\pi r^3$, Yüzey Alanı: $A = 4\\pi r^2$"
+        }
+      ]
+    },
+    {
+      "id": "dgs_tur_1",
+      "topic": "Sözcükte Anlam",
+      "subject": "Türkçe",
+      "label": "Sözcükte Anlam",
+      "description": "Sözcüklerin anlamsal özellikleri",
+      "children": [
+        {
+          "label": "Gerçek ve Mecaz Anlam",
+          "description": "Sözcüğün asıl ve yan anlamı"
+        },
+        {
+          "label": "Terim ve Kavram Anlam",
+          "description": "Özel alanlarda kullanılan sözcükler"
+        },
+        {
+          "label": "Yan Anlam",
+          "description": "Sözcüğün çağrıştırdığı duygular"
+        },
+        {
+          "label": "Eş Anlam",
+          "description": "Anlamları birbirine yakın sözcükler"
+        },
+        {
+          "label": "Zıt Anlam",
+          "description": "Anlamları karşıt sözcükler"
+        }
+      ]
+    },
+    {
+      "id": "dgs_tur_2",
+      "topic": "Cümlede Anlam",
+      "subject": "Türkçe",
+      "label": "Cümlede Anlam",
+      "description": "Cümlelerin anlamsal yapısı",
+      "children": [
+        {
+          "label": "Öznel ve Nesnel Anlatım",
+          "description": "Kişisel yorum vs gerçek bilgi"
+        },
+        {
+          "label": "Açık ve Kapalı Anlatım",
+          "description": "Doğrudan vs dolaylı anlatım"
+        },
+        {
+          "label": "Somut ve Soyut Anlatım",
+          "description": "Duyu organlarıyla algılanabilir vs zihinsel kavramlar"
+        }
+      ]
+    },
+    {
+      "id": "dgs_tur_3",
+      "topic": "Anlatım Biçimleri",
+      "subject": "Türkçe",
+      "label": "Anlatım Biçimleri",
+      "description": "Metinlerde kullanılan anlatım yöntemleri",
+      "children": [
+        {
+          "label": "Öyküleme",
+          "description": "Olay anlatımı, zaman-mekân-kişi"
+        },
+        {
+          "label": "Betimleme",
+          "description": "Duyular yoluyla tasvir"
+        },
+        {
+          "label": "Açıklama",
+          "description": "Bilgi verme, tanımlama"
+        },
+        {
+          "label": "Tartışma",
+          "description": "Fikir savunma, karşı görüş"
+        }
+      ]
+    },
+    {
+      "id": "dgs_tur_4",
+      "topic": "Paragraf",
+      "subject": "Türkçe",
+      "label": "Paragraf",
+      "description": "Paragraf yapısı ve ana düşünce",
+      "children": [
+        {
+          "label": "Ana Düşünce",
+          "description": "Paragrafın temel mesajı"
+        },
+        {
+          "label": "Yardımcı Düşünce",
+          "description": "Ana düşünceyi destekleyen fikirler"
+        },
+        {
+          "label": "Paragraf Türleri",
+          "description": "Giriş, gelişme, sonuç paragrafları"
+        }
+      ]
+    },
+    {
+      "id": "dgs_tur_5",
+      "topic": "Sözel Mantık",
+      "subject": "Türkçe",
+      "label": "Sözel Mantık",
+      "description": "Mantıksal çıkarım ve sözel muhakeme",
+      "children": [
+        {
+          "label": "Çıkarım",
+          "description": "Verilen bilgilerden sonuç çıkarma"
+        },
+        {
+          "label": "Önerme",
+          "description": "Doğru veya yanlış olabilen ifadeler"
+        },
+        {
+          "label": "Anlam İlişkileri",
+          "description": "Cümleler arası mantıksal bağlantılar"
+        }
+      ]
+    }
+  ]
+}
+
+

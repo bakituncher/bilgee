@@ -112,6 +112,13 @@ class HeroHeader extends ConsumerWidget {
           countdowns.add({'days': aytRem['days'], 'hours': aytRem['hours'], 'label': 'AYT'});
         }
       }
+    } else if (exam == 'dgs') {
+      // DGS: 19 Temmuz 2026, 10:15
+      final examDate = DateTime(2026, 7, 19, 10, 15);
+      final rem = _daysHoursRemaining(examDate);
+      if (rem['days']! > 0 || rem['hours']! > 0) {
+        countdowns.add({'days': rem['days'], 'hours': rem['hours'], 'label': 'DGS'});
+      }
     } else if (exam == 'kpsslisans') {
       // KPSS Lisans: 06 Eylül 2026, 10:15
       final examDate = DateTime(2026, 9, 6, 10, 15);

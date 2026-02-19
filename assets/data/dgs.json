@@ -1,0 +1,93 @@
+{
+  "type": "dgs",
+  "name": "Dikey Geçiş Sınavı",
+  "sections": [
+    {
+      "name": "DGS",
+      "penaltyCoefficient": 0.25,
+      "subjects": {
+        "Matematik": {
+          "questionCount": 60,
+          "topics": [
+            "Temel Kavramlar (Sayılar)",
+            "Sayı Basamakları",
+            "Bölme-Bölünebilme",
+            "OBEB-OKEK",
+            "Rasyonel Sayılar",
+            "Basit Eşitsizlikler",
+            "Mutlak Değer",
+            "Üslü Sayılar",
+            "Köklü Sayılar",
+            "Çarpanlara Ayırma",
+            "Oran-Orantı",
+            "Sayı Problemleri",
+            "Kesir Problemleri",
+            "İşçi-Havuz Problemleri",
+            "Yaş Problemleri",
+            "Yüzde Problemleri",
+            "Kar-Zarar Problemleri",
+            "Tablo-Grafik Problemleri",
+            "Hız Problemleri",
+            "Karışım Problemleri",
+            "Hareket Problemleri",
+            "Kümeler",
+            "Fonksiyon",
+            "İşlem",
+            "Modüler Aritmetik",
+            "Permütasyon",
+            "Kombinasyon",
+            "Olasılık",
+            "Tablo ve Grafik Yorumlama",
+            "Sayısal Mantık",
+            "Geometrik Kavramlar",
+            "Açılar",
+            "Üçgenler",
+            "Üçgen Çeşitleri",
+            "Açıortay",
+            "Kenarortay",
+            "Pisagor Teoremi",
+            "Öklid Bağıntıları",
+            "Üçgende Açıortay Teoremleri",
+            "Üçgende Kenarortay Teoremleri",
+            "Üçgende Alan",
+            "Üçgende Benzerlik",
+            "Çokgenler",
+            "Dörtgenler",
+            "Paralelkenar",
+            "Dikdörtgen",
+            "Kare",
+            "Yamuk",
+            "Deltoid",
+            "Çemberde Açı",
+            "Çemberde Uzunluk",
+            "Dairede Alan",
+            "Çemberde Benzerlik",
+            "Noktanın Analitik İncelenmesi",
+            "Analitik Düzlem",
+            "Doğrunun Denklemleri",
+            "Prizma",
+            "Dikdörtgenler Prizması",
+            "Küp",
+            "Silindir",
+            "Dönel Silindir",
+            "Piramit",
+            "Düzgün Piramit",
+            "Kesik Piramit",
+            "Küre"
+          ]
+        },
+        "Türkçe": {
+          "questionCount": 60,
+          "topics": [
+            "Sözcükte Anlam",
+            "Cümlede Anlam",
+            "Anlatım Biçimleri",
+            "Paragraf",
+            "Sözel Mantık"
+          ]
+        }
+      }
+    }
+  ]
+}
+
