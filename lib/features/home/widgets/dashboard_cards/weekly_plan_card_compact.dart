@@ -1,4 +1,5 @@
 // lib/features/home/widgets/dashboard_cards/weekly_plan_card_compact.dart
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,9 +61,11 @@ class _CompactPlanContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Calculate weekly progress
-    final creation = weeklyPlan.creationDate;
-    final creationStart = DateTime(creation.year, creation.month, creation.day);
-    final startOfWeek = creationStart.subtract(Duration(days: creationStart.weekday - 1));
+    // Bugünün haftasının başını (Pazartesi) hesapla — provider cache'i bozmasın diye
+    // normalize et (saat/dakika/saniye sıfır)
+    final now = DateTime.now();
+    final todayNormalized = DateTime(now.year, now.month, now.day);
+    final startOfWeek = todayNormalized.subtract(Duration(days: todayNormalized.weekday - 1));
 
     final weeklyCompletedMap = ref.watch(completedTasksForWeekProvider(startOfWeek)).maybeWhen(
       data: (m) => m,
@@ -72,31 +75,82 @@ class _CompactPlanContent extends ConsumerWidget {
     int total = 0;
     int done = 0;
 
+    // Progress: her plan gününü gün adına göre tarihe çevir
     for (int i = 0; i < weeklyPlan.plan.length; i++) {
       final dp = weeklyPlan.plan[i];
       total += dp.schedule.length;
-      final d = startOfWeek.add(Duration(days: i));
-      final dk = DateFormat('yyyy-MM-dd').format(d);
+      // Gün adından haftanın hangi günü olduğunu bul
+      const trDays = ['pazartesi','salı','çarşamba','perşembe','cuma','cumartesi','pazar'];
+      final dayIdx = trDays.indexOf(dp.day.toLowerCase().trim());
+      if (dayIdx < 0) continue;
+      // Bu haftada o günün tarihi
+      final dayDate = startOfWeek.add(Duration(days: dayIdx));
+      final dk = DateFormat('yyyy-MM-dd').format(dayDate);
       final completedList = weeklyCompletedMap[dk] ?? const <String>[];
       for (final s in dp.schedule) {
-        final id = s.id;
-        if (completedList.contains(id)) done++;
+        if (completedList.contains(s.id)) done++;
       }
     }
 
     final double ratio = total == 0 ? 0.0 : done / total;
-    final todayIndex = DateTime.now().weekday - 1;
-    final todayPlan = todayIndex < weeklyPlan.plan.length
-        ? weeklyPlan.plan[todayIndex]
-        : null;
+
+    // Bugünün Türkçe gün adını bul ve plan listesinde eşleştir
+    const turkishDays = [
+      'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'
+    ];
+    final todayTurkish = turkishDays[now.weekday - 1].toLowerCase();
+    final todayPlanIndex = weeklyPlan.plan.indexWhere(
+      (dp) => dp.day.toLowerCase().trim() == todayTurkish,
+    );
+    final todayPlan = todayPlanIndex >= 0 ? weeklyPlan.plan[todayPlanIndex] : null;
 
     // Today's completed tasks
-    final now = DateTime.now();
     final todayDate = DateFormat('yyyy-MM-dd').format(now);
     final todayCompleted = weeklyCompletedMap[todayDate] ?? const <String>[];
 
-    // Get today's first task only
-    final todayTasks = todayPlan?.schedule.take(1).toList() ?? [];
+    // Saate göre akıllı görev seçimi:
+    // "HH:mm" formatındaki time string'ini dakikaya çevir
+    int _timeToMinutes(String timeStr) {
+      try {
+        final parts = timeStr.trim().split(':');
+        if (parts.length < 2) return -1;
+        final h = int.tryParse(parts[0]) ?? -1;
+        final m = int.tryParse(parts[1].split(' ')[0]) ?? 0;
+        if (h < 0) return -1;
+        return h * 60 + m;
+      } catch (_) { return -1; }
+    }
+
+    final nowMinutes = now.hour * 60 + now.minute;
+    final schedule = todayPlan?.schedule ?? [];
+
+    ScheduleItem? currentTask;
+
+    if (schedule.isNotEmpty) {
+      // 1. Tamamlanmamış + saati geçmemiş olan ilk görevi bul
+      currentTask = schedule.firstWhereOrNull((t) {
+        final mins = _timeToMinutes(t.time);
+        return mins >= nowMinutes && !todayCompleted.contains(t.id);
+      });
+
+      // 2. Yoksa tamamlanmamış herhangi bir görevi bul (saati geçmiş bile olsa)
+      currentTask ??= schedule.firstWhereOrNull((t) => !todayCompleted.contains(t.id));
+
+      // 3. Hepsi tamamlandıysa saate göre en yakın geçmiş görevi göster
+      currentTask ??= (() {
+        ScheduleItem? best;
+        int bestDiff = 999999;
+        for (final t in schedule) {
+          final mins = _timeToMinutes(t.time);
+          if (mins < 0) continue;
+          final diff = (nowMinutes - mins).abs();
+          if (diff < bestDiff) { bestDiff = diff; best = t; }
+        }
+        return best ?? schedule.last;
+      })();
+    }
+
+    final todayTasks = currentTask != null ? [currentTask] : <ScheduleItem>[];
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),

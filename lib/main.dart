@@ -41,6 +41,8 @@ import 'package:taktik/features/coach/models/saved_content_model.dart';
 import 'package:taktik/data/providers/premium_provider.dart';
 import 'package:taktik/data/providers/version_check_provider.dart';
 import 'package:taktik/data/providers/time_check_provider.dart';
+import 'package:taktik/features/quests/logic/tp_earned_notifier.dart';
+import 'package:taktik/shared/widgets/tp_earned_toast.dart';
 
 /// Firebase Messaging Arka Plan İşleyicisi
 @pragma('vm:entry-point')
@@ -460,7 +462,18 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
             // 1. Uygulama İçeriği
             if (child != null) child,
 
-            // 2. Zorunlu Güncelleme Ekranı (En Üst Öncelik)
+            // 2. Global TP Kazanma Toast'u (AI Hub özellikleri — tüm sayfalarda çalışır)
+            Consumer(builder: (ctx, r, _) {
+              final tpState = r.watch(tpEarnedProvider);
+              if (!tpState.isVisible) return const SizedBox.shrink();
+              return TpEarnedToast(
+                key: ValueKey('tp_${tpState.points}_${tpState.featureLabel}'),
+                points: tpState.points,
+                featureLabel: tpState.featureLabel,
+              );
+            }),
+
+            // 3. Zorunlu Güncelleme Ekranı (En Üst Öncelik)
             // Eğer güncelleme zorunluysa, tüm uygulamanın üzerini kaplar
             if (versionCheckAsync.valueOrNull?.updateRequired == true)
               Positioned.fill(

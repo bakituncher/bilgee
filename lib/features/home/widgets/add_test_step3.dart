@@ -8,6 +8,7 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/home/logic/add_test_notifier.dart';
 import 'package:taktik/data/models/exam_model.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
+import 'package:taktik/features/quests/logic/tp_earned_notifier.dart';
 // StatsAnalysis importunu kaldırdık çünkü artık burada işlem yapmıyoruz
 // import 'package:taktik/features/stats/logic/stats_analysis.dart';
 import 'package:lottie/lottie.dart';
@@ -106,6 +107,9 @@ class Step3Summary extends ConsumerWidget {
                 ref.invalidate(testsProvider);
 
                 ref.read(questNotifierProvider.notifier).userSubmittedTest();
+
+                // Deneme ekleme: +50 TP toast göster (backend'de de ekleniyor)
+                ref.read(tpEarnedProvider.notifier).show(50, 'Deneme Eklendi');
 
                 if (context.mounted) {
                   await _showSuccessDialog(context);
