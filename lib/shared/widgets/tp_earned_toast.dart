@@ -81,7 +81,7 @@ class _TpEarnedToastState extends ConsumerState<TpEarnedToast>
     final subtitleColor = colorScheme.onSurfaceVariant;
 
     return Positioned(
-      top: MediaQuery.of(context).padding.top + 12,
+      top: MediaQuery.of(context).padding.top + kToolbarHeight + 8,
       left: 16,
       right: 16,
       child: AnimatedBuilder(
