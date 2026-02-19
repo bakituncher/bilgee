@@ -48,8 +48,8 @@ class _TpEarnedToastState extends ConsumerState<TpEarnedToast>
     // Giriş animasyonu
     _controller.forward();
 
-    // 3.5 saniye sonra çıkış animasyonu başlat, sonra provider'ı temizle
-    Future.delayed(const Duration(milliseconds: 3500), () {
+    // 1.5 saniye sonra çıkış animasyonu başlat, sonra provider'ı temizle
+    Future.delayed(const Duration(milliseconds: 1500), () {
       if (!mounted) return;
       _controller.reverse().then((_) {
         if (mounted) {
