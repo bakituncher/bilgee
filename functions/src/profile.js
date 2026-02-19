@@ -65,6 +65,7 @@ async function updatePublicProfile(uid, options = {}) {
       totalNetSum: realTotalNetSum,
       followerCount: typeof u.followerCount === "number" ? u.followerCount : 0,
       followingCount: typeof u.followingCount === "number" ? u.followingCount : 0,
+      isPremium: typeof u.isPremium === "boolean" ? u.isPremium : false,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
@@ -144,7 +145,7 @@ exports.onUserUpdate = onDocumentUpdated("users/{userId}", async (event) => {
   const after = event.data.after.data();
   const uid = event.params.userId;
 
-  const fieldsToSync = ["name", "username", "avatarStyle", "avatarSeed", "selectedExam", "followerCount", "followingCount"];
+  const fieldsToSync = ["name", "username", "avatarStyle", "avatarSeed", "selectedExam", "followerCount", "followingCount", "isPremium"];
   const needsSync = fieldsToSync.some((field) => before[field] !== after[field]);
 
   if (!needsSync) {
@@ -162,6 +163,7 @@ exports.onUserUpdate = onDocumentUpdated("users/{userId}", async (event) => {
     selectedExam: after.selectedExam || null,
     followerCount: typeof after.followerCount === "number" ? after.followerCount : 0,
     followingCount: typeof after.followingCount === "number" ? after.followingCount : 0,
+    isPremium: typeof after.isPremium === "boolean" ? after.isPremium : false,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   };
 

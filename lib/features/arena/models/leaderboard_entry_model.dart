@@ -9,6 +9,7 @@ class LeaderboardEntry {
   final String? avatarStyle;
   final String? avatarSeed;
   final int rank; // YENİ: Sıralama alanı eklendi
+  final bool isPremium;
 
   LeaderboardEntry({
     required this.userId,
@@ -19,5 +20,6 @@ class LeaderboardEntry {
     this.avatarStyle,
     this.avatarSeed,
     this.rank = 0, // YENİ: Varsayılan değer
+    this.isPremium = false,
   });
 }

@@ -85,16 +85,29 @@ async function publishLeaderboardSnapshot(examType, kind, limit = 200) {
     return;
   }
 
+  // Kullanıcıların isPremium bilgilerini toplu olarak al
+  const userIds = qs.docs.map(d => d.data()?.userId || d.id);
+  const userRefs = userIds.map(uid => db.collection("users").doc(uid));
+  const userSnaps = await db.getAll(...userRefs, { fieldMask: ['isPremium'] });
+  const premiumMap = {};
+  userSnaps.forEach(snap => {
+    if (snap.exists) {
+      premiumMap[snap.id] = snap.data().isPremium === true;
+    }
+  });
+
   const entries = qs.docs.map((d, index) => {
     const x = d.data() || {};
+    const userId = x.userId || d.id;
     return {
-      userId: x.userId || d.id,
+      userId: userId,
       userName: x.userName || "",
       username: x.username || "",
       score: typeof x.score === "number" ? x.score : 0,
       rank: index + 1, // Sıralamayı doğrudan ekle
       avatarStyle: x.avatarStyle || null,
       avatarSeed: x.avatarSeed || null,
+      isPremium: premiumMap[userId] || false,
     };
   });
 
