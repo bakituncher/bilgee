@@ -362,8 +362,7 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
       final net = perf.correctCount - (perf.wrongCount * penaltyCoefficient);
       final double mastery = perf.questionCount < 5 ? -1.0 : ((net / perf.questionCount).clamp(0.0,1.0));
       return _TopicBundle(topic: t, performance: perf, mastery: mastery);
-    }).where((e)=> filter.isEmpty || e.topic.name.toLowerCase().contains(filter.toLowerCase())).toList()
-      ..sort((a,b)=> (a.mastery<0?2:a.mastery).compareTo(b.mastery<0?2:b.mastery));
+    }).where((e)=> filter.isEmpty || e.topic.name.toLowerCase().contains(filter.toLowerCase())).toList();
 
     Widget buildGrid()=> LayoutBuilder(builder:(c,constraints){
       // Minimum 2 kolon, maksimum kart genişliği 160px
