@@ -198,7 +198,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
       body: userProfileAsync.when(
         data: (data) {
           if (data == null) {
-            return const Center(child: Text('Savaşçı bulunamadı.'));
+            return const Center(child: Text('Kullanıcı bulunamadı.'));
           }
           final String username = (data['username'] as String?) ?? '';
           final String displayName = username.isNotEmpty ? '@$username' : 'İsimsiz Savaşçı';
