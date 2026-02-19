@@ -49,6 +49,20 @@ class UserStatisticsScreen extends ConsumerWidget {
                 const SizedBox(height: 6),
                 _buildExamTypeCard(
                   context,
+                  'DGS',
+                  Map<String, dynamic>.from(stats['dgs'] ?? {}),
+                  Colors.teal,
+                ),
+                const SizedBox(height: 6),
+                _buildExamTypeCard(
+                  context,
+                  'ALES',
+                  Map<String, dynamic>.from(stats['ales'] ?? {}),
+                  Colors.indigo,
+                ),
+                const SizedBox(height: 6),
+                _buildExamTypeCard(
+                  context,
                   'AGS',
                   Map<String, dynamic>.from(stats['ags'] ?? {}),
                   Colors.purple,
@@ -213,11 +227,15 @@ class UserStatisticsScreen extends ConsumerWidget {
     final totalUsers = getStat('yks', 'total') +
         getStat('lgs', 'total') +
         getStat('kpss', 'total') +
+        getStat('dgs', 'total') +
+        getStat('ales', 'total') +
         getStat('ags', 'total');
 
     final totalPremium = getStat('yks', 'premium') +
         getStat('lgs', 'premium') +
         getStat('kpss', 'premium') +
+        getStat('dgs', 'premium') +
+        getStat('ales', 'premium') +
         getStat('ags', 'premium');
 
     final overallPremiumPercentage = totalUsers > 0
