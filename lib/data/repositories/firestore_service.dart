@@ -626,6 +626,7 @@ class FirestoreService {
         totalNetSum: (data['totalNetSum'] as num?)?.toDouble() ?? 0.0,
         followerCount: (data['followerCount'] as num?)?.toInt() ?? 0,
         followingCount: (data['followingCount'] as num?)?.toInt() ?? 0,
+        isPremium: (data['isPremium'] as bool?) ?? false,
       );
     });
   }

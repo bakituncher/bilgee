@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
 import 'package:taktik/shared/widgets/app_loader.dart';
 import 'package:taktik/data/providers/moderation_providers.dart';
 import 'package:taktik/features/profile/widgets/user_report_dialog.dart';
+import 'package:taktik/shared/widgets/pro_badge.dart';
 
 // Bu provider, ID'ye göre tek bir kullanıcı profili getirmek için kullanılır.
 final publicUserProfileProvider = FutureProvider.family.autoDispose<Map<String, dynamic>?, String>((ref, userId) async {
@@ -206,6 +207,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
           final int streak = (data['streak'] as num?)?.toInt() ?? 0;
           final String? avatarStyle = data['avatarStyle'] as String?;
           final String? avatarSeed = data['avatarSeed'] as String?;
+          final bool isPremium = (data['isPremium'] as bool?) ?? false;
 
           final rankInfo = RankService.getRankInfo(engagement);
           final rankName = rankInfo.current.name;
@@ -270,6 +272,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                 rankIndex: rankIndex,
                                 nextLevelXp: nextLevelXp,
                                 progress: progressToNext,
+                                isPremium: isPremium,
                               ),
                               loading: () => const _ShareableProfileCardSkeleton(),
                               error: (e, s) => const _ShareableProfileCardSkeleton(),
@@ -329,6 +332,7 @@ class _ShareableProfileCard extends StatelessWidget {
   final int rankIndex;
   final int nextLevelXp;
   final double progress;
+  final bool isPremium;
 
   const _ShareableProfileCard({
     required this.displayName,
@@ -349,6 +353,7 @@ class _ShareableProfileCard extends StatelessWidget {
     required this.rankIndex,
     required this.nextLevelXp,
     required this.progress,
+    required this.isPremium,
   });
 
   @override
@@ -372,7 +377,22 @@ class _ShareableProfileCard extends StatelessWidget {
         children: [
           _AvatarHalo(displayName: displayName, avatarStyle: avatarStyle, avatarSeed: avatarSeed, rankColor: rankColor),
           const SizedBox(height: 10),
-          Text(displayName, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(displayName, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
+              if (isPremium) ...[
+                const SizedBox(width: 8),
+                const ProBadge(
+                  fontSize: 10,
+                  horizontalPadding: 8,
+                  verticalPadding: 3,
+                  borderRadius: 8,
+                ),
+              ],
+            ],
+          ),
           const SizedBox(height: 6),
           _RankCapsule(rankName: rankName, icon: rankIcon, color: rankColor),
           const SizedBox(height: 12),
