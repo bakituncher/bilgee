@@ -369,12 +369,15 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
   }
 
   Widget _buildSaveButton(BuildContext context, WidgetRef ref, bool isAddingMode, int correct, int wrong, int blank, int sessionQuestions) {
+    final bool hasInput = (correct + wrong) > 0;
+    final theme = Theme.of(context);
+
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: theme.cardColor,
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
+            color: theme.brightness == Brightness.dark
                 ? Colors.black.withOpacity(0.1)
                 : Colors.black.withOpacity(0.05),
             blurRadius: 20,
@@ -391,13 +394,17 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
             height: 56,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.secondary,
-                foregroundColor: Colors.black,
+                backgroundColor: hasInput
+                    ? theme.colorScheme.secondary
+                    : theme.colorScheme.onSurface.withOpacity(0.12),
+                foregroundColor: hasInput
+                    ? Colors.black
+                    : theme.colorScheme.onSurface.withOpacity(0.38),
                 elevation: 0,
                 shadowColor: Colors.transparent,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-              onPressed: () async {
+              onPressed: hasInput ? () async {
                 final userId = ref.read(authControllerProvider).value!.uid;
                 TopicPerformanceModel newPerformance;
                 if (isAddingMode) {
@@ -478,12 +485,14 @@ class UpdateTopicPerformanceScreen extends ConsumerWidget {
 
                   if (context.mounted) context.pop();
                 }
-              },
+              } : null,
               child: Text(
                 "Kaydet",
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: hasInput
+                      ? Colors.black
+                      : theme.colorScheme.onSurface.withOpacity(0.38),
                   letterSpacing: 0.5,
                 ),
               ),
