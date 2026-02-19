@@ -169,6 +169,7 @@ class _LeaderboardViewState extends ConsumerState<_LeaderboardView>
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10.0),
                       child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
                         onTap: () {
                           HapticFeedback.selectionClick();
                           context.push('${AppRoutes.arena}/${entry.userId}');
@@ -276,11 +277,18 @@ class _StickyUserCard extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: _RankCard(
-          entry: entry,
-          rank: entry.rank,
-          isCurrentUser: true,
-          forceHighlight: true,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            HapticFeedback.selectionClick();
+            context.push('${AppRoutes.arena}/${entry.userId}');
+          },
+          child: _RankCard(
+            entry: entry,
+            rank: entry.rank,
+            isCurrentUser: true,
+            forceHighlight: true,
+          ),
         ),
       ),
     );
