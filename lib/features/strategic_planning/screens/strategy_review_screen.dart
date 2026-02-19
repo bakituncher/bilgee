@@ -9,6 +9,7 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/features/auth/application/auth_controller.dart';
 import 'package:taktik/data/repositories/ai_service.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
+import 'package:taktik/features/quests/logic/tp_earned_notifier.dart';
 
 class StrategyReviewScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> generationResult;
@@ -51,6 +52,9 @@ class _StrategyReviewScreenState extends ConsumerState<StrategyReviewScreen> {
 
       // Quest'i kaydet
       ref.read(questNotifierProvider.notifier).userApprovedStrategy();
+
+      // Haftalık plan kaydı: backend +100 TP ekliyor, toast göster
+      ref.read(tpEarnedProvider.notifier).show(100, 'Haftalık Plan');
 
       // Provider'ları yenile
       ref.invalidate(userProfileProvider);

@@ -248,8 +248,8 @@ class QuestNotifier extends StateNotifier<bool> {
       route: QuestRoute.strategy,
       tags: ['strategy', 'planning'],
     );
-    // Haftalık plan oluşturma: +25 TP
-    _addDirectPoints(25, featureLabel: 'Haftalık Plan');
+    // Haftalık plan oluşturma: backend updateStrategicPlan içinde +100 TP ekliyor.
+    // Toast strategy_review_screen'de gösteriliyor.
     _updateUserFeatureUsage('strategy');
     _markUserCreatedStrategicPlan();
     if (kDebugMode) {

@@ -1410,6 +1410,7 @@ class _StudyViewState extends ConsumerState<_StudyView> {
             widget.material.subject,
             widget.material.topic,
           );
+          ref.read(firestoreServiceProvider).updateEngagementScore('', 10); // backend +10 TP
           ref.read(tpEarnedProvider.notifier).show(10, 'Etüt Odası');
         }
       });
