@@ -93,21 +93,14 @@ class ExamSelectionScreen extends ConsumerWidget {
     );
   }
 
-  // KALDIRILDI: _confirmResetIfNeeded() - Sınav değiştirme özelliği kaldırıldı
-
-  // Bu fonksiyon artık hem seçim sonrası navigasyonu hem de veritabanı kaydını yönetecek.
   Future<void> _handleSelection(BuildContext context, WidgetRef ref, Function saveData) async {
-    // 1. Veritabanına kaydet.
     await saveData();
 
-    // Widget dispose edilmediyse devam et
     if (!context.mounted) return;
 
-    // Profil verisini yenile ve okunmasını bekle.
     final _ = ref.refresh(userProfileProvider);
     await ref.read(userProfileProvider.future);
 
-    // 2. Artık güncel veriyle navigasyonu güvenle kontrol et.
     if (!context.mounted) return;
 
     if (context.canPop()) {
@@ -123,56 +116,120 @@ class ExamSelectionScreen extends ConsumerWidget {
     }
   }
 
+  // --- SADELEŞTİRİLMİŞ BOTTOM SHEET ELEMANLARI ---
+
+  Widget _buildDragHandle(ThemeData theme) {
+    return Center(
+      child: Container(
+        width: 40,
+        height: 4,
+        margin: const EdgeInsets.only(bottom: 24),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomSheetItem(BuildContext context, String title, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // TEXT ARTIK EXPANDED İÇİNDE! Böylece çok uzunsa alta geçer, taşma yapmaz.
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --------------------------------------------------
+
   void _showKpssSubTypeSelection(BuildContext context, WidgetRef ref) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.75,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
         final theme = Theme.of(context);
+        final scrollController = ScrollController();
+
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
+          child: Container(
+            // Bottom sheet'e kesin bir maksimum sınır koyuyoruz (%80)
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min, // Sadece içeriği kadar yer kapla
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                _buildDragHandle(theme),
                 Text(
                   'Hangi KPSS türüne hazırlanıyorsun?',
-                  style: theme.textTheme.headlineSmall,
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      _onExamTypeSelected(context, ref, ExamType.kpssLisans);
-                    },
-                    child: const Text('KPSS Lisans'),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      _onExamTypeSelected(context, ref, ExamType.kpssOnlisans);
-                    },
-                    child: const Text('KPSS Önlisans'),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      _onExamTypeSelected(context, ref, ExamType.kpssOrtaogretim);
-                    },
-                    child: const Text('KPSS Ortaöğretim'),
+                const SizedBox(height: 24),
+                Flexible(
+                  child: Scrollbar(
+                    controller: scrollController,
+                    thumbVisibility: true,
+                    thickness: 3.0,
+                    radius: const Radius.circular(10),
+                    child: ListView(
+                      controller: scrollController,
+                      shrinkWrap: true, // LİSTENİN SADECE İÇERİĞİ KADAR YÜKSEKLİK ALMASINI SAĞLAR
+                      padding: const EdgeInsets.only(right: 8.0),
+                      children: [
+                        _buildBottomSheetItem(context, 'KPSS Lisans', () {
+                          Navigator.pop(ctx);
+                          _onExamTypeSelected(context, ref, ExamType.kpssLisans);
+                        }),
+                        _buildBottomSheetItem(context, 'KPSS Önlisans', () {
+                          Navigator.pop(ctx);
+                          _onExamTypeSelected(context, ref, ExamType.kpssOnlisans);
+                        }),
+                        _buildBottomSheetItem(context, 'KPSS Ortaöğretim', () {
+                          Navigator.pop(ctx);
+                          _onExamTypeSelected(context, ref, ExamType.kpssOrtaogretim);
+                        }),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -195,30 +252,43 @@ class ExamSelectionScreen extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.75,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
         final theme = Theme.of(context);
+        final scrollController = ScrollController();
+
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Hangi dil sınavına hazırlanıyorsun?',
-                    style: theme.textTheme.headlineSmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ...section.availableLanguages!.map(
-                        (language) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: ElevatedButton(
-                        onPressed: () async {
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildDragHandle(theme),
+                Text(
+                  'Hangi dil sınavına hazırlanıyorsun?',
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Flexible(
+                  child: Scrollbar(
+                    controller: scrollController,
+                    thumbVisibility: true,
+                    thickness: 3.0,
+                    radius: const Radius.circular(10),
+                    child: ListView(
+                      controller: scrollController,
+                      shrinkWrap: true, // LİSTENİN SADECE İÇERİĞİ KADAR YÜKSEKLİK ALMASINI SAĞLAR
+                      padding: const EdgeInsets.only(right: 8.0),
+                      children: section.availableLanguages!.map(
+                            (language) => _buildBottomSheetItem(context, language, () async {
                           Navigator.pop(ctx);
 
                           final ok = await _confirmInitialExamSelection(
@@ -238,13 +308,12 @@ class ExamSelectionScreen extends ConsumerWidget {
                               language: language,
                             ),
                           );
-                        },
-                        child: Text(language),
-                      ),
+                        }),
+                      ).toList(),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         );
@@ -257,12 +326,9 @@ class ExamSelectionScreen extends ConsumerWidget {
     final userId = ref.read(authControllerProvider).value!.uid;
     final firestoreService = ref.read(firestoreServiceProvider);
 
-    // Çok bölümlü sınavlarda (YKS) onayı burada değil, alt seçimden sonra alacağız.
     final isMultiSection = exam.sections.length > 1 && examType != ExamType.lgs;
 
-    // Tek bölümlü sınavlar (LGS, KPSS alt türleri vb.)
     if (!isMultiSection) {
-      // KPSS alt türleri için displayName zaten "KPSS Lisans" vb. döndürüyor.
       final ok = await _confirmInitialExamSelection(
         context,
         examDisplayName: examType.displayName,
@@ -282,41 +348,52 @@ class ExamSelectionScreen extends ConsumerWidget {
       return;
     }
 
-    // YKS gibi çok bölümlü sınavlarda önce alan/bölüm seçtir, onayı sonra al.
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.75,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
-        // AGS için "AGS" ortak bölümünü filtrele, sadece branşları göster
+        final theme = Theme.of(context);
         final sectionsToShow = examType == ExamType.ags
             ? exam.sections.where((s) => s.name != 'AGS').toList()
             : exam.sections;
 
+        final scrollController = ScrollController();
+
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Hangi alana hazırlanıyorsun?',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ...sectionsToShow.map(
-                        (section) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: ElevatedButton(
-                        onPressed: () async {
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildDragHandle(theme),
+                Text(
+                  'Hangi alana hazırlanıyorsun?',
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Flexible(
+                  child: Scrollbar(
+                    controller: scrollController,
+                    thumbVisibility: true,
+                    thickness: 3.0,
+                    radius: const Radius.circular(10),
+                    child: ListView(
+                      controller: scrollController,
+                      shrinkWrap: true, // LİSTENİN SADECE İÇERİĞİ KADAR YÜKSEKLİK ALMASINI SAĞLAR
+                      padding: const EdgeInsets.only(right: 8.0),
+                      children: sectionsToShow.map(
+                            (section) => _buildBottomSheetItem(context, section.name, () async {
                           Navigator.pop(ctx);
 
-                          // YDT seçildiyse önce dil seçimi yap
                           if (section.name == 'YDT' && section.availableLanguages != null) {
                             _showLanguageSelection(context, ref, exam, section, examType, userId, firestoreService);
                             return;
@@ -336,17 +413,15 @@ class ExamSelectionScreen extends ConsumerWidget {
                               userId: userId,
                               examType: examType,
                               sectionName: section.name,
-                              // YDT dışı seçimlerde dil bilgisini sıfırla
                               language: null,
                             ),
                           );
-                        },
-                        child: Text(section.name),
-                      ),
+                        }),
+                      ).toList(),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         );
@@ -370,7 +445,6 @@ class ExamSelectionScreen extends ConsumerWidget {
             final isSmall = constraints.maxHeight < 600;
             return Column(
               children: [
-                // Üst kısım - Progress bar ve Lottie animasyonu
                 Padding(
                   padding: EdgeInsets.all(isSmall ? 8.0 : 16.0),
                   child: Column(
@@ -383,15 +457,17 @@ class ExamSelectionScreen extends ConsumerWidget {
                         fit: BoxFit.contain,
                       ),
                       SizedBox(height: isSmall ? 4 : 12),
-                      Text(
-                        'Hazırlanacağın sınavı seçelim',
-                        style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Haydi hazırlanacağın sınavı seçelim',
+                          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                // Alt kısım - Kartlar ekrana eşit dağılır, scroll yok
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
@@ -467,4 +543,3 @@ class ExamSelectionScreen extends ConsumerWidget {
     );
   }
 }
-
