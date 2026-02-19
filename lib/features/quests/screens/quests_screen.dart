@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:taktik/shared/widgets/custom_back_button.dart';
+import 'package:taktik/features/quests/logic/tp_earned_notifier.dart';
 
 class QuestsScreen extends ConsumerStatefulWidget {
   const QuestsScreen({super.key});
@@ -322,12 +323,7 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
       if (!mounted) return;
 
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${widget.quest.reward} TP kazandın!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        ref.read(tpEarnedProvider.notifier).show(widget.quest.reward, 'Görev Tamamlandı');
         ref.invalidate(optimizedQuestsProvider);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

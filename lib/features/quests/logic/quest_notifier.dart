@@ -7,6 +7,7 @@ import 'package:taktik/features/quests/logic/quest_session_state.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/features/quests/logic/quest_completion_notifier.dart';
 import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
+import 'package:taktik/features/quests/logic/tp_earned_notifier.dart';
 import 'package:flutter/foundation.dart';
 
 // Bu provider'ın varlığı devam etmeli, arayüzden çağrılar bunun üzerinden yapılacak.
@@ -155,6 +156,9 @@ class QuestNotifier extends StateNotifier<bool> {
       tags: ['workshop', 'discovery', 'review'],
     );
 
+    // Etüt odası quiz tamamlama: +15 TP
+    _addDirectPoints(15, featureLabel: 'Etüt Odası');
+
     _updateUserFeatureUsage('workshop');
     if (kDebugMode) {
       debugPrint('[QuestNotifier] Atölye quizi tamamlandı - $subject/$topic');
@@ -180,6 +184,9 @@ class QuestNotifier extends StateNotifier<bool> {
       route: QuestRoute.workshop,
       tags: ['workshop', 'discovery', 'review'],
     );
+
+    // Etüt odası konu çalışması: +10 TP
+    _addDirectPoints(10, featureLabel: 'Etüt Odası');
 
     _updateUserFeatureUsage('workshop');
     if (kDebugMode) {
@@ -243,6 +250,8 @@ class QuestNotifier extends StateNotifier<bool> {
       route: QuestRoute.strategy,
       tags: ['strategy', 'planning'],
     );
+    // Haftalık plan oluşturma: +25 TP
+    _addDirectPoints(25, featureLabel: 'Haftalık Plan');
     _updateUserFeatureUsage('strategy');
     _markUserCreatedStrategicPlan();
     if (kDebugMode) {
@@ -356,6 +365,9 @@ class QuestNotifier extends StateNotifier<bool> {
       tags: ['question_solver', 'discovery', 'ai_feature'],
     );
 
+    // Soru çözücü kullanımı: +10 TP
+    _addDirectPoints(10, featureLabel: 'Soru Çözücü');
+
     _updateUserFeatureUsage('questionSolver');
   }
 
@@ -385,6 +397,9 @@ class QuestNotifier extends StateNotifier<bool> {
       tags: ['mind_map', 'discovery', 'visualization'],
     );
 
+    // Zihin haritası oluşturma: +15 TP
+    _addDirectPoints(15, featureLabel: 'Zihin Haritası');
+
     _updateUserFeatureUsage('mindMap');
   }
 
@@ -396,6 +411,8 @@ class QuestNotifier extends StateNotifier<bool> {
       route: QuestRoute.contentGenerator,
       tags: ['content', 'notes', 'study'],
     );
+    // Not defteri kullanımı: +10 TP
+    _addDirectPoints(10, featureLabel: 'Not Defteri');
     _updateUserFeatureUsage('contentGenerator');
   }
 
@@ -450,6 +467,25 @@ class QuestNotifier extends StateNotifier<bool> {
   }
 
   // --- YARDIMCI METOTLAR ---
+
+  /// Doğrudan TP (engagementScore) ekler — AI Hub özellik kullanımları için.
+  /// Backend rate limit + günlük kota koruması mevcuttur.
+  Future<void> _addDirectPoints(int points, {String featureLabel = ''}) async {
+    try {
+      final functions = _ref.read(functionsProvider);
+      final callable = functions.httpsCallable('tests-addEngagementPoints');
+      await callable.call({'pointsToAdd': points});
+      // Başarılı olunca UI bildirimi tetikle
+      _ref.read(tpEarnedProvider.notifier).show(points, featureLabel);
+      if (kDebugMode) {
+        debugPrint('[QuestNotifier] +$points TP eklendi (AI Hub özelliği: $featureLabel)');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[QuestNotifier] _addDirectPoints hatası: $e');
+      }
+    }
+  }
 
   /// Kullanıcının bir özelliği kullandığını Firestore'da işaretler
   void _updateUserFeatureUsage(String featureName) {

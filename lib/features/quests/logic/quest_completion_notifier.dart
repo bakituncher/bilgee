@@ -5,6 +5,7 @@ import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/features/quests/logic/quest_service.dart';
 import 'package:taktik/features/quests/logic/optimized_quests_provider.dart';
+import 'package:taktik/features/quests/logic/tp_earned_notifier.dart';
 import 'package:flutter/foundation.dart';
 
 /// Geliştirilmiş Quest Completion Notifier
@@ -51,12 +52,13 @@ class QuestCompletionNotifier extends StateNotifier<QuestCompletionState> {
 
       if (success) {
         // 2. UI'ı anında güncelle (Optimistic Update)
-        // Backend'den yanıt başarılı geldiyse UI'da 'alındı' göster.
-        // Puan zaten stream üzerinden güncelleneceği için burada puan eklemeye gerek yok.
         state = state.copyWith(
           rewardClaimed: true,
-          actualReward: quest.reward, // Backend'den dönen gerçek değeri servisten almak daha iyi olurdu ama şimdilik modeldekini gösteriyoruz.
+          actualReward: quest.reward,
         );
+
+        // TP kazanma toast'unu göster
+        ref.read(tpEarnedProvider.notifier).show(quest.reward, 'Görev Tamamlandı');
 
         debugPrint('[QuestCompletion] ✅ Ödül başarıyla toplandı.');
 
