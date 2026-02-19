@@ -283,6 +283,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
       final exam = user!.selectedExam!.toLowerCase();
       if (exam == 'yks') examSuffix = " YKS";
       else if (exam == 'lgs') examSuffix = " LGS";
+      else if (exam == 'dgs') examSuffix = " DGS";
       else if (exam == 'ags') examSuffix = " AGS - ÖABT";
       else if (exam.startsWith('kpss')) examSuffix = " KPSS";
     }
