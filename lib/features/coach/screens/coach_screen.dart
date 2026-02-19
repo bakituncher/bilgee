@@ -178,16 +178,14 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
                   title: _buildAppBarTitle(context),
                   bottom: TabBar(
                     controller: _tabController,
-                    isScrollable: true,
+                    isScrollable: subjects.length > 3,
+                    tabAlignment: subjects.length > 3 ? TabAlignment.start : TabAlignment.fill,
                     tabs: subjects.keys
                         .map((subjectName) => Tab(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 140),
-                        child: Text(
-                          subjectName,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
-                        ),
+                      child: Text(
+                        subjectName,
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: false,
                       ),
                     ))
                         .toList(),
