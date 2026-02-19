@@ -372,75 +372,74 @@ class _RankCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(
+                  username,
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: isCurrentUser ? FontWeight.w800 : FontWeight.w600,
+                    color: cs.onSurface,
+                    fontSize: 16,
+                    letterSpacing: -0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
                 Row(
                   children: [
-                    Expanded(
-                      child: Text(
-                        username,
-                        style: textTheme.titleSmall?.copyWith(
-                          fontWeight: isCurrentUser ? FontWeight.w800 : FontWeight.w600,
-                          color: cs.onSurface,
-                          fontSize: 16,
-                          letterSpacing: -0.2,
+                    if (isCurrentUser)
+                      Text(
+                        "Siz",
+                        style: textTheme.labelSmall?.copyWith(
+                          color: cs.primary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    if (entry.isPremium) ...[
+                    if (isCurrentUser && entry.isPremium)
                       const SizedBox(width: 6),
+                    if (entry.isPremium)
                       const ProBadge(
                         fontSize: 9,
                         horizontalPadding: 6,
                         verticalPadding: 3,
                         borderRadius: 4,
                       ),
-                    ],
                   ],
                 ),
-                if (isCurrentUser)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Text(
-                      "Siz",
-                      style: textTheme.labelSmall?.copyWith(
-                        color: cs.primary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
 
           const SizedBox(width: 12),
 
-          // 4. Puan Bölümü - Kutusuz tasarım
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                '${entry.score}',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: cs.onSurface,
-                  fontSize: 16,
-                  letterSpacing: 0.2,
+          // 4. Puan Bölümü - Sabit genişlik
+          SizedBox(
+            width: 70,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  '${entry.score}',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: cs.onSurface,
+                    fontSize: 16,
+                    letterSpacing: 0.2,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'TP',
-                style: textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: cs.onSurfaceVariant,
-                  fontSize: 12,
+                const SizedBox(width: 4),
+                Text(
+                  'TP',
+                  style: textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
