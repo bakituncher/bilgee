@@ -10,6 +10,7 @@ enum ExamType {
   kpssOrtaogretim,
   ags,
   dgs,
+  ales,
 }
 
 extension ExamTypeExtension on ExamType {
@@ -29,6 +30,8 @@ extension ExamTypeExtension on ExamType {
         return 'AGS'; // "AGS - ÖABT" yerine sadeleştirildi
       case ExamType.dgs:
         return 'DGS';
+      case ExamType.ales:
+        return 'ALES';
     }
   }
 }
@@ -201,6 +204,10 @@ class ExamData {
         return exam;
       case ExamType.dgs:
         final exam = await _loadExam(type, 'assets/data/dgs.json');
+        _cache[type] = exam;
+        return exam;
+      case ExamType.ales:
+        final exam = await _loadExam(type, 'assets/data/ales.json');
         _cache[type] = exam;
         return exam;
       case ExamType.kpssLisans:
