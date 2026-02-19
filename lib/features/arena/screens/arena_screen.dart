@@ -70,9 +70,19 @@ class _ArenaScreenState extends ConsumerState<ArenaScreen> {
             indicatorWeight: 3,
             labelStyle: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
             unselectedLabelStyle: textTheme.bodyLarge,
-            tabs: const [
-              Tab(text: 'Günlük Efsaneler'),
-              Tab(text: 'Haftalık Efsaneler'),
+            tabs: [
+              Tab(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('Günlük Efsaneler'),
+                ),
+              ),
+              Tab(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('Haftalık Efsaneler'),
+                ),
+              ),
             ],
           ),
         ),
@@ -148,16 +158,16 @@ class _LeaderboardViewState extends ConsumerState<_LeaderboardView>
                 ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.fromLTRB(
-                    12,
                     16,
-                    12,
+                    16,
+                    16,
                     showStickyCard ? 100 : 24,
                   ),
                   itemCount: itemCount,
                   itemBuilder: (context, index) {
                     final entry = displayList[index];
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 12.0),
+                      padding: const EdgeInsets.only(bottom: 10.0),
                       child: GestureDetector(
                         onTap: () {
                           HapticFeedback.selectionClick();
@@ -246,21 +256,21 @@ class _StickyUserCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+      padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
       decoration: BoxDecoration(
         color: cs.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
-            blurRadius: 16,
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 20,
             spreadRadius: 0,
-            offset: const Offset(0, -4),
+            offset: const Offset(0, -6),
           )
         ],
         border: Border(
           top: BorderSide(
-            color: cs.outlineVariant.withValues(alpha: 0.3),
-            width: 1,
+            color: cs.primary.withValues(alpha: 0.2),
+            width: 2,
           ),
         ),
       ),
@@ -295,50 +305,43 @@ class _RankCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    // Kart Renkleri
-    final Color cardColor = (isCurrentUser || forceHighlight)
-        ? cs.primary.withValues(alpha: 0.08)
-        : cs.surfaceContainerLow;
-
-    final Color borderColor = (isCurrentUser || forceHighlight)
-        ? cs.primary.withValues(alpha: 0.4)
-        : Colors.transparent;
-
     // Kullanıcı adı işleme
     String username = entry.username?.trim() ?? '';
     if (username.isEmpty) username = 'User ${entry.userId.substring(0, 4)}';
     if (!username.startsWith('@')) username = '@$username';
 
-    return Container(
-      // Padding horizontal 10 -> 8 olarak düşürüldü (Daha sıkı görünüm)
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor, width: 1.5),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // 1. Sıralama Badge (Genişlik 32 -> 24'e düşürüldü)
+          // 1. Sıralama Badge
           SizedBox(
-            width: 24,
+            width: 32,
             child: _RankBadge(rank: rank),
           ),
 
-          // Boşluk 10 -> 8'e düşürüldü
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
 
-          // 2. Avatar
+          // 2. Avatar - Biraz daha büyük ve belirgin
           Container(
-            width: 44,
-            height: 44,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: cs.outlineVariant.withValues(alpha: 0.5),
-                width: 1.5,
+                color: (isCurrentUser || forceHighlight)
+                    ? cs.primary.withValues(alpha: 0.4)
+                    : cs.outlineVariant.withValues(alpha: 0.5),
+                width: 2,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: ClipOval(
               child: (entry.avatarStyle != null && entry.avatarSeed != null)
@@ -346,12 +349,15 @@ class _RankCard extends StatelessWidget {
                 'https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}',
                 fit: BoxFit.cover,
               )
-                  : Center(
-                child: Text(
-                  username.length > 1 ? username.substring(1, 2).toUpperCase() : '?',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: cs.onSurfaceVariant,
+                  : Container(
+                color: cs.primaryContainer,
+                child: Center(
+                  child: Text(
+                    username.length > 1 ? username.substring(1, 2).toUpperCase() : '?',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: cs.onPrimaryContainer,
+                    ),
                   ),
                 ),
               ),
@@ -360,7 +366,7 @@ class _RankCard extends StatelessWidget {
 
           const SizedBox(width: 12),
 
-          // 3. İsim ve Badge Bölümü
+          // 3. İsim ve Badge Bölümü - Daha dengeli
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -374,7 +380,8 @@ class _RankCard extends StatelessWidget {
                         style: textTheme.titleSmall?.copyWith(
                           fontWeight: isCurrentUser ? FontWeight.w800 : FontWeight.w600,
                           color: cs.onSurface,
-                          fontSize: 15,
+                          fontSize: 16,
+                          letterSpacing: -0.2,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -383,9 +390,9 @@ class _RankCard extends StatelessWidget {
                     if (entry.isPremium) ...[
                       const SizedBox(width: 6),
                       const ProBadge(
-                        fontSize: 8.5,
-                        horizontalPadding: 5,
-                        verticalPadding: 2.5,
+                        fontSize: 9,
+                        horizontalPadding: 6,
+                        verticalPadding: 3,
                         borderRadius: 4,
                       ),
                     ],
@@ -393,13 +400,13 @@ class _RankCard extends StatelessWidget {
                 ),
                 if (isCurrentUser)
                   Padding(
-                    padding: const EdgeInsets.only(top: 3.0),
+                    padding: const EdgeInsets.only(top: 4.0),
                     child: Text(
                       "Siz",
                       style: textTheme.labelSmall?.copyWith(
                         color: cs.primary,
                         fontWeight: FontWeight.w700,
-                        fontSize: 11,
+                        fontSize: 12,
                       ),
                     ),
                   ),
@@ -407,26 +414,27 @@ class _RankCard extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
 
-          // 4. Puan Bölümü - OKUNURLUK DÜZELTİLDİ
+          // 4. Puan Bölümü - Yumuşak ve göz yormayan renkler
           Container(
             constraints: const BoxConstraints(minWidth: 72),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              // Eski: cs.primaryContainer.withValues(alpha: 0.3) -> Okunması zordu.
-              // Yeni: Tam solid primaryContainer veya SurfaceVariant
-              color: cs.primaryContainer, // Alpha kaldırıldı, net zemin.
+              // Yumuşak, nötr zemin - göz yormayan
+              color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(12),
-              // Border kaldırıldı, solid renkte gerek yok.
+              border: Border.all(
+                color: cs.outlineVariant.withValues(alpha: 0.3),
+                width: 1,
+              ),
             ),
             child: Text(
               '${entry.score}',
               style: textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                // Eski: cs.primary -> Mavi üstüne mavi okunmuyordu.
-                // Yeni: onPrimaryContainer -> Mavi zemin üstüne en uygun kontrast (genelde koyu lacivert veya beyaz).
-                color: cs.onPrimaryContainer,
+                fontWeight: FontWeight.w800,
+                // Yumuşak, okunabilir metin rengi
+                color: cs.onSurface.withValues(alpha: 0.85),
                 fontSize: 15,
                 letterSpacing: 0.3,
               ),
@@ -448,24 +456,23 @@ class _RankBadge extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
 
-    // İkon boyutları biraz küçültüldü (28/26) ki dar alana sığsın
     if (rank == 1) {
       return const Icon(
         Icons.emoji_events_rounded,
         color: Color(0xFFFFD700),
-        size: 28,
+        size: 30,
       );
     } else if (rank == 2) {
       return const Icon(
         Icons.emoji_events_rounded,
         color: Color(0xFFC0C0C0),
-        size: 26,
+        size: 28,
       );
     } else if (rank == 3) {
       return const Icon(
         Icons.emoji_events_rounded,
         color: Color(0xFFCD7F32),
-        size: 26,
+        size: 28,
       );
     }
 
@@ -476,7 +483,7 @@ class _RankBadge extends StatelessWidget {
         style: textTheme.titleMedium?.copyWith(
           color: cs.onSurfaceVariant,
           fontWeight: FontWeight.w700,
-          fontSize: 15, // Font biraz küçültüldü
+          fontSize: 16,
         ),
         textAlign: TextAlign.center,
       ),
