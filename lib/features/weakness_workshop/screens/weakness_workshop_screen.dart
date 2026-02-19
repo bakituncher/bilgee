@@ -17,6 +17,7 @@ import 'package:uuid/uuid.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
+import 'package:taktik/features/quests/logic/tp_earned_notifier.dart';
 import 'package:taktik/features/weakness_workshop/logic/quiz_quality_guard.dart';
 import 'package:confetti/confetti.dart';
 import 'package:lottie/lottie.dart';
@@ -414,6 +415,8 @@ class _WeaknessWorkshopScreenState extends ConsumerState<WeaknessWorkshopScreen>
     });
 
     ref.read(questNotifierProvider.notifier).userCompletedWorkshopQuiz(material.subject, material.topic);
+    ref.read(firestoreServiceProvider).updateEngagementScore('', 15); // backend +15 TP
+    ref.read(tpEarnedProvider.notifier).show(15, 'Etüt Odası');
 
     setState(() => _currentStep = WorkshopStep.results);
   }
@@ -1407,6 +1410,7 @@ class _StudyViewState extends ConsumerState<_StudyView> {
             widget.material.subject,
             widget.material.topic,
           );
+          ref.read(tpEarnedProvider.notifier).show(10, 'Etüt Odası');
         }
       });
     }

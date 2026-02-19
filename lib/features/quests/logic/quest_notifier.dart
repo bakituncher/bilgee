@@ -156,9 +156,8 @@ class QuestNotifier extends StateNotifier<bool> {
       tags: ['workshop', 'discovery', 'review'],
     );
 
-    // Etüt odası quiz tamamlama: +15 TP
-    _addDirectPoints(15, featureLabel: 'Etüt Odası');
-
+    // Etüt odası quiz tamamlama için puan ve toast,
+    // weakness_workshop_screen.dart içinde doğrudan tetikleniyor.
     _updateUserFeatureUsage('workshop');
     if (kDebugMode) {
       debugPrint('[QuestNotifier] Atölye quizi tamamlandı - $subject/$topic');
@@ -185,9 +184,8 @@ class QuestNotifier extends StateNotifier<bool> {
       tags: ['workshop', 'discovery', 'review'],
     );
 
-    // Etüt odası konu çalışması: +10 TP
-    _addDirectPoints(10, featureLabel: 'Etüt Odası');
-
+    // Etüt odası konu çalışması için puan ve toast,
+    // weakness_workshop_screen.dart içinde doğrudan tetikleniyor.
     _updateUserFeatureUsage('workshop');
     if (kDebugMode) {
       debugPrint('[QuestNotifier] Etüt odası konu çalışması tamamlandı - $subject/$topic');
