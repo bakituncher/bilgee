@@ -13,6 +13,7 @@ import 'dart:ui';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:lottie/lottie.dart';
+import 'package:taktik/shared/widgets/pro_badge.dart';
 
 class ArenaScreen extends ConsumerStatefulWidget {
   const ArenaScreen({super.key});
@@ -393,15 +394,32 @@ class _CurrentUserCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    getUsernameDisplay(),
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                      fontSize: 13,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          getUsernameDisplay(),
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurface,
+                            fontSize: 13,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                      if (entry.isPremium) ...[
+                        const SizedBox(width: 6),
+                        const ProBadge(
+                          fontSize: 8,
+                          horizontalPadding: 5,
+                          verticalPadding: 2,
+                          borderRadius: 5,
+                          borderWidth: 0.8,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -522,15 +540,32 @@ class _RankCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      getUsernameDisplay(),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: cs.onSurface,
-                            fontSize: 13,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            getUsernameDisplay(),
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: cs.onSurface,
+                                  fontSize: 13,
+                                ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
+                        ),
+                        if (entry.isPremium) ...[
+                          const SizedBox(width: 6),
+                          const ProBadge(
+                            fontSize: 8,
+                            horizontalPadding: 5,
+                            verticalPadding: 2,
+                            borderRadius: 5,
+                            borderWidth: 0.8,
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 6),
                     Row(

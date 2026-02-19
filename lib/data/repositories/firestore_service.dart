@@ -1016,6 +1016,7 @@ class FirestoreService {
         testCount: ((m['testCount'] ?? 0) as num).toInt(),
         avatarStyle: m['avatarStyle'] as String?,
         avatarSeed: m['avatarSeed'] as String?,
+        isPremium: (m['isPremium'] as bool?) ?? false,
       );
     }).where((e) => e.userName.isNotEmpty).toList(growable: false);
   }
