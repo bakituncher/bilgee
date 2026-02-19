@@ -69,7 +69,7 @@ class _FAQScreenState extends State<FAQScreen> {
       FAQItem(
         question: "Hangi sınavlar destekleniyor?",
         answer:
-        "Taktik şu anda YKS (TYT-AYT), LGS, KPSS ve AGS sınavları için tam destek vermektedir. Müfredat ve konular düzenli olarak güncellenir.",
+        "Taktik şu anda YKS (TYT-AYT), LGS, KPSS, AGS ve DGS için tam destek vermektedir. Müfredat ve konular düzenli olarak güncellenir.",
       ),
       FAQItem(
         question: "İnternet olmadan kullanabilir miyim?",
