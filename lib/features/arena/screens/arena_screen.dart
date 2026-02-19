@@ -9,7 +9,6 @@ import 'package:go_router/go_router.dart';
 import 'package:taktik/core/navigation/app_routes.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:lottie/lottie.dart';
@@ -32,7 +31,6 @@ class _ArenaScreenState extends ConsumerState<ArenaScreen> {
         try {
           await ref.read(questNotifierProvider.notifier).userParticipatedInArena();
         } catch (e) {
-          // Quest hatası uygulamayı etkilemesin
           debugPrint('Arena quest error: $e');
         }
       }
@@ -73,26 +71,8 @@ class _ArenaScreenState extends ConsumerState<ArenaScreen> {
             labelStyle: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
             unselectedLabelStyle: textTheme.bodyLarge,
             tabs: const [
-              Tab(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    'Günlük Efsaneler',
-                    maxLines: 1,
-                    softWrap: false,
-                  ),
-                ),
-              ),
-              Tab(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    'Haftalık Efsaneler',
-                    maxLines: 1,
-                    softWrap: false,
-                  ),
-                ),
-              ),
+              Tab(text: 'Günlük Efsaneler'),
+              Tab(text: 'Haftalık Efsaneler'),
             ],
           ),
         ),
@@ -122,15 +102,17 @@ class _LeaderboardViewState extends ConsumerState<_LeaderboardView>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // AutomaticKeepAliveClientMixin için gerekli
+    super.build(context);
     final currentUserId = ref.watch(authControllerProvider).value?.uid;
     final currentUser = ref.watch(userProfileProvider).value;
     final currentUserExam = currentUser?.selectedExam;
 
     if (currentUserExam == null) return const SizedBox.shrink();
+
     final leaderboardAsync = widget.period == 'weekly'
         ? ref.watch(leaderboardWeeklyProvider(currentUserExam))
         : ref.watch(leaderboardDailyProvider(currentUserExam));
+
     final colorScheme = Theme.of(context).colorScheme;
 
     return RefreshIndicator(
@@ -146,86 +128,65 @@ class _LeaderboardViewState extends ConsumerState<_LeaderboardView>
         await Future.delayed(const Duration(milliseconds: 500));
       },
       child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              colorScheme.surface,
-              colorScheme.surface,
-            ],
-            stops: const [0.0, 0.7],
-          ),
-        ),
-        child: SafeArea(
-          top: false,
-          child: leaderboardAsync.when(
-            data: (entries) {
-              if (entries.isEmpty) return _buildEmptyState(context);
+        color: colorScheme.surface,
+        child: leaderboardAsync.when(
+          data: (entries) {
+            if (entries.isEmpty) return _buildEmptyState(context);
 
-              final fullList = entries;
-              final currentUserIndex =
-              fullList.indexWhere((e) => e.userId == currentUserId);
-              final currentUserEntry =
-              currentUserIndex != -1 ? fullList[currentUserIndex] : null;
-              final showCurrentUserAtBottom =
-                  currentUserEntry != null && currentUserIndex >= 20;
-              final topScore = fullList.isNotEmpty
-                  ? (fullList.first.score == 0 ? 1 : fullList.first.score)
-                  : 1;
+            final fullList = entries;
+            final currentUserIndex = fullList.indexWhere((e) => e.userId == currentUserId);
+            final currentUserEntry = currentUserIndex != -1 ? fullList[currentUserIndex] : null;
 
-              final displayList = fullList.take(20).toList();
-              final itemCount = displayList.length + (showCurrentUserAtBottom ? 1 : 0);
+            // Eğer kullanıcı ilk 20'de DEĞİLSE, aşağıda sticky card göster
+            final showStickyCard = currentUserEntry != null && currentUserIndex >= 20;
 
-               return ListView.builder(
-                 physics: const AlwaysScrollableScrollPhysics(),
-                 padding: const EdgeInsets.fromLTRB(14, 16, 14, 36),
-                 itemCount: itemCount,
-                 itemBuilder: (context, index) {
-                   if (showCurrentUserAtBottom && index == displayList.length) {
-                     return Padding(
-                       padding: const EdgeInsets.only(top: 20.0),
-                       child: _CurrentUserCard(entry: currentUserEntry),
-                     );
-                   }
+            final displayList = fullList.take(20).toList();
+            final itemCount = displayList.length;
 
-                   final listIndex = index;
-                   if (listIndex < 0 || listIndex >= displayList.length) {
-                     return const SizedBox.shrink();
-                   }
-
-                   final entry = displayList[listIndex];
-                   return GestureDetector(
-                     onTap: () {
-                       HapticFeedback.selectionClick();
-                       context.push('${AppRoutes.arena}/${entry.userId}');
-                     },
-                     child: Padding(
-                       padding: const EdgeInsets.only(bottom: 8.0),
-                       child: _RankCard(
-                         entry: entry,
-                         rank: entry.rank,
-                         isCurrentUser: entry.userId == currentUserId,
-                         topScore: topScore,
-                       )
-                           .animate()
-                           .fadeIn(
-                           duration: 350.ms,
-                           delay: (40 * (listIndex % 10)).ms)
-                           .slideX(
-                           begin: listIndex.isEven ? -0.06 : 0.06,
-                           end: 0,
-                           duration: 420.ms,
-                           curve: Curves.easeOutCubic),
-                     ),
-                   );
-                 },
-               );
-            },
-            loading: () => const LogoLoader(),
-            error: (err, stack) =>
-                Center(child: Text('Liderlik tablosu yüklenemedi: $err')),
-          ),
+            return Stack(
+              children: [
+                ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(
+                    12,
+                    16,
+                    12,
+                    showStickyCard ? 100 : 24,
+                  ),
+                  itemCount: itemCount,
+                  itemBuilder: (context, index) {
+                    final entry = displayList[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          context.push('${AppRoutes.arena}/${entry.userId}');
+                        },
+                        child: _RankCard(
+                          entry: entry,
+                          rank: entry.rank,
+                          isCurrentUser: entry.userId == currentUserId,
+                        )
+                            .animate()
+                            .fadeIn(duration: 350.ms, delay: (40 * (index % 10)).ms)
+                            .slideX(begin: 0.05, end: 0, duration: 400.ms, curve: Curves.easeOutCubic),
+                      ),
+                    );
+                  },
+                ),
+                if (showStickyCard)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: _StickyUserCard(entry: currentUserEntry),
+                  ),
+              ],
+            );
+          },
+          loading: () => const LogoLoader(),
+          error: (err, stack) => Center(child: Text('Hata oluştu: $err')),
         ),
       ),
     );
@@ -243,85 +204,29 @@ class _LeaderboardViewState extends ConsumerState<_LeaderboardView>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Lottie Animasyonu
-              Container(
-                width: 220,
-                height: 220,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      colorScheme.primary.withValues(alpha: 0.15),
-                      colorScheme.surface,
-                    ],
-                    stops: const [0.0, 1.0],
-                  ),
-                ),
-                child: Lottie.asset(
-                  'assets/lotties/Kart Flag Animation.json',
-                  fit: BoxFit.contain,
-                  repeat: true,
-                  animate: true,
-                ),
-              )
-                  .animate()
-                  .fadeIn(duration: 600.ms, delay: 100.ms)
-                  .scale(
-                    begin: const Offset(0.7, 0.7),
-                    end: const Offset(1.0, 1.0),
-                    duration: 700.ms,
-                    curve: Curves.easeOutBack,
-                  ),
-              const SizedBox(height: 32),
-
-              // Başlık
+              Lottie.asset(
+                'assets/lotties/Kart Flag Animation.json',
+                width: 200,
+                height: 200,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 24),
               Text(
                 'Arena Henüz Boş',
                 style: textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,
-                  letterSpacing: -0.5,
                 ),
                 textAlign: TextAlign.center,
-              )
-                  .animate()
-                  .fadeIn(duration: 500.ms, delay: 300.ms)
-                  .slideY(begin: 0.3, end: 0, duration: 500.ms, curve: Curves.easeOut),
-
-              const SizedBox(height: 16),
-
-              // Açıklama Metni
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Text(
-                  'İlk efsanelerden ol!',
-                  textAlign: TextAlign.center,
-                  style: textTheme.titleMedium?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              )
-                  .animate()
-                  .fadeIn(duration: 500.ms, delay: 400.ms)
-                  .slideY(begin: 0.3, end: 0, duration: 500.ms, curve: Curves.easeOut),
-
+              ),
               const SizedBox(height: 12),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  'Deneme ekleyerek veya Pomodoro seansları tamamlayarak Taktik Puanı kazan ve adını bu panteona yazdır!',
-                  textAlign: TextAlign.center,
-                  style: textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    height: 1.5,
-                  ),
+              Text(
+                'Taktik Puanı kazan ve adını bu panteona yazdır!',
+                textAlign: TextAlign.center,
+                style: textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
                 ),
-              )
-                  .animate()
-                  .fadeIn(duration: 500.ms, delay: 500.ms)
-                  .slideY(begin: 0.3, end: 0, duration: 500.ms, curve: Curves.easeOut),
+              ),
             ],
           ),
         ),
@@ -330,389 +235,250 @@ class _LeaderboardViewState extends ConsumerState<_LeaderboardView>
   }
 }
 
-class _CurrentUserCard extends StatelessWidget {
+/// Listenin altında sabit duran kullanıcı kartı
+class _StickyUserCard extends StatelessWidget {
   final LeaderboardEntry entry;
 
-  const _CurrentUserCard({required this.entry});
+  const _StickyUserCard({required this.entry});
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    // Kullanıcı adını snapshot verisinden çek (tutarlılık için)
-    String getUsernameDisplay() {
-      if (entry.username != null && entry.username!.trim().isNotEmpty) {
-        return '@${entry.username!.trim()}';
-      }
-      return '@user${entry.userId.substring(entry.userId.length - 6)}';
-    }
+    final cs = Theme.of(context).colorScheme;
 
     return Container(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
       decoration: BoxDecoration(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        color: colorScheme.primary.withValues(alpha: 0.12),
-        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.35)),
+        color: cs.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 16,
+            spreadRadius: 0,
+            offset: const Offset(0, -4),
+          )
+        ],
+        border: Border(
+          top: BorderSide(
+            color: cs.outlineVariant.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-        child: Column(
-          children: [
-            Text(
-              "Sizin Sıralamanız",
-              style: textTheme.labelLarge?.copyWith(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                _RankCapsule(rank: entry.rank),
-                const SizedBox(width: 10),
-                CircleAvatar(
-                  backgroundColor: colorScheme.primary.withValues(alpha: 0.18),
-                  radius: 20,
-                  child: ClipOval(
-                    child: (entry.avatarStyle != null && entry.avatarSeed != null)
-                        ? SvgPicture.network(
-                            'https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}',
-                            fit: BoxFit.cover,
-                          )
-                        : Center(
-                            child: Text(
-                              entry.username != null && entry.username!.isNotEmpty
-                                  ? entry.username!.substring(0, 1).toUpperCase()
-                                  : '?',
-                              style: textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          getUsernameDisplay(),
-                          style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.onSurface,
-                            fontSize: 13,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ),
-                      if (entry.isPremium) ...[
-                        const SizedBox(width: 6),
-                        const ProBadge(
-                          fontSize: 8,
-                          horizontalPadding: 5,
-                          verticalPadding: 2,
-                          borderRadius: 5,
-                          borderWidth: 0.8,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  '${entry.score} TP',
-                  style: textTheme.titleSmall?.copyWith(
-                    color: colorScheme.onSurface,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
-            ),
-          ],
+      child: SafeArea(
+        top: false,
+        child: _RankCard(
+          entry: entry,
+          rank: entry.rank,
+          isCurrentUser: true,
+          forceHighlight: true,
         ),
       ),
     );
   }
 }
 
-class _RankCapsule extends StatelessWidget {
-  final int rank;
-  const _RankCapsule({required this.rank});
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: cs.primary.withValues(alpha: 0.16),
-        border: Border.all(color: cs.primary.withValues(alpha: 0.4)),
-      ),
-      child: Text(
-        '#$rank',
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: cs.onSurface,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.3,
-            ),
-      ),
-    );
-  }
-}
-
-class _RankCard extends ConsumerWidget {
+class _RankCard extends StatelessWidget {
   final LeaderboardEntry entry;
   final int rank;
   final bool isCurrentUser;
-  final int topScore;
+  final bool forceHighlight;
 
   const _RankCard({
     required this.entry,
     required this.rank,
     required this.isCurrentUser,
-    required this.topScore,
+    this.forceHighlight = false,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final progress = topScore > 0 ? (entry.score / topScore).clamp(0.0, 1.0) : 0.0;
-    final currentUserId = ref.watch(authControllerProvider).value?.uid;
-    final isFollowingAsync = !isCurrentUser && currentUserId != null
-        ? ref.watch(isFollowingProvider(entry.userId))
-        : null;
+  Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
-    String getUsernameDisplay() {
-      if (entry.username != null && entry.username!.trim().isNotEmpty) {
-        return '@${entry.username!.trim()}';
-      }
-      return '@user${entry.userId.substring(entry.userId.length - 6)}';
-    }
+    // Kart Renkleri
+    final Color cardColor = (isCurrentUser || forceHighlight)
+        ? cs.primary.withValues(alpha: 0.08)
+        : cs.surfaceContainerLow;
 
-    return RepaintBoundary(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: cs.primary.withValues(alpha: 0.12),
-          border: Border.all(color: cs.primary.withValues(alpha: 0.35), width: 1),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              // Rank kapsülü tek tip
-              _RankCapsule(rank: rank),
-              const SizedBox(width: 12),
-              // Avatar
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: cs.primary.withValues(alpha: 0.18),
-                child: ClipOval(
-                  child: (entry.avatarStyle != null && entry.avatarSeed != null)
-                      ? SvgPicture.network(
-                          'https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}',
-                          fit: BoxFit.cover,
-                        )
-                      : Center(
-                          child: Text(
-                            entry.username != null && entry.username!.isNotEmpty
-                                ? entry.username!.substring(0, 1).toUpperCase()
-                                : '?',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: cs.onSurface,
-                                ),
-                          ),
-                        ),
+    final Color borderColor = (isCurrentUser || forceHighlight)
+        ? cs.primary.withValues(alpha: 0.4)
+        : Colors.transparent;
+
+    // Kullanıcı adı işleme
+    String username = entry.username?.trim() ?? '';
+    if (username.isEmpty) username = 'User ${entry.userId.substring(0, 4)}';
+    if (!username.startsWith('@')) username = '@$username';
+
+    return Container(
+      // Padding horizontal 10 -> 8 olarak düşürüldü (Daha sıkı görünüm)
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor, width: 1.5),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // 1. Sıralama Badge (Genişlik 32 -> 24'e düşürüldü)
+          SizedBox(
+            width: 24,
+            child: _RankBadge(rank: rank),
+          ),
+
+          // Boşluk 10 -> 8'e düşürüldü
+          const SizedBox(width: 8),
+
+          // 2. Avatar
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: cs.outlineVariant.withValues(alpha: 0.5),
+                width: 1.5,
+              ),
+            ),
+            child: ClipOval(
+              child: (entry.avatarStyle != null && entry.avatarSeed != null)
+                  ? SvgPicture.network(
+                'https://api.dicebear.com/9.x/${entry.avatarStyle}/svg?seed=${entry.avatarSeed}',
+                fit: BoxFit.cover,
+              )
+                  : Center(
+                child: Text(
+                  username.length > 1 ? username.substring(1, 2).toUpperCase() : '?',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: cs.onSurfaceVariant,
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
-              // Bilgiler
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          // 3. İsim ve Badge Bölümü
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            getUsernameDisplay(),
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: cs.onSurface,
-                                  fontSize: 13,
-                                ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
+                    Flexible(
+                      child: Text(
+                        username,
+                        style: textTheme.titleSmall?.copyWith(
+                          fontWeight: isCurrentUser ? FontWeight.w800 : FontWeight.w600,
+                          color: cs.onSurface,
+                          fontSize: 15,
                         ),
-                        if (entry.isPremium) ...[
-                          const SizedBox(width: 6),
-                          const ProBadge(
-                            fontSize: 8,
-                            horizontalPadding: 5,
-                            verticalPadding: 2,
-                            borderRadius: 5,
-                            borderWidth: 0.8,
-                          ),
-                        ],
-                      ],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(6),
-                            color: cs.primary.withValues(alpha: 0.18),
-                          ),
-                          child: Text(
-                            '${entry.score} TP',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: cs.onSurface,
-                                  letterSpacing: 0.4,
-                                ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Stack(
-                            children: [
-                              Container(
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(2),
-                                  color: cs.onSurface.withValues(alpha: 0.12),
-                                ),
-                              ),
-                              FractionallySizedBox(
-                                alignment: Alignment.centerLeft,
-                                widthFactor: progress,
-                                child: Container(
-                                  height: 4,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(2),
-                                    color: cs.primary, // doldurma
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                    if (entry.isPremium) ...[
+                      const SizedBox(width: 6),
+                      const ProBadge(
+                        fontSize: 8.5,
+                        horizontalPadding: 5,
+                        verticalPadding: 2.5,
+                        borderRadius: 4,
+                      ),
+                    ],
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              if (!isCurrentUser)
-                isFollowingAsync?.when(
-                      data: (isFollowing) => OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          side: BorderSide(
-                            color: cs.primary.withValues(alpha: isFollowing ? 0.8 : 0.35),
-                          ),
-                          foregroundColor: cs.onSurface,
-                          textStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                        onPressed: () async {
-                          if (currentUserId == null) return;
-                          HapticFeedback.lightImpact();
-                          try {
-                            final firestore = ref.read(firestoreServiceProvider);
-                            if (isFollowing) {
-                              await firestore.unfollowUser(
-                                currentUserId: currentUserId,
-                                targetUserId: entry.userId,
-                              );
-                            } else {
-                              await firestore.followUser(
-                                currentUserId: currentUserId,
-                                targetUserId: entry.userId,
-                              );
-                              // Başarılı takip bildirimi eklendi
-                              if (context.mounted) {
-                                final username = entry.username?.trim() ?? '';
-                                // 1. Önce varsa ekrandaki eski bildirimleri temizle (Seri basma sorunu çözümü)
-                                ScaffoldMessenger.of(context).clearSnackBars();
-
-                                // 2. Yeni ve şık bildirimi göster
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    // İçerik: İkon + Metin yan yana
-                                    content: Row(
-                                      children: [
-                                        const Icon(Icons.check_circle_rounded, color: Colors.white),
-                                        const SizedBox(width: 12), // İkon ile yazı arası boşluk
-                                        Expanded(
-                                          child: Text(
-                                            '${username.isNotEmpty ? "@$username" : "Kullanıcı"} takip edildi!',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w600, // Yazıyı biraz kalınlaştır
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    // Görünüm Ayarları
-                                    behavior: SnackBarBehavior.floating, // Alt tarafta havada asılı durur
-                                    backgroundColor: const Color(0xFF323232), // Koyu gri modern arka plan
-                                    elevation: 4, // Hafif gölge
-                                    margin: const EdgeInsets.all(16), // Kenarlardan boşluk bırakır
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12), // Kenarları yumuşat
-                                    ),
-                                    duration: const Duration(milliseconds: 1500), // 1.5 saniye (daha seri hissettirir)
-                                  ),
-                                );
-                              }
-                            }
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Hata: $e'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        },
-                        child: Text(isFollowing ? 'Takipte' : 'Takip Et'),
+                if (isCurrentUser)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 3.0),
+                    child: Text(
+                      "Siz",
+                      style: textTheme.labelSmall?.copyWith(
+                        color: cs.primary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
                       ),
-                      loading: () => const SizedBox(
-                        width: 60,
-                        height: 26,
-                        child: Center(
-                          child: SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
-                      ),
-                      error: (error, stack) => OutlinedButton(
-                        onPressed: () {},
-                        child: const Text('Takip'),
-                      ),
-                    ) ?? const SizedBox.shrink(),
-            ],
+                    ),
+                  ),
+              ],
+            ),
           ),
+
+          const SizedBox(width: 8),
+
+          // 4. Puan Bölümü - OKUNURLUK DÜZELTİLDİ
+          Container(
+            constraints: const BoxConstraints(minWidth: 72),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              // Eski: cs.primaryContainer.withValues(alpha: 0.3) -> Okunması zordu.
+              // Yeni: Tam solid primaryContainer veya SurfaceVariant
+              color: cs.primaryContainer, // Alpha kaldırıldı, net zemin.
+              borderRadius: BorderRadius.circular(12),
+              // Border kaldırıldı, solid renkte gerek yok.
+            ),
+            child: Text(
+              '${entry.score}',
+              style: textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w900,
+                // Eski: cs.primary -> Mavi üstüne mavi okunmuyordu.
+                // Yeni: onPrimaryContainer -> Mavi zemin üstüne en uygun kontrast (genelde koyu lacivert veya beyaz).
+                color: cs.onPrimaryContainer,
+                fontSize: 15,
+                letterSpacing: 0.3,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RankBadge extends StatelessWidget {
+  final int rank;
+  const _RankBadge({required this.rank});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+
+    // İkon boyutları biraz küçültüldü (28/26) ki dar alana sığsın
+    if (rank == 1) {
+      return const Icon(
+        Icons.emoji_events_rounded,
+        color: Color(0xFFFFD700),
+        size: 28,
+      );
+    } else if (rank == 2) {
+      return const Icon(
+        Icons.emoji_events_rounded,
+        color: Color(0xFFC0C0C0),
+        size: 26,
+      );
+    } else if (rank == 3) {
+      return const Icon(
+        Icons.emoji_events_rounded,
+        color: Color(0xFFCD7F32),
+        size: 26,
+      );
+    }
+
+    // Diğerleri için sayı - Ortalanmış
+    return Center(
+      child: Text(
+        '$rank',
+        style: textTheme.titleMedium?.copyWith(
+          color: cs.onSurfaceVariant,
+          fontWeight: FontWeight.w700,
+          fontSize: 15, // Font biraz küçültüldü
         ),
+        textAlign: TextAlign.center,
       ),
     );
   }
