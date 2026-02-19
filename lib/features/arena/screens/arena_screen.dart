@@ -416,30 +416,31 @@ class _RankCard extends StatelessWidget {
 
           const SizedBox(width: 12),
 
-          // 4. Puan Bölümü - Yumuşak ve göz yormayan renkler
-          Container(
-            constraints: const BoxConstraints(minWidth: 72),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              // Yumuşak, nötr zemin - göz yormayan
-              color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: cs.outlineVariant.withValues(alpha: 0.3),
-                width: 1,
+          // 4. Puan Bölümü - Kutusuz tasarım
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                '${entry.score}',
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: cs.onSurface,
+                  fontSize: 16,
+                  letterSpacing: 0.2,
+                ),
               ),
-            ),
-            child: Text(
-              '${entry.score}',
-              style: textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                // Yumuşak, okunabilir metin rengi
-                color: cs.onSurface.withValues(alpha: 0.85),
-                fontSize: 15,
-                letterSpacing: 0.3,
+              const SizedBox(width: 4),
+              Text(
+                'TP',
+                style: textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurfaceVariant,
+                  fontSize: 12,
+                ),
               ),
-              textAlign: TextAlign.center,
-            ),
+            ],
           ),
         ],
       ),
