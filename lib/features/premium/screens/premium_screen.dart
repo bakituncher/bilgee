@@ -56,12 +56,12 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     {
       'icon': Icons.calendar_month_rounded,
       'title': "Haftalık Plan",
-      'desc': "Taktik Tavşan senin için en verimli rotayı çizsin. Ne çalışacağım diye düşünme, Tavşan'ın planıyla hedefe odaklan!"
+      'desc': "Taktik Tavşan senin için en verimli rotayı çizsin. Ne çalışacağım diye düşünmek yerine hedefe odaklan!"
     },
     {
       'icon': Icons.account_tree_rounded,
       'title': "Zihin Haritaları",
-      'desc': "Konuların içinde kaybolma! Taktik Tavşan en karmaşık dersleri bile senin için tek bakışta çözeceğin bir haritaya dönüştürür."
+      'desc': "Konuların içinde kaybolma! Görsel zihin haritalarıyla konuları daha kolay öğren ve hatırla."
     },
     {
       'icon': Icons.bolt,
@@ -76,12 +76,12 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     {
       'icon': Icons.auto_stories_rounded,
       'title': "Koçun Taktik Tavşan",
-      'desc': "Sınav sadece bilgi değil, mental bir savaştır. Taktik Tavşan ile strateji geliştir ve motivasyonunu hep zirvede tut."
+      'desc': "Taktik Tavşan ile strateji geliştir, motivasyonunu hep zirvede tut."
     },
     {
       'icon': Icons.block_rounded,
       'title': "Reklamları Yok Et",
-      'desc': "Reklamları ve dikkat dağıtıcı her şeyi yok et. Sadece hedefinle senin arandaki engelleri kaldır."
+      'desc': "Reklamları ve dikkat dağıtıcı her şeyi yok et. Sadece dersine odaklan."
     },
   ];
 
