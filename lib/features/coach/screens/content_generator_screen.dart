@@ -237,7 +237,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                             Text(
                               state.capturedImages.isNotEmpty
                                   ? '${state.capturedImages.length} Sayfadan Üret'
-                                  : 'İçerik Üret',
+                                  : 'Dönüştür',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,

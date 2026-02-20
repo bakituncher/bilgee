@@ -336,7 +336,7 @@ class _BilgeAiAppState extends ConsumerState<BilgeAiApp> with WidgetsBindingObse
   }
 
   /// Premium rotaların tanımları
-  /// NOT: Soru Çözücü, Zihin Haritası, İçerik Üretici artık ücretsiz - listeden çıkarıldı
+  /// NOT: Soru Çözücü, Zihin Haritası, Dönüştürücü artık ücretsiz - listeden çıkarıldı
   static final Map<String, Map<String, dynamic>> _premiumRoutesMap = {
     '/ai-hub/weakness-workshop': {
       'title': 'Etüt Odası',

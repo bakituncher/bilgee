@@ -49,9 +49,9 @@ class _IntroScreenState extends ConsumerState<IntroScreen> {
       iconData: Icons.menu_book_rounded,
       color: const Color(0xFF8B5CF6), // Violet - Etüt rengi
     ),
-    // 5. Not Defteri (AiHubScreen referanslı)
+    // 5. Dönüştürücü (AiHubScreen referanslı)
     _IntroContent(
-      title: "Not Defteri",
+      title: "Dönüştürücü",
       description: "Ders notlarını veya kitap sayfalarını yükle; senin için anında özetler, bilgi kartları ve testler hazırlayayım. Verimli çalışmanın en teknolojik hali.",
       iconData: Icons.bolt,
       color: const Color(0xFF0EA5E9), // Sky - Teknoloji/Hız rengi

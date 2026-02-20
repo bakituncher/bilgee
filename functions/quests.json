@@ -86,7 +86,7 @@
   {
     "id": "daily_foc_01_content_create",
     "title": "Not Oluştur",
-    "description": "İçerik Üretici ile ders notlarınızı düzenleyin veya özet çıkartın. Notlarınızı hap bilgiye dönüştürün.",
+    "description": "Dönüştürücü ile ders notlarınızı düzenleyin veya özet çıkartın. Notlarınızı hap bilgiye dönüştürün.",
     "type": "daily",
     "category": "focus",
     "reward": 85,
@@ -187,7 +187,7 @@
   {
     "id": "daily_foc_04_content_summary",
     "title": "Konu Özeti Çıkar",
-    "description": "İçerik Üretici'yi kullanarak bir konunun özetini çıkarın. Ders notlarınızı hap bilgiye dönüştürün.",
+    "description": "Dönüştürücü kullanarak bir konunun özetini çıkarın. Ders notlarınızı hap bilgiye dönüştürün.",
     "type": "daily",
     "category": "focus",
     "reward": 100,
@@ -253,7 +253,7 @@
   {
     "id": "daily_foc_07_study_cards",
     "title": "Çalışma Kartı Oluştur",
-    "description": "İçerik Üretici ile çalışma kartları oluşturun. Ezber konularını kolayca öğrenin!",
+    "description": "Dönüştürücü ile çalışma kartları oluşturun. Ezber konularını kolayca öğrenin!",
     "type": "daily",
     "category": "focus",
     "reward": 90,

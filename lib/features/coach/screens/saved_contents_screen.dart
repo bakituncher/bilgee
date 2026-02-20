@@ -144,7 +144,7 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'İçerik üretici ile oluşturduğun içerikleri\nburadan kaydedebilirsin.',
+              'Dönüştürücü ile oluşturduğun içerikleri\nburadan kaydedebilirsin.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,

@@ -410,7 +410,7 @@ class QuestNotifier extends StateNotifier<bool> {
       tags: ['content', 'notes', 'study'],
     );
     // Not defteri kullanımı: +10 TP
-    _addDirectPoints(10, featureLabel: 'Not Defteri');
+    _addDirectPoints(10, featureLabel: 'Dönüştürücü');
     _updateUserFeatureUsage('contentGenerator');
   }
 

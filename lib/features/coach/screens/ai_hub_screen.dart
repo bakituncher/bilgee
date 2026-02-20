@@ -89,7 +89,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
         ),
         TutorialStep(
           highlightKey: _notebookKey,
-          title: "Akıllı Not Defteri",
+          title: "Dönüştürücü",
           text: "PDF veya ders notlarını yükle, Taktik saniyeler içinde sana bilgi kartları ve özetler hazırlasın. Çalışmanı verimli hale getir!",
           buttonText: "Süper",
         ),
@@ -222,7 +222,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                       theme: theme,
                       icon: Icons.bolt,
                       color: const Color(0xFF0EA5E9),
-                      title: "Not Defteri",
+                      title: "Dönüştürücü",
                       description: "PDF veya görsel yükle, Taktik bilgi kartları, soru kartları veya özet üretsin.",
                     ),
                   ],
@@ -326,8 +326,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            // --- BENTO GRID ---
-            // Satır 1 - Mentör (Taktik Tavşan) ve Not Defteri
+
             Row(
               children: [
                 Expanded(

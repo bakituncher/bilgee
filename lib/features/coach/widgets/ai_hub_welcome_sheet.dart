@@ -231,7 +231,7 @@ class _AiHubWelcomeSheetState extends ConsumerState<AiHubWelcomeSheet>
                     Expanded(
                       child: _FeatureItem(
                         icon: Icons.bolt,
-                        title: 'Not Defteri',
+                        title: 'Dönüştürücü',
                         color: const Color(0xFF0EA5E9),
                         textColor: textPrimary,
                         subtitleColor: textSecondary,

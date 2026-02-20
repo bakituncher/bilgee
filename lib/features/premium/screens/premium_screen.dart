@@ -65,7 +65,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> with TickerProvid
     },
     {
       'icon': Icons.bolt,
-      'title': "Not Defteri",
+      'title': "Dönüştürücü",
       'desc': "Notlarını yükle; Taktik senin için saniyeler içinde özetler, bilgi kartları ve çalışma soruları çıkarsın."
     },
     {
@@ -1311,7 +1311,7 @@ class _ComparisonBottomSheet extends StatelessWidget {
                         pro: true,
                       ),
                       _buildFeatureRow(
-                        "Not Defteri",
+                        "Dönüştürücü",
                         free: "3 hak/gün",
                         pro: true,
                       ),

@@ -24,7 +24,7 @@ class _FAQScreenState extends State<FAQScreen> {
       FAQItem(
         question: "Taktik ücretli mi?",
         answer:
-        "Hayır, Taktik'i indirmek ve kullanmak ücretsizdir. Sınav sayaçları, konu takip çizelgeleri, pomodoro, deneme analizleri ve soru kutusu gibi daha sayamadığımız temel özelliklerin tamamı herkese açıktır. Ayrıca her gün yenilenen belirli sayıda ücretsiz 'Soru Çözücü' ve 'Akıllı Not Defteri' kullanım hakkınız bulunur.",
+        "Hayır, Taktik'i indirmek ve kullanmak ücretsizdir. Sınav sayaçları, konu takip çizelgeleri, pomodoro, deneme analizleri ve soru kutusu gibi daha sayamadığımız temel özelliklerin tamamı herkese açıktır. Ayrıca her gün yenilenen belirli sayıda ücretsiz 'Soru Çözücü' ve 'Dönüştürücü' kullanım hakkınız bulunur.",
       ),
 
       // --- TABLOLU SORU ---
