@@ -12,7 +12,7 @@ class _MilestoneInfo {
   final String subtitle;
   final String message;
   final Color accentColor;
-  final IconData badgeIcon;
+  final List<Color> gradient;
 
   const _MilestoneInfo({
     required this.emoji,
@@ -20,7 +20,7 @@ class _MilestoneInfo {
     required this.subtitle,
     required this.message,
     required this.accentColor,
-    required this.badgeIcon,
+    required this.gradient,
   });
 }
 
@@ -28,147 +28,147 @@ _MilestoneInfo _getMilestoneInfo(int streak) {
   switch (streak) {
     case 1:
       return const _MilestoneInfo(
-        emoji: '🔥',
-        title: 'İlk Adım Atıldı!',
-        subtitle: '1 Günlük Seri',
-        message: 'Her büyük başarı bir ilk adımla başlar. Yarın da burada olmayı unutma.',
-        accentColor: Color(0xFF22D3EE), // cyan
-        badgeIcon: Icons.local_fire_department_rounded,
+        emoji: '🌱',
+        title: 'Tohum Atıldı!',
+        subtitle: 'Yolculuğun İlk Günü',
+        message: 'Büyük değişimler tek bir kararla başlar. Bugün o kararı verdin, harikasın!',
+        accentColor: Color(0xFF22D3EE),
+        gradient: [Color(0xFF0891B2), Color(0xFF22D3EE)],
       );
     case 2:
       return const _MilestoneInfo(
         emoji: '⚡',
-        title: 'Momentum Başlıyor!',
+        title: 'Kıvılcım Çıktı!',
         subtitle: '2 Günlük Seri',
-        message: 'İki gün üst üste. Alışkanlık oluşmaya başladı — sınav gününe kadar bırakma.',
-        accentColor: Color(0xFF34D399), // emerald
-        badgeIcon: Icons.bolt_rounded,
+        message: 'Dün geldin, bugün de buradasın. Momentum kazanmaya başladın bile!',
+        accentColor: Color(0xFF34D399),
+        gradient: [Color(0xFF059669), Color(0xFF34D399)],
       );
     case 3:
       return const _MilestoneInfo(
-        emoji: '🌟',
-        title: '3 Gün Kesintisiz!',
+        emoji: '🔥',
+        title: 'Alev Alıyor!',
         subtitle: '3 Günlük Seri',
-        message: 'Üç gün disiplin, farkı yaratmaya yeter. Şimdi soru sormaya devam et.',
-        accentColor: Color(0xFF34D399), // emerald
-        badgeIcon: Icons.star_rounded,
+        message: 'Üç gün üst üste! Artık sadece bir heves olmadığını kanıtlıyorsun.',
+        accentColor: Color(0xFFFB923C),
+        gradient: [Color(0xFFEA580C), Color(0xFFFB923C)],
       );
     case 5:
       return const _MilestoneInfo(
         emoji: '🏅',
-        title: '5 Günlük Bronz!',
-        subtitle: 'Küçük Seri Madalyası',
-        message: 'Beş gün devam ettin. Rakiplerin dinlenirken sen çalışmaya devam ediyorsun.',
+        title: 'Beşlik Çak!',
+        subtitle: '5 Günlük Bronz Seri',
+        message: 'Hafta içini devirdin. Rakiplerin yorulurken sen hala sahadasın!',
         accentColor: Color(0xFFCD7F32),
-        badgeIcon: Icons.military_tech_rounded,
+        gradient: [Color(0xFF92400E), Color(0xFFCD7F32)],
       );
     case 7:
       return const _MilestoneInfo(
         emoji: '🥈',
-        title: '1 Tam Hafta!',
-        subtitle: 'Haftalık Seri Madalyası',
-        message: 'Bir haftayı eksiksiz tamamladın. Bu tutarlılık seni sıralamada yukarı taşır.',
+        title: 'Haftanın Galibi!',
+        subtitle: '7 Günlük Gümüş Seri',
+        message: 'Tam bir hafta! Bu disiplinle aşamayacağın hiçbir engel yok.',
         accentColor: Color(0xFF94A3B8),
-        badgeIcon: Icons.emoji_events_rounded,
+        gradient: [Color(0xFF475569), Color(0xFF94A3B8)],
       );
     case 10:
       return const _MilestoneInfo(
         emoji: '💎',
-        title: '10 Gün Elmas Seri!',
-        subtitle: '10 Günlük Elmas Madalya',
-        message: '10 günde kazandığın alışkanlık, sınav günü seni rahatlatacak. Harika gidiyorsun!',
-        accentColor: Color(0xFF22D3EE), // cyan
-        badgeIcon: Icons.diamond_rounded,
+        title: 'On Numara İlerleme!',
+        subtitle: '10 Günlük Elmas Seri',
+        message: 'Çift hanelere ulaştın! Çalışma düzenin bir elmas gibi parlıyor.',
+        accentColor: Color(0xFF38BDF8),
+        gradient: [Color(0xFF0284C7), Color(0xFF38BDF8)],
       );
     case 14:
       return const _MilestoneInfo(
         emoji: '🚀',
-        title: '2 Hafta Roket Hızı!',
+        title: 'Roket Modu!',
         subtitle: '14 Günlük Seri',
-        message: 'İki haftadır her gün buradaydın. Artık bu bir alışkanlık değil, bir yaşam biçimi.',
-        accentColor: Color(0xFF8B5CF6),
-        badgeIcon: Icons.rocket_launch_rounded,
+        message: 'İki haftadır her gün! Artık seni durdurmak imkansıza yakın.',
+        accentColor: Color(0xFF818CF8),
+        gradient: [Color(0xFF4F46E5), Color(0xFF818CF8)],
       );
     case 21:
       return const _MilestoneInfo(
         emoji: '🧠',
-        title: 'Alışkanlık Kilidi Açıldı!',
+        title: 'Zihin Ustası!',
         subtitle: '21 Günlük Seri',
-        message: 'Bilim insanları 21 günün yeni bir alışkanlık oluşturmak için yeterli olduğunu söylüyor. Sen başardın!',
+        message: 'Bilim der ki; bir alışkanlık 21 günde oluşur. Tebrikler, sen artık bir "çalışkansın"!',
         accentColor: Color(0xFF3B82F6),
-        badgeIcon: Icons.psychology_rounded,
+        gradient: [Color(0xFF1D4ED8), Color(0xFF3B82F6)],
       );
     case 30:
       return const _MilestoneInfo(
         emoji: '🥇',
-        title: 'Bir Ay Altın Seri!',
-        subtitle: '30 Günlük Altın Madalya',
-        message: 'Bir ay boyunca her gün çalıştın. Sınav sonuçları bu tutarsızlığı asla unutmayacak.',
-        accentColor: Color(0xFFFFB020), // gold
-        badgeIcon: Icons.workspace_premium_rounded,
+        title: 'Altın Ay!',
+        subtitle: '30 Günlük Altın Seri',
+        message: 'Dile kolay, tam bir ay! Sınavı kazananlar işte bu 30 günlük disiplinden çıkıyor.',
+        accentColor: Color(0xFFFFB020),
+        gradient: [Color(0xFFB45309), Color(0xFFFFB020)],
       );
     case 50:
       return const _MilestoneInfo(
         emoji: '🏆',
-        title: 'Efsane 50 Gün!',
-        subtitle: '50 Günlük Efsane Serisi',
-        message: '50 gün! Artık sen ortalama bir öğrenci değilsin. Hedefe bu inançla ulaşırsın.',
-        accentColor: Color(0xFFFF6B35),
-        badgeIcon: Icons.emoji_events_rounded,
+        title: 'Yolun Yarısı!',
+        subtitle: '50 Günlük Efsane Seri',
+        message: '50 gün boyunca pes etmedin. Sen artık diğer öğrencilerin ilham kaynağısın!',
+        accentColor: Color(0xFFF43F5E),
+        gradient: [Color(0xFFBE123C), Color(0xFFF43F5E)],
       );
     case 75:
       return const _MilestoneInfo(
         emoji: '👑',
-        title: '75 Gün Taç!',
-        subtitle: '75 Günlük Şampiyon Serisi',
-        message: '75 günlük özveri — bu kararlılık seni sıralamada çok yukarılara taşır. Dur.',
-        accentColor: Color(0xFFE91E63),
-        badgeIcon: Icons.military_tech_rounded,
+        title: 'Krallara Layık!',
+        subtitle: '75 Günlük Şampiyon Seri',
+        message: '75 gündür her sabah bu amaçla uyanıyorsun. Başarı seni bekliyor, durma!',
+        accentColor: Color(0xFFA855F7),
+        gradient: [Color(0xFF7E22CE), Color(0xFFA855F7)],
       );
     case 100:
       return const _MilestoneInfo(
         emoji: '💯',
-        title: '100 Gün Tam Not!',
-        subtitle: '100 Günlük Yüzde Yüz Serisi',
-        message: '100 gün! Bu artık çalışkanlık değil, karakter. Sınav günü bu gücü hissedeceksin.',
-        accentColor: Color(0xFFFFB020), // gold
-        badgeIcon: Icons.star_rounded,
+        title: 'Dalya Dedik!',
+        subtitle: '100 Günlük Kusursuz Seri',
+        message: '100 GÜN! Bu artık bir seri değil, bir karakter meselesi. Sen gerçek bir şampiyonsun.',
+        accentColor: Color(0xFFF59E0B),
+        gradient: [Color(0xFFD97706), Color(0xFFF59E0B)],
       );
     case 150:
       return const _MilestoneInfo(
         emoji: '🌈',
-        title: '150 Gün Gökkuşağı!',
+        title: 'Gökkuşağı Etkisi!',
         subtitle: '150 Günlük Eşsiz Seri',
-        message: 'Yarım yılı aşkın bir süre boyunca her gün. Bu özveri herkese nasip olmaz.',
-        accentColor: Color(0xFF00897B),
-        badgeIcon: Icons.auto_awesome_rounded,
+        message: 'Yarım yılı devirmek üzeresin. Kararlılığın karşısında tüm zorluklar eğiliyor.',
+        accentColor: Color(0xFF10B981),
+        gradient: [Color(0xFF047857), Color(0xFF10B981)],
       );
     case 200:
       return const _MilestoneInfo(
         emoji: '⭐',
-        title: '200 Gün Yıldız!',
-        subtitle: '200 Günlük Süper Seri',
-        message: '200 günde öğrendiğin disiplin, hayatın geri kalanında işine yarayacak. Bir yıldızsın.',
-        accentColor: Color(0xFF7B1FA2),
-        badgeIcon: Icons.star_rate_rounded,
+        title: 'Süper Nova!',
+        subtitle: '200 Günlük Yıldız Seri',
+        message: '200 gün... Seninle gurur duyuyoruz. Bu azim seni hayallerindeki o bölüme götürecek.',
+        accentColor: Color(0xFFEC4899),
+        gradient: [Color(0xFFBE185D), Color(0xFFEC4899)],
       );
     case 365:
       return const _MilestoneInfo(
         emoji: '🎓',
-        title: 'Tam Bir Yıl! Mezun!',
-        subtitle: '365 Günlük Efsanevi Seri',
-        message: 'Bir yıl boyunca her gün. Bu başarı tarihe geçiyor. Sen zaten kazandın.',
-        accentColor: AppTheme.secondaryBrandColor, // cyan
-        badgeIcon: Icons.school_rounded,
+        title: 'Efsanevi Yıl!',
+        subtitle: '365 Günlük Tarihi Seri',
+        message: 'Tam 1 yıl! Sen sadece sınavı değil, kendi sınırlarını da kazandın. Efsanesin!',
+        accentColor: Color(0xFF6366F1),
+        gradient: [Color(0xFF4338CA), Color(0xFF6366F1)],
       );
     default:
       return _MilestoneInfo(
         emoji: '🔥',
-        title: '$streak Günlük Seri!',
-        subtitle: '$streak Günlük Çalışma Serisi',
-        message: '$streak gün boyunca her gün buradaydın. Bu kararlılık seni öne taşır.',
+        title: 'Harika Gidiyorsun!',
+        subtitle: '$streak Günlük Seri',
+        message: 'Her gün üstüne koyarak ilerliyorsun. Bu kararlılık seni zirveye taşıyacak.',
         accentColor: AppTheme.secondaryBrandColor,
-        badgeIcon: Icons.local_fire_department_rounded,
+        gradient: [const Color(0xFF0F172A), AppTheme.secondaryBrandColor],
       );
   }
 }
@@ -188,7 +188,7 @@ class _StreakMilestoneOverlayState extends ConsumerState<StreakMilestoneOverlay>
   void initState() {
     super.initState();
     _confettiController = ConfettiController(duration: const Duration(seconds: 4));
-    Future.delayed(const Duration(milliseconds: 400), () {
+    Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) _confettiController.play();
     });
   }
@@ -207,274 +207,224 @@ class _StreakMilestoneOverlayState extends ConsumerState<StreakMilestoneOverlay>
   Widget build(BuildContext context) {
     final info = _getMilestoneInfo(widget.streak);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    // Arka plan renkleri uygulamanın slate paletinden
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final surfaceBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9);
 
     return Stack(
       alignment: Alignment.center,
       children: [
-        // Arkaplan overlay
+        // 1. Derinlik: Karartılmış Arka Plan
         GestureDetector(
           onTap: _dismiss,
           child: Container(
-            color: Colors.black.withValues(alpha: 0.75),
+            color: Colors.black.withValues(alpha: 0.85),
             width: double.infinity,
             height: double.infinity,
           ),
-        ).animate().fadeIn(duration: 250.ms),
+        ).animate().fadeIn(duration: 400.ms),
 
-        // Konfeti
+        // 2. Derinlik: Arka Plan Işığı (Glow)
+        IgnorePointer(
+          child: Container(
+            width: 300,
+            height: 300,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: info.accentColor.withValues(alpha: 0.15),
+            ),
+          ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(
+            begin: const Offset(1, 1),
+            end: const Offset(1.4, 1.4),
+            duration: 2.seconds,
+            curve: Curves.easeInOut,
+          ),
+        ),
+
+        // 3. Derinlik: Konfeti
         Positioned(
-          top: 0,
+          top: -50,
           child: ConfettiWidget(
             confettiController: _confettiController,
             blastDirectionality: BlastDirectionality.explosive,
             shouldLoop: false,
-            numberOfParticles: 40,
-            gravity: 0.15,
-            emissionFrequency: 0.04,
-            colors: [
-              info.accentColor,
-              AppTheme.secondaryBrandColor,
-              AppTheme.goldBrandColor,
-              AppTheme.successBrandColor,
-              Colors.white,
-            ],
+            numberOfParticles: 50,
+            gravity: 0.1,
+            colors: [...info.gradient, Colors.white],
           ),
         ),
 
-        // Ana kart
+        // 4. Derinlik: Ana Kart
         Center(
           child: Material(
             color: Colors.transparent,
             child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 28),
+              margin: const EdgeInsets.symmetric(horizontal: 30),
+              width: double.infinity,
               decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: info.accentColor.withValues(alpha: 0.4),
-                  width: 1.5,
-                ),
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.circular(32),
                 boxShadow: [
                   BoxShadow(
-                    color: info.accentColor.withValues(alpha: 0.25),
-                    blurRadius: 40,
-                    spreadRadius: 2,
-                    offset: const Offset(0, 8),
+                    color: info.accentColor.withValues(alpha: 0.3),
+                    blurRadius: 50,
+                    spreadRadius: 5,
                   ),
                 ],
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Üst renkli şerit
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          info.accentColor.withValues(alpha: 0.15),
-                          info.accentColor.withValues(alpha: 0.05),
-                        ],
-                      ),
-                    ),
-                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-                    child: Column(
-                      children: [
-                        // Büyük emoji + badge ikonu birlikte
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Container(
-                              width: 88,
-                              height: 88,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: info.accentColor.withValues(alpha: 0.12),
-                                border: Border.all(
-                                  color: info.accentColor.withValues(alpha: 0.3),
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                            Text(
-                              info.emoji,
-                              style: const TextStyle(fontSize: 52),
-                            ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Kart Başlığı (Gradient alan)
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            info.gradient[0].withValues(alpha: 0.8),
+                            info.gradient[1].withValues(alpha: 0.9),
                           ],
-                        )
-                            .animate()
-                            .scale(
-                              begin: const Offset(0.3, 0.3),
-                              end: const Offset(1.0, 1.0),
-                              duration: 600.ms,
-                              curve: Curves.elasticOut,
-                            ),
-                        const SizedBox(height: 16),
-
-                        // Streak badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: info.accentColor,
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      child: Column(
+                        children: [
+                          // Emoji ve Halo Efekti
+                          Stack(
+                            alignment: Alignment.center,
                             children: [
-                              Icon(
-                                Icons.local_fire_department_rounded,
-                                color: Colors.white,
-                                size: 16,
+                              Container(
+                                width: 110,
+                                height: 110,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                ),
+                              ).animate().scale(
+                                duration: 1.seconds,
+                                curve: Curves.elasticOut,
                               ),
-                              const SizedBox(width: 5),
                               Text(
-                                '${widget.streak} Günlük Seri',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  fontFamily: 'Montserrat',
-                                  letterSpacing: 0.3,
-                                ),
-                              ),
+                                info.emoji,
+                                style: const TextStyle(fontSize: 60),
+                              ).animate().shake(delay: 500.ms),
                             ],
                           ),
-                        ).animate().fadeIn(delay: 300.ms, duration: 350.ms),
-                      ],
-                    ),
-                  ),
-
-                  // Alt içerik
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-                    child: Column(
-                      children: [
-                        // Başlık
-                        Text(
-                          info.title,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
-                            fontFamily: 'Montserrat',
-                            letterSpacing: -0.5,
-                          ),
-                          textAlign: TextAlign.center,
-                        ).animate().fadeIn(delay: 400.ms, duration: 350.ms),
-
-                        const SizedBox(height: 10),
-
-                        // Alt başlık (subtitle)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: surfaceBg,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            info.subtitle,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: info.accentColor,
-                              fontFamily: 'Montserrat',
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ).animate().fadeIn(delay: 450.ms, duration: 350.ms),
-
-                        const SizedBox(height: 14),
-
-                        // Açıklama mesajı — ince ayraçla ayrılmış
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: surfaceBg,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isDark
-                                  ? const Color(0xFF334155)
-                                  : const Color(0xFFE2E8F0),
-                            ),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(
-                                Icons.format_quote_rounded,
-                                color: info.accentColor,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  info.message,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: isDark
-                                        ? const Color(0xFF94A3B8)
-                                        : const Color(0xFF64748B),
-                                    height: 1.55,
-                                    fontFamily: 'Montserrat',
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                          const SizedBox(height: 20),
+                          // Rozet (Badge)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 10,
                                 ),
-                              ),
-                            ],
-                          ),
-                        ).animate().fadeIn(delay: 500.ms, duration: 350.ms),
-
-                        const SizedBox(height: 20),
-
-                        // Devam butonu — uygulamanın standart button stili
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: _dismiss,
-                            icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                            label: const Text(
-                              'Çalışmaya Devam Et',
+                              ],
+                            ),
+                            child: Text(
+                              info.subtitle.toUpperCase(),
                               style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
+                                color: info.gradient[0],
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.2,
                                 fontFamily: 'Montserrat',
                               ),
                             ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: info.accentColor,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              elevation: 0,
-                            ),
-                          ),
-                        ).animate().fadeIn(delay: 620.ms, duration: 350.ms),
-                      ],
+                          ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.5, end: 0),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+
+                    // Kart İçeriği
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(30, 24, 30, 32),
+                      child: Column(
+                        children: [
+                          Text(
+                            info.title,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              fontFamily: 'Montserrat',
+                            ),
+                          ).animate().fadeIn(delay: 600.ms),
+                          const SizedBox(height: 12),
+                          Text(
+                            info.message,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 15,
+                              height: 1.5,
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.7)
+                                  : const Color(0xFF64748B),
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ).animate().fadeIn(delay: 800.ms),
+                          const SizedBox(height: 32),
+
+                          // Şık Devam Butonu
+                          Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              gradient: LinearGradient(colors: info.gradient),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: info.accentColor.withValues(alpha: 0.4),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: _dismiss,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                shadowColor: Colors.transparent,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: const Text(
+                                'HARİKA, DEVAM ET!',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  fontFamily: 'Montserrat',
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ),
+                          ).animate().fadeIn(delay: 1.seconds).scale(
+                            begin: const Offset(0.9, 0.9),
+                            end: const Offset(1, 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        )
-            .animate()
-            .scale(
-              begin: const Offset(0.85, 0.85),
-              end: const Offset(1.0, 1.0),
-              duration: 400.ms,
-              curve: Curves.easeOutBack,
-            )
-            .fadeIn(duration: 300.ms),
+        ).animate().scale(
+          begin: const Offset(0.7, 0.7),
+          end: const Offset(1.0, 1.0),
+          duration: 500.ms,
+          curve: Curves.easeOutBack,
+        ),
       ],
     );
   }
