@@ -1,4 +1,4 @@
-const { onCall } = require("firebase-functions/v2/https");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const { logger } = require("firebase-functions");
 const { db } = require("./init");
@@ -359,9 +359,117 @@ const getServerTime = onCall({ region: "us-central1" }, async (request) => {
   };
 });
 
+// Streak milestone değerleri - bu günlerde kullanıcıya bildirim gösterilir
+const STREAK_MILESTONES = [1, 2, 3, 5, 7, 10, 14, 21, 30, 50, 75, 100, 150, 200, 365];
+
+/**
+ * Kullanıcı uygulamaya her girdiğinde çağrılan login-based streak fonksiyonu.
+ * Günde bir kez streak'i artırır ve milestone kontrolü yapar.
+ * Dönüş: { streak, previousStreak, isMilestone, milestoneEmoji, milestoneMessage, isNewDay }
+ */
+const recordLoginStreak = onCall({
+  region: "us-central1",
+  enforceAppCheck: true,
+  timeoutSeconds: 20,
+  maxInstances: 30,
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Oturum gerekli");
+  }
+
+  const uid = request.auth.uid;
+  const ip = getClientIpFromRawRequest(request.rawRequest) || "unknown";
+
+  // Rate limit: günde makul miktarda çağrı (uygulama aç/kapa sıklığı)
+  await enforceRateLimit(`login_streak_uid_${uid}`, 60, 20);
+
+  const userRef = db.collection("users").doc(uid);
+  const statsRef = userRef.collection("state").doc("stats");
+
+  let result = null;
+
+  await db.runTransaction(async (tx) => {
+    const [uSnap, sSnap] = await Promise.all([
+      tx.get(userRef),
+      tx.get(statsRef),
+    ]);
+
+    if (!uSnap.exists) throw new HttpsError("failed-precondition", "Kullanıcı yok");
+
+    const stats = sSnap.exists ? (sSnap.data() || {}) : {};
+    const lastTs = stats.lastStreakUpdate;
+    const currentStreak = typeof stats.streak === "number" ? stats.streak : 0;
+
+    const now = nowIstanbul();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Bugün zaten streak güncellendiyse hiçbir şey yapma
+    if (lastTs && typeof lastTs.toDate === "function") {
+      const lastDate = lastTs.toDate();
+      const lastDay = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
+      if (lastDay.getTime() === today.getTime()) {
+        // Bugün zaten girilmiş, değişiklik yok
+        result = {
+          streak: currentStreak,
+          previousStreak: currentStreak,
+          isMilestone: false,
+          isNewDay: false,
+        };
+        return;
+      }
+    }
+
+    // Yeni gün - streak hesapla
+    let newStreak = 1;
+    if (lastTs && typeof lastTs.toDate === "function") {
+      const lastDate = lastTs.toDate();
+      const lastDay = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      if (lastDay.getTime() === yesterday.getTime()) {
+        // Dün girmişti, seri devam ediyor
+        newStreak = currentStreak + 1;
+      } else {
+        // 2+ gün ara verdi, sıfırla
+        newStreak = 1;
+      }
+    }
+
+    // Milestone kontrolü
+    const isMilestone = STREAK_MILESTONES.includes(newStreak);
+
+    // Stats güncelle
+    tx.set(statsRef, {
+      streak: newStreak,
+      lastStreakUpdate: admin.firestore.Timestamp.fromDate(today),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    result = {
+      streak: newStreak,
+      previousStreak: currentStreak,
+      isMilestone,
+      isNewDay: true,
+    };
+  });
+
+  // Public profile'ı güncelle (streak senkronizasyonu)
+  if (result && result.isNewDay) {
+    try {
+      const { updatePublicProfile } = require("./profile");
+      await updatePublicProfile(uid);
+    } catch (e) {
+      logger.warn("[recordLoginStreak] updatePublicProfile failed", { uid, error: String(e) });
+    }
+  }
+
+  return result;
+});
+
 module.exports = {
   computeInactivityHours,
   processAudienceInBatches,
   deleteUserAccount,
   getServerTime,
+  recordLoginStreak,
 };

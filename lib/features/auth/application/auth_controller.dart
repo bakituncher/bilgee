@@ -10,6 +10,7 @@ import 'package:taktik/features/quests/logic/quest_notifier.dart';
 import 'package:flutter/foundation.dart'; // kDebugMode ve debugPrint için
 import '../../../shared/notifications/notification_service.dart';
 import '../../../core/services/revenuecat_service.dart'; // RevenueCat Service
+import '../../../shared/streak/streak_milestone_notifier.dart';
 
 final authControllerProvider = StreamNotifierProvider<AuthController, User?>(() {
   return AuthController();
@@ -126,6 +127,27 @@ class AuthController extends StreamNotifier<User?> {
           }
         } catch (e) {
           print("Quest update on auth change failed (safe to ignore on startup): $e");
+        }
+      });
+
+      // --- LOGIN STREAK: Her gün ilk girişte streak güncelle ---
+      Future.delayed(const Duration(seconds: 3), () async {
+        try {
+          if (!state.hasValue) return;
+          final callable = FirebaseFunctions.instanceFor(region: 'us-central1')
+              .httpsCallable('users-recordLoginStreak');
+          final result = await callable.call();
+          final data = result.data as Map<String, dynamic>?;
+          if (data != null && data['isMilestone'] == true && data['isNewDay'] == true) {
+            final streak = (data['streak'] as num?)?.toInt() ?? 0;
+            if (streak > 0) {
+              ref.read(streakMilestoneProvider.notifier).showMilestone(streak);
+            }
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('recordLoginStreak hatası (güvenli): $e');
+          }
         }
       });
       // ------------------------------------

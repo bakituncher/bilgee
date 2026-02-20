@@ -12,6 +12,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:taktik/data/providers/firestore_providers.dart';
 import 'package:taktik/shared/constants/highlight_keys.dart';
 import 'package:taktik/shared/widgets/side_panel_drawer.dart';
+import 'package:taktik/shared/streak/streak_milestone_notifier.dart';
+import 'package:taktik/shared/streak/streak_milestone_overlay.dart';
 
 final GlobalKey<ScaffoldState> rootScaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -110,6 +112,11 @@ class ScaffoldWithNavBar extends ConsumerWidget {
               ),
             ),
             if (completedQuest != null) QuestCompletionCelebration(completedQuest: completedQuest),
+            Consumer(builder: (context, r, _) {
+              final milestoneState = r.watch(streakMilestoneProvider);
+              if (!milestoneState.show || milestoneState.streak == null) return const SizedBox.shrink();
+              return StreakMilestoneOverlay(streak: milestoneState.streak!);
+            }),
             Consumer(builder: (context, r, _) {
               final showWeeklyPopup = r.watch(weeklyPlanCompletionProvider);
               if (!showWeeklyPopup) return const SizedBox.shrink();

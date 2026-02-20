@@ -88,9 +88,8 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
 
     await db.runTransaction(async (tx) => {
       // Önce tüm okuma işlemleri
-      const [uSnap, sSnap, questsSnap] = await Promise.all([
+      const [uSnap, questsSnap] = await Promise.all([
         tx.get(userRef),
-        tx.get(statsRef),
         tx.get(userRef.collection("daily_quests").where("isCompleted", "==", false)),
       ]);
 
@@ -98,24 +97,6 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
       const userDocData = uSnap.data() || {};
       const examType = ((userDocData && userDocData.selectedExam) || examTypeParam || "").toString();
 
-      const stats = sSnap.exists ? (sSnap.data() || {}) : {};
-      const lastTs = stats.lastStreakUpdate;
-      const currentStreak = typeof stats.streak === "number" ? stats.streak : 0;
-
-      const now = nowIstanbul();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      let newStreak = 1;
-      if (lastTs && typeof lastTs.toDate === "function") {
-        const lastDate = lastTs.toDate();
-        const lastDay = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
-        if (lastDay.getTime() === today.getTime()) {
-          newStreak = currentStreak; // aynı gün
-        } else {
-          const y = new Date(today);
-          y.setDate(today.getDate() - 1);
-          newStreak = (lastDay.getTime() === y.getTime()) ? currentStreak + 1 : 1;
-        }
-      }
 
       // Branş denemesi kontrolü
       const isTestBranch = isBranchTest(normalizedScores, sectionName, examType);
@@ -141,13 +122,11 @@ exports.addTestResult = onCall({ region: "us-central1", timeoutSeconds: 30, enfo
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      // İstatistikleri güncelle (Streak ve Puan)
+      // İstatistikleri güncelle (Sadece Puan - Streak login'de güncelleniyor)
       // DİKKAT: testCount ve totalNetSum burada GÜNCELLENMİYOR.
       // Bu değerler transaction sonrası çağrılacak updatePublicProfile ile
       // sıfırdan hesaplanıp (recalculation) yazılacak. Bu sayede tutarsızlık önlenir.
       const statsUpdate = {
-        streak: newStreak,
-        lastStreakUpdate: admin.firestore.Timestamp.fromDate(today),
         engagementScore: admin.firestore.FieldValue.increment(pointsAward),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       };
