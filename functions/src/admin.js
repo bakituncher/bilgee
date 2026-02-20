@@ -226,6 +226,14 @@ exports.getUserStats = onCall({
       // KPSS İstatistikleri (Toplu)
       usersRef.where('selectedExam', 'in', kpssTypes).count().get(),
       usersRef.where('selectedExam', 'in', kpssTypes).where('isPremium', '==', true).count().get(),
+
+      // DGS İstatistikleri
+      usersRef.where('selectedExam', '==', 'dgs').count().get(),
+      usersRef.where('selectedExam', '==', 'dgs').where('isPremium', '==', true).count().get(),
+
+      // ALES İstatistikleri
+      usersRef.where('selectedExam', '==', 'ales').count().get(),
+      usersRef.where('selectedExam', '==', 'ales').where('isPremium', '==', true).count().get(),
     ];
 
     // 3. Tüm sayımları aynı anda başlat ve bitmesini bekle (Hız için)
@@ -249,6 +257,14 @@ exports.getUserStats = onCall({
       kpss: {
         total: snapshots[6].data().count,
         premium: snapshots[7].data().count
+      },
+      dgs: {
+        total: snapshots[8].data().count,
+        premium: snapshots[9].data().count
+      },
+      ales: {
+        total: snapshots[10].data().count,
+        premium: snapshots[11].data().count
       },
     };
 

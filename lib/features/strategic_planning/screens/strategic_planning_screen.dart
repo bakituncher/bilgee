@@ -12,7 +12,6 @@ import 'package:intl/intl.dart';
 import 'package:taktik/data/models/plan_model.dart';
 import 'package:taktik/data/models/plan_document.dart';
 import 'package:lottie/lottie.dart';
-import 'package:taktik/core/safety/ai_content_safety.dart';
 import 'package:taktik/shared/widgets/custom_back_button.dart';
 
 enum Pacing { relaxed, moderate, intense }
@@ -313,229 +312,286 @@ class StrategicPlanningScreen extends ConsumerWidget {
         scrolledUnderElevation: 0,
         leading: const CustomBackButton(),
       ),
-      body: Container(
-        child: Column(
-          children: [
-            // AI güvenlik uyarısı
-            AiContentSafety.buildDisclaimerBanner(
-              context,
-              customMessage: 'Bu plan AI tarafından kişiselleştirilmiştir. Kendi durumunuza göre ayarlayabilirsiniz.',
-            ),
-            Expanded(
-              child: Center(
-                child: SingleChildScrollView(
-                  // DÜZELTME: Alt padding ekledik
-                  padding: EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 20.0 + bottomPadding),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 560),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Ana Kart - Modern Tasarım
-                        Container(
-                          decoration: BoxDecoration(
+      body: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 20.0),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Ana Kart - Modern Tasarım
+                      Container(
+                        decoration: BoxDecoration(
+                          color: isExpired
+                              ? (isDark
+                              ? const Color(0xFF2D1F1F)
+                              : const Color(0xFFFFF3E0))
+                              : (isDark
+                              ? Theme.of(context).colorScheme.surface
+                              : Colors.white),
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(
                             color: isExpired
-                                ? (isDark
-                                ? const Color(0xFF2D1F1F)
-                                : const Color(0xFFFFF3E0))
+                                ? (isDark ? Colors.amber.withOpacity(0.2) : Colors.orange.withOpacity(0.3))
                                 : (isDark
-                                ? Theme.of(context).colorScheme.surface
-                                : Colors.white),
-                            borderRadius: BorderRadius.circular(28),
-                            border: Border.all(
-                              color: isExpired
-                                  ? (isDark ? Colors.amber.withOpacity(0.2) : Colors.orange.withOpacity(0.3))
-                                  : (isDark
-                                  ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
-                                  : Theme.of(context).colorScheme.primary.withOpacity(0.1)),
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: isExpired
-                                    ? Colors.orange.withOpacity(isDark ? 0.1 : 0.08)
-                                    : Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.15 : 0.08),
-                                blurRadius: 32,
-                                offset: const Offset(0, 12),
-                                spreadRadius: 0,
-                              ),
-                            ],
+                                ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
+                                : Theme.of(context).colorScheme.primary.withOpacity(0.1)),
+                            width: 1.5,
                           ),
-                          padding: const EdgeInsets.all(32.0),
-                          child: Column(
-                            children: [
-                              // Icon Container - Gradient Style
-                              Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: isExpired
-                                        ? [
-                                      Colors.orange.withOpacity(0.8),
-                                      Colors.deepOrange.withOpacity(0.9),
-                                    ]
-                                        : [
-                                      Theme.of(context).colorScheme.primary,
-                                      Theme.of(context).colorScheme.secondary,
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: (isExpired ? Colors.orange : Theme.of(context).colorScheme.primary)
-                                          .withOpacity(0.4),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 8),
-                                    ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: isExpired
+                                  ? Colors.orange.withOpacity(isDark ? 0.1 : 0.08)
+                                  : Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.15 : 0.08),
+                              blurRadius: 32,
+                              offset: const Offset(0, 12),
+                              spreadRadius: 0,
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          children: [
+                            // Icon Container - Gradient Style
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: isExpired
+                                      ? [
+                                    Colors.orange.withOpacity(0.8),
+                                    Colors.deepOrange.withOpacity(0.9),
+                                  ]
+                                      : [
+                                    Theme.of(context).colorScheme.primary,
+                                    Theme.of(context).colorScheme.secondary,
                                   ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
                                 ),
-                                child: Icon(
-                                  isExpired ? Icons.refresh_rounded : Icons.verified_rounded,
-                                  size: 48,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-
-                              // Başlık
-                              Text(
-                                isExpired ? "Plan Yenileme Zamanı!" : "Haftalık Plan Aktif",
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: -0.5,
-                                  color: isExpired
-                                      ? (isDark ? Colors.amber : Colors.orange.shade800)
-                                      : null,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-
-
-                              // Süre doldu mesajı
-                              if (isExpired) ...[
-                                const SizedBox(height: 20),
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: (isDark ? Colors.orange.shade900 : Colors.orange.shade50).withOpacity(0.5),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: Colors.orange.withOpacity(0.3),
-                                    ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: (isExpired ? Colors.orange : Theme.of(context).colorScheme.primary)
+                                        .withOpacity(0.4),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 8),
                                   ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.info_outline_rounded,
-                                        color: isDark ? Colors.orange.shade300 : Colors.orange.shade800,
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          "Yeni bir haftalık plan oluşturarak güncel hedeflerinle devam edin",
-                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                            color: isDark ? Colors.orange.shade200 : Colors.orange.shade900,
-                                            fontWeight: FontWeight.w600,
-                                            height: 1.4,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
+                              child: Icon(
+                                isExpired ? Icons.refresh_rounded : Icons.verified_rounded,
+                                size: 44,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
 
-                              const SizedBox(height: 20),
+                            // Başlık
+                            Text(
+                              isExpired ? "Plan Yenileme Zamanı!" : "Haftalık Plan Aktif",
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.5,
+                                color: isExpired
+                                    ? (isDark ? Colors.amber : Colors.orange.shade800)
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
 
-                              // Tarih Bilgisi
+                            // Plan aktif olduğunda detaylar
+                            if (!isExpired) ...[
+                              const SizedBox(height: 12),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(isDark ? 0.3 : 0.25),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Programınız Nasıl Oluşturuldu?",
+                                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    _buildDetailItem(
+                                      context,
+                                      icon: Icons.assessment_rounded,
+                                      text: "Deneme performansınız",
+                                    ),
+                                    const SizedBox(height: 3),
+                                    _buildDetailItem(
+                                      context,
+                                      icon: Icons.trending_up_rounded,
+                                      text: "Güçlü ve zayıf konularınız",
+                                    ),
+                                    const SizedBox(height: 3),
+                                    _buildDetailItem(
+                                      context,
+                                      icon: Icons.calendar_month_rounded,
+                                      text: "Sınava kalan süre",
+                                    ),
+                                    const SizedBox(height: 3),
+                                    _buildDetailItem(
+                                      context,
+                                      icon: Icons.psychology_rounded,
+                                      text: "Tempo tercihiniz",
+                                    ),
+                                    const SizedBox(height: 3),
+                                    _buildDetailItem(
+                                      context,
+                                      icon: Icons.school_rounded,
+                                      text: "Müfredat ağırlıkları",
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+
+                            // Süre doldu mesajı
+                            if (isExpired) ...[
+                              const SizedBox(height: 12),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: (isDark ? Colors.orange.shade900 : Colors.orange.shade50).withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.orange.withOpacity(0.3),
+                                  ),
+                                ),
                                 child: Row(
-                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
-                                      Icons.calendar_today_rounded,
-                                      size: 16,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      Icons.info_outline_rounded,
+                                      color: isDark ? Colors.orange.shade300 : Colors.orange.shade800,
+                                      size: 20,
                                     ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      "Oluşturulma: ${DateFormat.yMMMMd('tr').format(weeklyPlan.creationDate)}",
-                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                        fontWeight: FontWeight.w600,
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        "Yeni bir haftalık plan oluşturarak güncel hedeflerinle devam edin",
+                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          color: isDark ? Colors.orange.shade200 : Colors.orange.shade900,
+                                          fontWeight: FontWeight.w600,
+                                          height: 1.4,
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
                             ],
-                          ),
-                        ).animate().fadeIn(duration: 400.ms).scale(
-                          begin: const Offset(0.95, 0.95),
-                          curve: Curves.easeOutCubic,
+
+                            const SizedBox(height: 12),
+
+                            // Tarih Bilgisi
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today_rounded,
+                                    size: 14,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    "Oluşturulma: ${DateFormat.yMMMMd('tr').format(weeklyPlan.creationDate)}",
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-
-                        const SizedBox(height: 24),
-
-                        // Butonlar - Modern Instagram/Spotify Tarzı
-                        if (isExpired) ...[
-                          // Yeni Plan Oluştur - Primary Button
-                          _ModernButton(
-                            onPressed: () {
-                              ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
-                            },
-                            icon: Icons.auto_awesome_rounded,
-                            label: "Yeni Plan Oluştur",
-                            isPrimary: true,
-                            gradient: LinearGradient(
-                              colors: [
-                                Theme.of(context).colorScheme.primary,
-                                Theme.of(context).colorScheme.secondary,
-                              ],
-                            ),
-                          ),
-                        ] else ...[
-                          // Haftalık Planı Aç - Primary Button
-                          _ModernButton(
-                            onPressed: () => context.push('/home/weekly-plan'),
-                            icon: Icons.playlist_play_rounded,
-                            label: "Haftalık Planı Aç",
-                            isPrimary: true,
-                            gradient: LinearGradient(
-                              colors: [
-                                Theme.of(context).colorScheme.primary,
-                                Theme.of(context).colorScheme.secondary,
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          _ModernButton(
-                            onPressed: () {
-                              ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
-                            },
-                            icon: Icons.refresh_rounded,
-                            label: "Yeni Plan Oluştur",
-                            isPrimary: false,
-                          ),
-                        ],
-                      ],
-                    ),
+                      ).animate().fadeIn(duration: 400.ms).scale(
+                        begin: const Offset(0.95, 0.95),
+                        curve: Curves.easeOutCubic,
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+          // Butonlar - Altta Sabit
+          Padding(
+            padding: EdgeInsets.fromLTRB(20.0, 12.0, 20.0, 12.0 + bottomPadding),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (isExpired) ...[
+                      // Yeni Plan Oluştur - Primary Button
+                      _ModernButton(
+                        onPressed: () {
+                          ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
+                        },
+                        icon: Icons.auto_awesome_rounded,
+                        label: "Yeni Plan Oluştur",
+                        isPrimary: true,
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.primary,
+                            Theme.of(context).colorScheme.secondary,
+                          ],
+                        ),
+                      ),
+                    ] else ...[
+                      // Haftalık Planı Aç - Primary Button
+                      _ModernButton(
+                        onPressed: () => context.push('/home/weekly-plan'),
+                        icon: Icons.playlist_play_rounded,
+                        label: "Haftalık Planı Aç",
+                        isPrimary: true,
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.primary,
+                            Theme.of(context).colorScheme.secondary,
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _ModernButton(
+                        onPressed: () {
+                          ref.read(planningStepProvider.notifier).state = PlanningStep.confirmation;
+                        },
+                        icon: Icons.refresh_rounded,
+                        label: "Yeni Plan Oluştur",
+                        isPrimary: false,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1026,6 +1082,34 @@ class StrategicPlanningScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+// Helper widget for detail items
+Widget _buildDetailItem(
+  BuildContext context, {
+  required IconData icon,
+  required String text,
+}) {
+  final colorScheme = Theme.of(context).colorScheme;
+  return Row(
+    children: [
+      Icon(
+        icon,
+        size: 14,
+        color: colorScheme.primary.withOpacity(0.6),
+      ),
+      const SizedBox(width: 8),
+      Flexible(
+        child: Text(
+          text,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: colorScheme.onSurface.withOpacity(0.7),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 // Modern Buton Widget - Instagram/Spotify Tarzı

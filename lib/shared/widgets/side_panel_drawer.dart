@@ -53,16 +53,23 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
     final screenWidth = MediaQuery.of(context).size.width;
     final drawerWidth = screenWidth * 0.75 > 320.0 ? 320.0 : screenWidth * 0.75;
 
-    return SizedBox(
-      width: drawerWidth, // BURASI PANELİN ÇOK AÇILMASINI ENGELLER
-      child: Drawer(
-        backgroundColor: theme.cardColor,
-        child: SafeArea(
-          child: SlideTransition(
-            position: _slide,
-            child: FadeTransition(
-              opacity: _fade,
-              child: Column(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (!didPop) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: SizedBox(
+        width: drawerWidth, // BURASI PANELİN ÇOK AÇILMASINI ENGELLER
+        child: Drawer(
+          backgroundColor: theme.cardColor,
+          child: SafeArea(
+            child: SlideTransition(
+              position: _slide,
+              child: FadeTransition(
+                opacity: _fade,
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Header - Kullanıcı Profili
@@ -131,7 +138,6 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(6, 4, 6, 4),
                       children: [
-                        _navTile(context, currentLocation: location, icon: Icons.dashboard_rounded, title: 'Ana Panel', route: '/home'),
                         _navTile(context, currentLocation: location, icon: Icons.timer_rounded, title: 'Odaklan (Pomodoro)', route: '/home/pomodoro'),
                         _navTile(context, currentLocation: location, icon: Icons.bar_chart_rounded, title: 'Deneme Gelişimi', route: '/home/stats'),
                         _navTile(context, currentLocation: location, icon: Icons.insights_rounded, title: 'Genel Bakış', route: '/stats/overview'),
@@ -212,6 +218,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
           ),
         ),
       ),
+    ),
     );
   }
 

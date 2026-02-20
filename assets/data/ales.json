@@ -1,13 +1,13 @@
 {
-  "type": "dgs",
-  "name": "Dikey Geçiş Sınavı",
+  "type": "ales",
+  "name": "Akademik Personel ve Lisansüstü Eğitimi Giriş Sınavı",
   "sections": [
     {
-      "name": "DGS",
+      "name": "ALES",
       "penaltyCoefficient": 0.25,
       "subjects": {
         "Sayısal": {
-          "questionCount": 60,
+          "questionCount": 50,
           "topics": [
             "Temel Kavramlar",
             "Basamak Kavramı",
@@ -41,7 +41,7 @@
           ]
         },
         "Sözel": {
-          "questionCount": 60,
+          "questionCount": 50,
           "topics": [
             "Sözcükte Anlam",
             "Cümlede Anlam",

@@ -10,6 +10,7 @@ class ExamSchedule {
     ExamType.yks: (0, 6, 21), // Haziran ortası (güncel yıl otomatik verilir)
     ExamType.lgs: (0, 6, 15),
     ExamType.dgs: (0, 7, 19), // DGS: 19 Temmuz 2026, 10:15
+    ExamType.ales: (0, 5, 10), // ALES: 10 Mayıs (Yılda birkaç kez yapılır, en yakın tarihi baz aldık)
     ExamType.ags: (0, 7, 12), // AGS: 12 Temmuz
     ExamType.kpssLisans: (0, 9, 7),
     ExamType.kpssOnlisans: (0, 9, 7),
