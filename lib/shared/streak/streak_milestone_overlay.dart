@@ -29,28 +29,28 @@ class _MilestoneInfo {
 _MilestoneInfo _getMilestoneInfo(int streak) {
   // Rastgele motivasyon mesajları
   final randomMessages = [
-    "Sınavı kazandın da haberin mi yok? Netlerin efendisi!",
-    "YKS/LGS korksun senden! Böyle devam edersen derece garanti.",
-    "Alev aldı buralar! Çalışma masan yanıyor kardeşim.",
-    "Buna ne YKS dayanır ne KPSS. Fenalardasın!",
-    "Rakipler uyurken sen şov yapıyorsun. Aynen böyle devam!",
-    "Netler tavan yapacak, üniversite kapıları sonuna kadar açılacak.",
+    "Hedeflerine giden yolda durmak yok. Harika ilerliyorsun!",
+    "Disiplin, başarının anahtarıdır. Sen bunu başardın.",
+    "Bu istikrar seni zirveye taşıyacak. Aynen böyle devam!",
+    "Her gün bir adım daha ileriye. Potansiyelin sınırsız.",
+    "Rakiplerin dinlenirken sen fark yaratıyorsun. Tebrikler!",
+    "Başarı tesadüf değildir, senin gibi çalışmanın sonucudur.",
   ];
 
   final randomTitles = [
-    "ALEV ALEV!",
-    "YANIYORSUN!",
-    "BU NE HIZ?",
-    "ŞOV YAPIYORSUN!",
-    "DURDURULAMIYOR!",
+    "MUAZZAM!",
+    "YAKIYORSUN!",
+    "DURDURULAMAZ!",
+    "MÜKEMMEL!",
+    "HARİKASIN!",
   ];
 
   final randomButtonTexts = [
-    "DEVAMKE",
-    "AYNEN BÖYLE",
+    "DEVAM ET",
+    "HARİKA",
     "TAM GAZ",
-    "YOLA DEVAM",
-    "YAKALAYAMAZLAR",
+    "SÜPERSİN",
+    "İLERLE",
   ];
 
   final rand = Random();
@@ -63,42 +63,114 @@ _MilestoneInfo _getMilestoneInfo(int streak) {
   switch (streak) {
     case 1:
       return const _MilestoneInfo(
-        title: 'BAŞLADIN BİLE!',
-        subtitle: 'İLK ADIM ATILDI',
-        message: 'En zoru başlamaktı, gerisi çorap söküğü gibi gelecek. Hadi bakalım!',
+        title: 'BAŞLANGIÇ YAPILDI!',
+        subtitle: 'İLK GÜN TAMAMLANDI',
+        message: 'En önemli adımı attın. Bu yolculukta seni harika şeyler bekliyor.',
         buttonText: 'BAŞLIYORUZ',
         accentColor: Color(0xFF22D3EE),
         gradient: [Color(0xFF0891B2), Color(0xFF22D3EE)],
       );
     case 3:
       return const _MilestoneInfo(
-        title: 'ISINIYORSUN!',
+        title: 'RİTMİNİ BULDUN!',
         subtitle: '3 GÜNLÜK SERİ',
-        message: 'Üç gündür buradasın. Motor ısındı, şimdi gaza basma zamanı!',
-        buttonText: 'TAM GAZ',
+        message: 'Üç gündür aralıksız buradasın. Alışkanlıklar işte böyle kazanılır!',
+        buttonText: 'DEVAM ET',
         accentColor: fireAccent,
         gradient: fireColors,
       );
     case 7:
       return const _MilestoneInfo(
-        title: 'HAFTANIN KRALI!',
+        title: 'HAFTAYI KAPATTIN!',
         subtitle: '7 GÜNLÜK SERİ',
-        message: 'Tam bir haftayı devirdin. Bu disiplinle aşamayacağın engel yok!',
-        buttonText: 'DURMAK YOK',
+        message: 'Tam bir hafta boyunca zinciri kırmadın. Kararlılığın takdire şayan!',
+        buttonText: 'HARİKASIN',
         accentColor: Color(0xFF94A3B8),
         gradient: [Color(0xFF475569), Color(0xFF94A3B8)],
       );
+    case 14:
+      return const _MilestoneInfo(
+        title: 'İKİ HAFTA DOLDU!',
+        subtitle: '14 GÜNLÜK SERİ',
+        message: 'İki haftayı geride bıraktın. İstikrarın meyvelerini toplamaya başladın.',
+        buttonText: 'İLERLE',
+        accentColor: Color(0xFF818CF8),
+        gradient: [Color(0xFF4F46E5), Color(0xFF818CF8)],
+      );
+    case 21:
+      return const _MilestoneInfo(
+        title: 'ALIŞKANLIK KAZANDIN!',
+        subtitle: '21 GÜNLÜK SERİ',
+        message: 'Bilimsel olarak bir alışkanlık kazandın. Artık başarı senin doğanda var.',
+        buttonText: 'ZİHİN AÇIKLIĞI',
+        accentColor: Color(0xFF3B82F6),
+        gradient: [Color(0xFF1D4ED8), Color(0xFF3B82F6)],
+      );
     case 30:
       return const _MilestoneInfo(
-        title: 'MAKİNE OLDUN!',
+        title: 'DİSİPLİN TİMSALİ!',
         subtitle: '30 GÜNLÜK SERİ',
-        message: 'Koca bir ay! Sen artık öğrenci değilsin, bir çalışma makinesis.',
-        buttonText: 'VİTES YÜKSELT',
+        message: 'Bir aydır her gün hedefin için çalıştın. Bu azimle başaramayacağın şey yok.',
+        buttonText: 'DURMAK YOK',
         accentColor: Color(0xFFFFB020),
         gradient: [Color(0xFFB45309), Color(0xFFFFB020)],
       );
+    case 50:
+      return const _MilestoneInfo(
+        title: 'YOLU YARILADIN!',
+        subtitle: '50 GÜNLÜK SERİ',
+        message: '50 gündür aralıksız devam ediyorsun. İraden çelikten farksız.',
+        buttonText: 'EFSANE',
+        accentColor: Color(0xFFF43F5E),
+        gradient: [Color(0xFFBE123C), Color(0xFFF43F5E)],
+      );
+    case 75:
+      return const _MilestoneInfo(
+        title: 'ZİRVEYE DOĞRU!',
+        subtitle: '75 GÜNLÜK SERİ',
+        message: '75 gün dile kolay! Seninle gurur duyuyoruz. Hedeflerine koşar adımla gidiyorsun.',
+        buttonText: 'YÜKSELİŞ',
+        accentColor: Color(0xFFA855F7),
+        gradient: [Color(0xFF7E22CE), Color(0xFFA855F7)],
+      );
+    case 100:
+      return const _MilestoneInfo(
+        title: 'YÜZ GÜNLÜK ZAFER!',
+        subtitle: '100 GÜNLÜK SERİ',
+        message: '100 GÜN! Bu artık bir seri değil, bir yaşam tarzı. Sen gerçek bir maratoncusun.',
+        buttonText: 'ŞAMPİYON',
+        accentColor: Color(0xFFF59E0B),
+        gradient: [Color(0xFFD97706), Color(0xFFF59E0B)],
+      );
+    case 150:
+      return const _MilestoneInfo(
+        title: 'SINIRLARI AŞTIN!',
+        subtitle: '150 GÜNLÜK KUSURSUZ SERİ',
+        message: 'Yarım yıla yaklaşıyorsun. Bu kararlılık karşısında hiçbir zorluk duramaz.',
+        buttonText: 'DURDURULAMAZ',
+        accentColor: Color(0xFF10B981),
+        gradient: [Color(0xFF047857), Color(0xFF10B981)],
+      );
+    case 200:
+      return const _MilestoneInfo(
+        title: 'YILDIZLAR LİGİ!',
+        subtitle: '200 GÜNLÜK SERİ',
+        message: '200 gün boyunca gösterdiğin azim, geleceğini inşa ediyor.',
+        buttonText: 'MÜKEMMELİYET',
+        accentColor: Color(0xFFEC4899),
+        gradient: [Color(0xFFBE185D), Color(0xFFEC4899)],
+      );
+    case 365:
+      return const _MilestoneInfo(
+        title: 'TARİH YAZDIN!',
+        subtitle: '365 GÜNLÜK EFSANE SERİ',
+        message: 'Tam bir yıl! Bugün kendine bir teşekkür et, çünkü imkansızı başardın.',
+        buttonText: 'EFSANEVİ',
+        accentColor: Color(0xFF6366F1),
+        gradient: [Color(0xFF4338CA), Color(0xFF6366F1)],
+      );
     default:
-      // Standart günlük seri mesajları (Türk genci tarzı)
+      // Standart günlük seri mesajları
       return _MilestoneInfo(
         title: getRandom(randomTitles),
         subtitle: '$streak GÜNLÜK SERİ',
