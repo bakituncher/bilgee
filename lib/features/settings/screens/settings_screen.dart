@@ -16,7 +16,9 @@ import 'package:taktik/data/providers/admin_providers.dart';
 import 'package:taktik/shared/widgets/logo_loader.dart';
 import 'package:taktik/core/theme/theme_provider.dart';
 import 'package:taktik/core/utils/app_info_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:taktik/shared/widgets/custom_back_button.dart';
+import 'package:taktik/shared/streak/streak_milestone_notifier.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -397,23 +399,61 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  void _showStreakPreviewPicker(BuildContext context, WidgetRef ref) {
+    const milestones = [1, 2, 3, 5, 7, 10, 14, 21, 30, 50, 75, 100, 150, 200, 365];
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Streak Önizleme',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text('Görmek istediğin milestone\'u seç:',
+                  style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: milestones.map((streak) {
+                  return ActionChip(
+                    avatar: const Icon(Icons.local_fire_department_rounded, size: 16, color: Color(0xFF22D3EE)),
+                    label: Text('$streak gün', style: const TextStyle(fontWeight: FontWeight.w700)),
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      ref.read(streakMilestoneProvider.notifier).showMilestone(streak);
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _launchSubscriptionManagement(BuildContext context) async {
     String url;
-
     if (Platform.isIOS) {
-      // iOS için App Store abonelik yönetimi
       url = 'https://apps.apple.com/account/subscriptions';
     } else if (Platform.isAndroid) {
-      // Android için Google Play abonelik yönetimi
       url = 'https://play.google.com/store/account/subscriptions';
     } else {
-      // Diğer platformlar için (web vb.)
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Bu platform için abonelik yönetimi desteklenmiyor.')),
       );
       return;
     }
-
     await _launchURL(context, url);
   }
 
@@ -966,6 +1006,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   subtitle: "Yönetim araçları",
                   onTap: () {}, // Admin panel eklenebilir
                 ),
+                if (kDebugMode) ...[
+                  const Divider(height: 1, indent: 56),
+                  SettingsTile(
+                    icon: Icons.local_fire_department_rounded,
+                    iconColor: const Color(0xFF22D3EE),
+                    title: "🧪 Streak Milestone Önizleme",
+                    subtitle: "Test için — hangi streaki görmek istiyorsun?",
+                    onTap: () => _showStreakPreviewPicker(context, ref),
+                  ),
+                ],
               ],
             ),
           ],
