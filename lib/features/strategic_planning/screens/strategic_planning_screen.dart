@@ -408,42 +408,77 @@ class StrategicPlanningScreen extends ConsumerWidget {
 
                             // Plan aktif olduğunda detaylar
                             if (!isExpired) ...[
-                              const SizedBox(height: 16),
-                              Text(
-                                "Programınız Nasıl Oluşturuldu?",
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
+                              const SizedBox(height: 20),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(isDark ? 0.4 : 0.35),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              _buildDetailItem(
-                                context,
-                                icon: Icons.assessment_rounded,
-                                text: "Deneme performansınız",
-                              ),
-                              const SizedBox(height: 8),
-                              _buildDetailItem(
-                                context,
-                                icon: Icons.trending_up_rounded,
-                                text: "Güçlü ve zayıf konularınız",
-                              ),
-                              const SizedBox(height: 8),
-                              _buildDetailItem(
-                                context,
-                                icon: Icons.calendar_month_rounded,
-                                text: "Sınava kalan süre",
-                              ),
-                              const SizedBox(height: 8),
-                              _buildDetailItem(
-                                context,
-                                icon: Icons.psychology_rounded,
-                                text: "Tempo tercihiniz",
-                              ),
-                              const SizedBox(height: 8),
-                              _buildDetailItem(
-                                context,
-                                icon: Icons.school_rounded,
-                                text: "Müfredat ağırlıkları",
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Icon(
+                                            Icons.auto_awesome_rounded,
+                                            size: 14,
+                                            color: Theme.of(context).colorScheme.primary,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          "Programınız Nasıl Oluşturuldu?",
+                                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            color: Theme.of(context).colorScheme.onSurface,
+                                            letterSpacing: -0.2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _buildDetailItem(
+                                      context,
+                                      icon: Icons.assessment_rounded,
+                                      text: "Deneme performansınız",
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildDetailItem(
+                                      context,
+                                      icon: Icons.trending_up_rounded,
+                                      text: "Güçlü ve zayıf konularınız",
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildDetailItem(
+                                      context,
+                                      icon: Icons.calendar_month_rounded,
+                                      text: "Sınava kalan süre",
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildDetailItem(
+                                      context,
+                                      icon: Icons.psychology_rounded,
+                                      text: "Tempo tercihiniz",
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildDetailItem(
+                                      context,
+                                      icon: Icons.school_rounded,
+                                      text: "Müfredat ağırlıkları",
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
 
@@ -1076,19 +1111,28 @@ Widget _buildDetailItem(
   required IconData icon,
   required String text,
 }) {
+  final colorScheme = Theme.of(context).colorScheme;
   return Row(
     children: [
-      Icon(
-        icon,
-        size: 18,
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: colorScheme.primary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          icon,
+          size: 15,
+          color: colorScheme.primary,
+        ),
       ),
       const SizedBox(width: 10),
       Flexible(
         child: Text(
           text,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            color: colorScheme.onSurface.withOpacity(0.8),
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
