@@ -354,12 +354,12 @@ class StrategicPlanningScreen extends ConsumerWidget {
                             ),
                           ],
                         ),
-                        padding: const EdgeInsets.all(32.0),
+                        padding: const EdgeInsets.all(24.0),
                         child: Column(
                           children: [
                             // Icon Container - Gradient Style
                             Container(
-                              padding: const EdgeInsets.all(20),
+                              padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: isExpired
@@ -386,11 +386,11 @@ class StrategicPlanningScreen extends ConsumerWidget {
                               ),
                               child: Icon(
                                 isExpired ? Icons.refresh_rounded : Icons.verified_rounded,
-                                size: 48,
+                                size: 44,
                                 color: Colors.white,
                               ),
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 16),
 
                             // Başlık
                             Text(
@@ -404,74 +404,53 @@ class StrategicPlanningScreen extends ConsumerWidget {
                                     : null,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 6),
 
                             // Plan aktif olduğunda detaylar
                             if (!isExpired) ...[
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 12),
                               Container(
                                 width: double.infinity,
-                                padding: const EdgeInsets.all(16),
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(isDark ? 0.4 : 0.35),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                                  ),
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(isDark ? 0.3 : 0.25),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Icon(
-                                            Icons.auto_awesome_rounded,
-                                            size: 14,
-                                            color: Theme.of(context).colorScheme.primary,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          "Programınız Nasıl Oluşturuldu?",
-                                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                            fontWeight: FontWeight.w700,
-                                            color: Theme.of(context).colorScheme.onSurface,
-                                            letterSpacing: -0.2,
-                                          ),
-                                        ),
-                                      ],
+                                    Text(
+                                      "Programınız Nasıl Oluşturuldu?",
+                                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                                      ),
                                     ),
-                                    const SizedBox(height: 12),
+                                    const SizedBox(height: 6),
                                     _buildDetailItem(
                                       context,
                                       icon: Icons.assessment_rounded,
                                       text: "Deneme performansınız",
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 3),
                                     _buildDetailItem(
                                       context,
                                       icon: Icons.trending_up_rounded,
                                       text: "Güçlü ve zayıf konularınız",
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 3),
                                     _buildDetailItem(
                                       context,
                                       icon: Icons.calendar_month_rounded,
                                       text: "Sınava kalan süre",
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 3),
                                     _buildDetailItem(
                                       context,
                                       icon: Icons.psychology_rounded,
                                       text: "Tempo tercihiniz",
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 3),
                                     _buildDetailItem(
                                       context,
                                       icon: Icons.school_rounded,
@@ -484,12 +463,12 @@ class StrategicPlanningScreen extends ConsumerWidget {
 
                             // Süre doldu mesajı
                             if (isExpired) ...[
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 12),
                               Container(
-                                padding: const EdgeInsets.all(16),
+                                padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: (isDark ? Colors.orange.shade900 : Colors.orange.shade50).withOpacity(0.5),
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: Colors.orange.withOpacity(0.3),
                                   ),
@@ -517,24 +496,24 @@ class StrategicPlanningScreen extends ConsumerWidget {
                               ),
                             ],
 
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 12),
 
                             // Tarih Bilgisi
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
                                 color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(10),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
                                     Icons.calendar_today_rounded,
-                                    size: 16,
+                                    size: 14,
                                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: 6),
                                   Text(
                                     "Oluşturulma: ${DateFormat.yMMMMd('tr').format(weeklyPlan.creationDate)}",
                                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -1114,24 +1093,17 @@ Widget _buildDetailItem(
   final colorScheme = Theme.of(context).colorScheme;
   return Row(
     children: [
-      Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: colorScheme.primary.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(
-          icon,
-          size: 15,
-          color: colorScheme.primary,
-        ),
+      Icon(
+        icon,
+        size: 14,
+        color: colorScheme.primary.withOpacity(0.6),
       ),
-      const SizedBox(width: 10),
+      const SizedBox(width: 8),
       Flexible(
         child: Text(
           text,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: colorScheme.onSurface.withOpacity(0.8),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: colorScheme.onSurface.withOpacity(0.7),
             fontWeight: FontWeight.w500,
           ),
         ),
