@@ -388,7 +388,7 @@ class _ProComparisonTable extends StatelessWidget {
           ),
           // Rows
           _buildRow(theme, "Soru Çözücü", "3 soru/gün", "Sınırsız"),
-          _buildRow(theme, "Not Defteri", "3 hak/gün", "Sınırsız"),
+          _buildRow(theme, "Dönüştürücü", "3 hak/gün", "Sınırsız"),
           _buildRow(theme, "Haftalık Plan", false, true),
           _buildRow(theme, "Zihin Haritaları", false, true),
           _buildRow(theme, "Etüt Odası", false, true),

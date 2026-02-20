@@ -196,6 +196,7 @@ class SavedContentNotifier extends StateNotifier<List<SavedContentModel>> {
     'flashcards': state.where((c) => c.type == SavedContentType.flashcard).length,
     'quizzes': state.where((c) => c.type == SavedContentType.quiz).length,
     'summaries': state.where((c) => c.type == SavedContentType.summary).length,
+    'mnemonics': state.where((c) => c.type == SavedContentType.mnemonic).length,
     'limit': maxTotalContents,
     'remaining': maxTotalContents - state.length,
   };

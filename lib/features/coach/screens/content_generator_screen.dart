@@ -80,7 +80,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             },
           ),
           title: Text(
-            'Not Defteri',
+            'Dönüştürücü',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: theme.colorScheme.onSurface,
@@ -607,6 +607,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         return Icons.quiz_rounded;
       case ContentType.summary:
         return Icons.summarize_rounded;
+      case ContentType.mnemonic:
+        return Icons.psychology_rounded;
     }
   }
 
@@ -618,6 +620,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         return 'Quiz';
       case ContentType.summary:
         return 'Özet';
+      case ContentType.mnemonic:
+        return 'Kodlama';
     }
   }
 
@@ -629,6 +633,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         return 'Çoktan seçmeli test';
       case ContentType.summary:
         return 'Hızlı tekrar için özet';
+      case ContentType.mnemonic:
+        return 'Kısa ve akılda kalıcı';
     }
   }
 
@@ -745,6 +751,8 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
           // İçerik görüntüleme
           if (state.result!.type == ContentType.summary)
             _buildSummaryView(theme, isDark)
+          else if (state.result!.type == ContentType.mnemonic)
+            _buildMnemonicView(theme, isDark)
           else if (state.result!.type == ContentType.quiz)
             _buildQuizView(theme, isDark)
           else
@@ -1669,6 +1677,10 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
         title = extractTitle(null, result.summary ?? result.rawContent, result.topic);
         content = result.summary ?? result.rawContent;
         break;
+      case SavedContentType.mnemonic:
+        title = extractTitle(null, result.summary ?? result.rawContent, result.topic);
+        content = result.summary ?? result.rawContent;
+        break;
     }
 
     final user = ref.read(userProfileProvider).value;
@@ -1902,6 +1914,221 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             color: colorScheme.onSurface.withOpacity(0.85),
           ),
           tableCellsPadding: const EdgeInsets.all(10),
+            ),
+            builders: {
+              'latex': _LatexElementBuilder(
+                textStyle: TextStyle(color: colorScheme.onSurface),
+              ),
+            },
+            extensionSet: md.ExtensionSet(
+              [...md.ExtensionSet.gitHubFlavored.blockSyntaxes],
+              [...md.ExtensionSet.gitHubFlavored.inlineSyntaxes, _LatexInlineSyntax()],
+            ),
+          ),
+        ).animate().fadeIn(delay: 150.ms, duration: 350.ms),
+      ],
+    );
+  }
+
+  /// Mnemonic (Hafıza Teknikleri) görünümü
+  Widget _buildMnemonicView(ThemeData theme, bool isDark) {
+    final state = ref.watch(contentGeneratorStateProvider);
+    final colorScheme = theme.colorScheme;
+    final mnemonicText = state.result!.summary ?? state.result!.rawContent;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Üst başlık
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFFFF6B9D).withOpacity(0.15),
+                const Color(0xFFFF6B9D).withOpacity(0.05),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF6B9D).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.psychology_rounded,
+                  color: Color(0xFFFF6B9D),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Kodlama Teknikleri',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    Text(
+                      'Kısa ve akılda kalıcı kodlama yöntemleri',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurface.withOpacity(0.5),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              _buildSaveButton(SavedContentType.mnemonic),
+            ],
+          ),
+        ).animate().fadeIn(duration: 300.ms),
+
+        const SizedBox(height: 16),
+
+        // Mnemonic içeriği
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF6B9D).withOpacity(0.08),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: MarkdownBody(
+            data: mnemonicText,
+            selectable: true,
+            styleSheet: MarkdownStyleSheet(
+              // Ana başlık
+              h1: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: colorScheme.onSurface,
+                height: 1.3,
+                letterSpacing: -0.5,
+              ),
+              h1Padding: const EdgeInsets.only(bottom: 16, top: 8),
+
+              // Alt başlık
+              h2: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFFFF6B9D),
+                height: 1.4,
+              ),
+              h2Padding: const EdgeInsets.only(bottom: 10, top: 20),
+
+              // Küçük başlık
+              h3: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface.withOpacity(0.9),
+                height: 1.4,
+              ),
+              h3Padding: const EdgeInsets.only(bottom: 8, top: 16),
+
+              // Paragraf
+              p: TextStyle(
+                fontSize: 14,
+                height: 1.7,
+                color: colorScheme.onSurface.withOpacity(0.85),
+              ),
+              pPadding: const EdgeInsets.only(bottom: 12),
+
+              // Liste maddeleri
+              listBullet: const TextStyle(
+                color: Color(0xFFFF6B9D),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+              listIndent: 20,
+              listBulletPadding: const EdgeInsets.only(right: 8),
+
+              // Kalın metin
+              strong: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: colorScheme.onSurface,
+              ),
+
+              // İtalik metin
+              em: TextStyle(
+                fontStyle: FontStyle.italic,
+                color: colorScheme.onSurface.withOpacity(0.8),
+              ),
+
+              // Alıntı bloğu
+              blockquote: TextStyle(
+                color: colorScheme.onSurface.withOpacity(0.75),
+                fontStyle: FontStyle.italic,
+                fontSize: 13,
+                height: 1.6,
+              ),
+              blockquoteDecoration: BoxDecoration(
+                color: const Color(0xFFFF6B9D).withOpacity(0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: const Border(
+                  left: BorderSide(
+                    color: Color(0xFFFF6B9D),
+                    width: 4,
+                  ),
+                ),
+              ),
+              blockquotePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+
+              // Yatay çizgi
+              horizontalRuleDecoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: colorScheme.onSurface.withOpacity(0.1),
+                    width: 1,
+                  ),
+                ),
+              ),
+
+              // Kod bloğu
+              codeblockDecoration: BoxDecoration(
+                color: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              codeblockPadding: const EdgeInsets.all(14),
+              code: TextStyle(
+                backgroundColor: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
+                fontSize: 12,
+                color: colorScheme.onSurface,
+              ),
+
+              // Tablo
+              tableBorder: TableBorder.all(
+                color: colorScheme.onSurface.withOpacity(0.1),
+                width: 1,
+              ),
+              tableHead: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface,
+              ),
+              tableBody: TextStyle(
+                color: colorScheme.onSurface.withOpacity(0.85),
+              ),
+              tableCellsPadding: const EdgeInsets.all(10),
             ),
             builders: {
               'latex': _LatexElementBuilder(

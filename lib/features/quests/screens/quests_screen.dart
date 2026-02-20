@@ -269,7 +269,7 @@ class _GamifiedQuestCardState extends ConsumerState<GamifiedQuestCard> {
           'redirectRoute': '/ai-hub/motivation-chat',
           'imageAsset': 'assets/images/bunnyy.webp',
         };
-      // Not: Soru Çözücü, Zihin Haritası, İçerik Üretici (Not Defteri) ve Soru Kutusu
+      // Not: Soru Çözücü, Zihin Haritası, Dönüştürücü ve Soru Kutusu
       // herkese açık özellikler olduğu için tool offer gösterilmiyor.
       default:
         return null;

@@ -5,6 +5,7 @@ enum SavedContentType {
   flashcard,  // Bilgi kartları (eski infoCards)
   quiz,       // Quiz/Test soruları (eski questionCards)
   summary,    // Özet
+  mnemonic,   // Kodlama (Hafıza Teknikleri)
 }
 
 /// Kaydedilen içerik modeli - Quiz, Flashcard ve Özet için ortak

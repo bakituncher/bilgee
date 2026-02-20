@@ -25,7 +25,7 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -75,6 +75,7 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
             Tab(text: 'Flashcard (${stats['flashcards']})'),
             Tab(text: 'Quiz (${stats['quizzes']})'),
             Tab(text: 'Özet (${stats['summaries']})'),
+            Tab(text: 'Mnemonic (${stats['mnemonics']})'),
           ],
         ),
       ),
@@ -99,6 +100,12 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
             _buildContentList(
               savedContents.where((c) => c.type == SavedContentType.summary).toList(),
               SavedContentType.summary,
+              theme,
+              isDark,
+            ),
+            _buildContentList(
+              savedContents.where((c) => c.type == SavedContentType.mnemonic).toList(),
+              SavedContentType.mnemonic,
               theme,
               isDark,
             ),
@@ -357,6 +364,8 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
         return AppTheme.secondaryBrandColor;
       case SavedContentType.summary:
         return const Color(0xFF8B5CF6);
+      case SavedContentType.mnemonic:
+        return const Color(0xFFFF6B9D);
     }
   }
 
@@ -368,6 +377,8 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
         return Icons.quiz_rounded;
       case SavedContentType.summary:
         return Icons.summarize_rounded;
+      case SavedContentType.mnemonic:
+        return Icons.psychology_rounded;
     }
   }
 
@@ -379,6 +390,8 @@ class _SavedContentsScreenState extends ConsumerState<SavedContentsScreen>
         return 'QUIZ';
       case SavedContentType.summary:
         return 'ÖZET';
+      case SavedContentType.mnemonic:
+        return 'KODLAMA';
     }
   }
 
@@ -576,6 +589,8 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
         return _buildQuizView(theme, isDark, typeColor, colorScheme);
       case SavedContentType.summary:
         return _buildSummaryView(theme, isDark, typeColor, colorScheme);
+      case SavedContentType.mnemonic:
+        return _buildMnemonicView(theme, isDark, typeColor, colorScheme);
     }
   }
 
@@ -1001,6 +1016,11 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
     return _buildMarkdownView(theme, isDark, typeColor, colorScheme);
   }
 
+  /// Mnemonic görünümü
+  Widget _buildMnemonicView(ThemeData theme, bool isDark, Color typeColor, ColorScheme colorScheme) {
+    return _buildMarkdownView(theme, isDark, typeColor, colorScheme);
+  }
+
   /// Markdown görünümü (fallback)
   Widget _buildMarkdownView(ThemeData theme, isDark, Color typeColor, ColorScheme colorScheme) {
     return SingleChildScrollView(
@@ -1076,6 +1096,8 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
         return AppTheme.secondaryBrandColor;
       case SavedContentType.summary:
         return const Color(0xFF8B5CF6);
+      case SavedContentType.mnemonic:
+        return const Color(0xFFFF6B9D);
     }
   }
 
@@ -1087,6 +1109,8 @@ class _SavedContentDetailScreenState extends State<_SavedContentDetailScreen> {
         return Icons.quiz_rounded;
       case SavedContentType.summary:
         return Icons.summarize_rounded;
+      case SavedContentType.mnemonic:
+        return Icons.psychology_rounded;
     }
   }
 }

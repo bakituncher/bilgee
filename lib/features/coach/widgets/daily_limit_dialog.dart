@@ -282,7 +282,7 @@ class _DailyLimitDialogState extends State<DailyLimitDialog> with SingleTickerPr
                         ),
                         _buildComparisonRow(
                           theme: theme,
-                          feature: "Not Defteri",
+                          feature: "Dönüştürücü",
                           free: "3 hak/gün",
                           pro: "Sınırsız",
                         ),
@@ -320,7 +320,7 @@ class _DailyLimitDialogState extends State<DailyLimitDialog> with SingleTickerPr
                       ] else ...[
                         _buildComparisonRow(
                           theme: theme,
-                          feature: "Not Defteri",
+                          feature: "Dönüştürücü",
                           free: "3 hak/gün",
                           pro: "Sınırsız",
                         ),

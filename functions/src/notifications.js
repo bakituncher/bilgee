@@ -52,7 +52,7 @@ const GENERAL_MESSAGES = [
   { title: 'Sadece 25 dakika, söz! 🍅', body: 'Bir pomodoro aç, odaklan. Mola zamanı gelince haber veririm!', route: '/home/pomodoro' },
   { title: 'Telefonla savaşmak zor, biliyorum 📱', body: 'Pomodoro sayacını aç, 25 dakika sadece çalışmaya odaklan!', route: '/home/pomodoro' },
 
-  // 📝 NOT DEFTERİ & ÖZET ÇIKARICI - /ai-hub
+  // 📝 DÖNÜŞTÜRÜCÜ - /ai-hub
   { title: 'Uzun uzun okumaya üşeniyor musun? 😴', body: 'Sayfanın fotoğrafını çek, Taktik Tavşan senin için özetlesin! Hem de saniyeler içinde.', route: '/ai-hub' },
   { title: 'Ders notların çok mu karışık? 📚', body: 'Fotoğrafı yükle, senin için düzenleyip "hap bilgi" haline getireyim. Denemeye değer!', route: '/ai-hub' },
   { title: 'Otobüste, yolda konu tekrarı yap! 🚌', body: 'Tüm notlarını PDF yap, Taktik sana özet çıkarsın. Sınav öncesi hayat kurtarır.', route: '/ai-hub' },
@@ -73,7 +73,7 @@ const GENERAL_MESSAGES = [
 
 // ---- 2. YÜKSEK DÖNÜŞÜMLÜ PREMIUM SATIŞ MESAJLARI (Stratejik & Samimi) ----
 // Haftanın 5 günü (Ptesi, Salı, Çarşamba, Cuma, Pazar) 21:00'de sadece Premium olmayanlara gidecek.
-// AIHub Odaklı: Soru Çözücü, Etüt Odası, Haftalık Plan, Not Defteri, Zihin Haritası, Taktik Tavşan
+// AIHub Odaklı: Soru Çözücü, Etüt Odası, Haftalık Plan, Dönüştürücü, Zihin Haritası, Taktik Tavşan
 const PREMIUM_SALES_MESSAGES = [
   // 📸 SORU ÇÖZÜCÜ
   {
@@ -136,7 +136,7 @@ const PREMIUM_SALES_MESSAGES = [
     route: '/ai-hub'
   },
 
-  // 📝 NOT DEFTERİ - Sadece kayıt değil, Taktik Dönüşüm!
+  // 📝 Dönüştürücü - Sadece kayıt değil, Taktik Dönüşüm!
   {
     title: 'Kitap okumaya üşeniyor musun? 📸',
     body: 'Sayfanın fotoğrafını çek, Taktik Tavşan senin için özetini çıkarsın ve test sorusu hazırlasın! Taktik Pro ile ders çalışmak bu kadar kolay.',
@@ -356,7 +356,7 @@ exports.dispatchPremiumSalesPush = onSchedule({
   // GÜN BAZLI ÖZELLİK ROTASYONU
   // Her gün farklı bir özelliği öne çıkararak kullanıcının ilgisini canlı tutuyoruz.
   // Pazartesi (1) -> Soru Çözücü / Haftalık Plan (Hafta başı planlama)
-  // Salı (2)      -> Etüt Odası / Not Defteri
+  // Salı (2)      -> Etüt Odası / Dönüştürücü
   // Çarşamba (3)  -> Zihin Haritası / Taktik Tavşan (Hafta ortası motivasyon)
   // Cuma (5)      -> Taktik Pro Genel (Hafta sonu fırsatı)
   // Pazar (0)     -> Haftalık Plan / Soru Çözücü (Yeni hafta hazırlığı)
@@ -369,7 +369,7 @@ exports.dispatchPremiumSalesPush = onSchedule({
   // 0-3: Soru Çözücü (4 adet)
   // 4-7: Etüt Odası (4 adet)
   // 8-10: Haftalık Plan (3 adet)
-  // 11-13: Not Defteri (3 adet)
+  // 11-13: Dönüştürücü (3 adet)
   // 14-16: Zihin Haritası (3 adet)
   // 17-19: Taktik Tavşan (3 adet)
   // 20-22: Taktik Pro Genel (3 adet)
@@ -380,7 +380,7 @@ exports.dispatchPremiumSalesPush = onSchedule({
     case 1: // PAZARTESİ: Haftalık Plan & Soru Çözücü (Haftaya hızlı başlangıç)
       selectedIndices = [0, 1, 2, 3, 8, 9, 10];
       break;
-    case 2: // SALI: Etüt Odası & Not Defteri (Konu çalışma günü)
+    case 2: // SALI: Etüt Odası & Dönüştürücü (Konu çalışma günü)
       selectedIndices = [4, 5, 6, 7, 11, 12, 13];
       break;
     case 3: // ÇARŞAMBA: Zihin Haritası & Taktik Tavşan (Hafta ortası toparlama)

@@ -11,6 +11,7 @@ enum ContentType {
   flashcard,    // Flashcard Kartları (eski infoCards)
   quiz,         // Quiz Soruları (eski questionCards)
   summary,      // Özet
+  mnemonic,     // Kodlama (Hafıza Teknikleri)
 }
 
 extension ContentTypeExtension on ContentType {
@@ -22,6 +23,8 @@ extension ContentTypeExtension on ContentType {
         return 'Quiz';
       case ContentType.summary:
         return 'Özet';
+      case ContentType.mnemonic:
+        return 'Kodlama';
     }
   }
 
@@ -34,6 +37,8 @@ extension ContentTypeExtension on ContentType {
         return 'Quiz';
       case ContentType.summary:
         return 'Özet';
+      case ContentType.mnemonic:
+        return 'Kodlama';
     }
   }
 }
@@ -328,6 +333,8 @@ $basePrompt
         return ContentGeneratorPrompts.getQuestionCardsPrompt(examType);
       case ContentType.summary:
         return ContentGeneratorPrompts.getSummaryPrompt(examType);
+      case ContentType.mnemonic:
+        return ContentGeneratorPrompts.getMnemonicPrompt(examType);
     }
   }
 
@@ -354,6 +361,13 @@ $basePrompt
           type: contentType,
           rawContent: rawResponse,
           summary: json['summary'] ?? json['ozet'] ?? '',
+          topic: json['topic'] ?? json['konu'],
+        );
+      } else if (contentType == ContentType.mnemonic) {
+        return GeneratedContent(
+          type: contentType,
+          rawContent: rawResponse,
+          summary: json['content'] ?? json['icerik'] ?? json['mnemonic'] ?? rawResponse,
           topic: json['topic'] ?? json['konu'],
         );
       } else {
