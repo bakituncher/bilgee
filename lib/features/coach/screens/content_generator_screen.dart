@@ -80,7 +80,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
             },
           ),
           title: Text(
-            'Not Defteri',
+            'Dönüştürücü',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: theme.colorScheme.onSurface,
