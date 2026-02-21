@@ -143,6 +143,7 @@ class _SidePanelDrawerState extends ConsumerState<SidePanelDrawer> with SingleTi
                         _navTile(context, currentLocation: location, icon: Icons.insights_rounded, title: 'Genel Bakış', route: '/stats/overview'),
                         _navTileStrategy(context, currentLocation: location, planDoc: planDoc),
                         _navTile(context, currentLocation: location, icon: Icons.account_tree_rounded, title: 'Zihin Haritası', route: '/ai-hub/mind-map'),
+                        _navTile(context, currentLocation: location, icon: Icons.school_rounded, title: 'Konu Netlerim', route: '/coach'),
                         _navTile(context, currentLocation: location, icon: Icons.inventory_2_outlined, title: 'Deneme Arşivi', route: '/library'),
 
                         // --- EKLENEN SORU KUTUSU ---

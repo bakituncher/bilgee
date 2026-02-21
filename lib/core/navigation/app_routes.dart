@@ -36,6 +36,12 @@ class AppRoutes {
   // Yeni eklenen rota: Soru Kutusu
   static const String questionBox = '/question-box';
 
+  // Oyun rotaları
+  static const String games = '/games';
+  static const String spellingGame = '/games/spelling';
+  static const String authorWorkGame = '/games/author-work';
+  static const String mathGame = '/games/math';
+
   static const String quests = 'quests'; // GÜNLÜK GÖREVLER EKRANI
   static const String premium = '/premium'; // Premium ekranı
   static const String premiumWelcome = '/premium-welcome'; // Premium hoş geldiniz ekranı

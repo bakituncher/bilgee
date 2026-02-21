@@ -2,14 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taktik/data/models/test_model.dart';
-import 'package:taktik/data/models/topic_performance_model.dart';
 import 'package:taktik/features/arena/screens/arena_screen.dart';
 import 'package:taktik/features/arena/screens/public_profile_screen.dart';
 import 'package:taktik/features/coach/screens/ai_hub_screen.dart';
-import 'package:taktik/features/coach/screens/coach_screen.dart';
+import 'package:taktik/features/coach/screens/coach_screen.dart'; // Coach ekranı (AI Hub'dan push için)
 import 'package:taktik/features/coach/screens/motivation_chat_screen.dart';
-import 'package:taktik/features/coach/screens/select_subject_screen.dart';
-import 'package:taktik/features/coach/screens/update_topic_performance_screen.dart';
 import 'package:taktik/features/home/screens/add_test_screen.dart';
 import 'package:taktik/features/home/screens/dashboard_screen.dart';
 import 'package:taktik/features/home/screens/test_detail_screen.dart';
@@ -35,6 +32,7 @@ import 'package:taktik/features/profile/screens/follow_list_screen.dart'; // YEN
 import 'package:taktik/features/profile/screens/ranks_screen.dart'; // YENİ: Ranks ekranı import edildi
 import 'package:taktik/features/mind_map/screens/mind_map_screen.dart'; // YENİ: Zihin haritası ekranı
 import 'package:taktik/features/coach/screens/content_generator_screen.dart'; // YENİ: İçerik Dönüştürücü ekranı
+import 'package:taktik/features/games/games_hub.dart'; // YENİ: Merkezi oyun sistemi
 import 'transition_utils.dart';
 
 StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
@@ -109,31 +107,10 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
       ]),
       StatefulShellBranch(routes: [
         GoRoute(
-            path: AppRoutes.coach,
-            name: 'Coach',
-            pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: CoachScreen(initialSubject: state.uri.queryParameters['subject'])),
-            routes: [
-              GoRoute(
-                path: AppRoutes.selectSubject,
-                name: 'SelectSubject',
-                parentNavigatorKey: rootNavigatorKey,
-                pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const SelectSubjectScreen()),
-              ),
-              GoRoute(
-                path: AppRoutes.updateTopicPerformance,
-                name: 'UpdateTopicPerformance',
-                parentNavigatorKey: rootNavigatorKey,
-                pageBuilder: (context, state) {
-                  final args = state.extra as Map<String, dynamic>;
-                  return buildPageWithFadeTransition(context: context, state: state, child: UpdateTopicPerformanceScreen(
-                    subject: args['subject'] as String,
-                    topic: args['topic'] as String,
-                    initialPerformance:
-                    args['performance'] as TopicPerformanceModel,
-                  ));
-                },
-              ),
-            ]),
+            path: AppRoutes.games,
+            name: 'Games',
+            pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const GamesHub()),
+        ),
       ]),
       StatefulShellBranch(routes: [
         GoRoute(

@@ -39,6 +39,10 @@ import 'package:taktik/features/settings/screens/faq_screen.dart';
 import 'package:taktik/features/coach/screens/question_solver_screen.dart';
 import 'package:taktik/features/coach/screens/saved_solutions_screen.dart'; // YENİ EKLENEN IMPORT
 import 'package:taktik/features/coach/screens/saved_contents_screen.dart'; // Kaydedilen İçerikler
+import 'package:taktik/features/coach/screens/coach_screen.dart'; // Coach ekranı
+import 'package:taktik/features/coach/screens/select_subject_screen.dart'; // Select subject
+import 'package:taktik/features/coach/screens/update_topic_performance_screen.dart'; // Update topic
+import 'package:taktik/data/models/topic_performance_model.dart'; // Topic performance model
 import 'package:shared_preferences/shared_preferences.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -323,6 +327,37 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           child: const GeneralOverviewScreen(),
         ),
       ),
+      // Konu Netlerim (Coach) - Side Panel Drawer'dan erişilebilir
+      GoRoute(
+          path: '/coach',
+          name: 'CoachStandalone',
+          parentNavigatorKey: rootNavigatorKey,
+          pageBuilder: (context, state) => buildPageWithFadeTransition(
+            context: context,
+            state: state,
+            child: CoachScreen(initialSubject: state.uri.queryParameters['subject']),
+          ),
+          routes: [
+            GoRoute(
+              path: AppRoutes.selectSubject,
+              name: 'SelectSubjectStandalone',
+              parentNavigatorKey: rootNavigatorKey,
+              pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const SelectSubjectScreen()),
+            ),
+            GoRoute(
+              path: AppRoutes.updateTopicPerformance,
+              name: 'UpdateTopicPerformanceStandalone',
+              parentNavigatorKey: rootNavigatorKey,
+              pageBuilder: (context, state) {
+                final args = state.extra as Map<String, dynamic>;
+                return buildPageWithFadeTransition(context: context, state: state, child: UpdateTopicPerformanceScreen(
+                  subject: args['subject'] as String,
+                  topic: args['topic'] as String,
+                  initialPerformance: args['performance'] as TopicPerformanceModel,
+                ));
+              },
+            ),
+          ]),
       // Bildirim Merkezi
       GoRoute(
         path: '/notifications',

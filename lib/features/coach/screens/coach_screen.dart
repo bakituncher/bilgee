@@ -65,12 +65,20 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
   }
 
   void _setupTabController(int length) {
-    final initialIndex = ref.read(coachScreenTabProvider);
+    // Her zaman ilk tab'dan başla (0)
     _tabController = TabController(
-      initialIndex: initialIndex < length ? initialIndex : 0,
+      initialIndex: 0,
       length: length,
       vsync: this,
     );
+
+    // Provider'ı lifecycle dışında güncelle
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(coachScreenTabProvider.notifier).state = 0;
+      }
+    });
+
     _tabController!.addListener(() {
       if (_tabController!.indexIsChanging) {
         ref.read(coachScreenTabProvider.notifier).state =
@@ -175,6 +183,16 @@ class _CoachScreenState extends ConsumerState<CoachScreen>
             return Scaffold(
                 resizeToAvoidBottomInset: false,
                 appBar: AppBar(
+                  leading: IconButton(
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    onPressed: () {
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go('/home');
+                      }
+                    },
+                  ),
                   title: _buildAppBarTitle(context),
                   bottom: TabBar(
                     controller: _tabController,
@@ -383,7 +401,7 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
           topic:e.topic,
           performance:e.performance,
           penaltyCoefficient: penaltyCoefficient,
-          onTap: ()=> context.go('/coach/update-topic-performance', extra:{'subject': subjectName,'topic': e.topic.name,'performance': e.performance}),
+          onTap: ()=> context.push('/coach/update-topic-performance', extra:{'subject': subjectName,'topic': e.topic.name,'performance': e.performance}),
           onLongPress: ()=> _showTopicStats(e),
           compact: true,
           index: i, // Staggered animasyon için index
@@ -403,7 +421,7 @@ class _SubjectGalaxyViewState extends ConsumerState<_SubjectGalaxyView> {
           final e=processed[i]; 
 
           return InkWell(
-            onTap: ()=> context.go('/coach/update-topic-performance', extra:{'subject': subjectName,'topic': e.topic.name,'performance': e.performance}),
+            onTap: ()=> context.push('/coach/update-topic-performance', extra:{'subject': subjectName,'topic': e.topic.name,'performance': e.performance}),
             onLongPress: ()=> _showTopicStats(e),
             borderRadius: BorderRadius.circular(16),
             child: Container(

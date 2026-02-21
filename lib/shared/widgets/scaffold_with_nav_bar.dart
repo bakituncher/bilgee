@@ -101,7 +101,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _buildNavItem(context, icon: Icons.dashboard_outlined, activeIcon: Icons.dashboard_rounded, index: 0, ref: ref),
-                        _buildNavItem(context, icon: Icons.school_outlined, activeIcon: Icons.school_rounded, index: 1, ref: ref),
+                        _buildNavItem(context, icon: Icons.games_outlined, activeIcon: Icons.games_rounded, index: 1, ref: ref),
                         const SizedBox(width: 68), // Tavşan butonu için boşluk
                         _buildNavItem(context, icon: Icons.military_tech_outlined, activeIcon: Icons.military_tech_rounded, index: 3, ref: ref),
                         _buildNavItem(context, icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, index: 4, ref: ref),
