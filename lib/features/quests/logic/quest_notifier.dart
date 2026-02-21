@@ -409,7 +409,7 @@ class QuestNotifier extends StateNotifier<bool> {
       route: QuestRoute.contentGenerator,
       tags: ['content', 'notes', 'study'],
     );
-    // Not defteri kullanımı: +10 TP
+    // Dönüştürücü kullanımı: +10 TP
     _addDirectPoints(10, featureLabel: 'Dönüştürücü');
     _updateUserFeatureUsage('contentGenerator');
   }

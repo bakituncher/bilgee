@@ -353,7 +353,7 @@ class _AiHubScreenState extends ConsumerState<AiHubScreen> {
                   child: KeyedSubtree(
                     key: _notebookKey,
                     child: _BentoCard(
-                      title: 'Not\nDefteri',
+                      title: 'Dönüştürücü',
                       description: 'PDF veya görsel yükle,\nkart veya özet üret.',
                       icon: Icons.bolt,
                       color: const Color(0xFF0EA5E9),
