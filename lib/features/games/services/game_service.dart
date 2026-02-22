@@ -3,15 +3,28 @@ import 'dart:math';
 import 'package:flutter/services.dart';
 import '../models/game_config.dart';
 
+enum QuestionFormat {
+  authorToWork,  // Yazardan esere: "Aşağıdakilerin hangisi X yazarının eseridir?"
+  workToAuthor,  // Eserden yazara: "X eserinin yazarı kimdir?"
+}
+
 class GameQuestion {
   final String displayText;
   final String? secondaryText;
   final bool isCorrect;
+  final QuestionFormat? questionFormat;
+
+  // 4 şıklı test için
+  final List<String>? options;       // Şıklar (4 tane)
+  final int? correctAnswerIndex;     // Doğru cevabın indeksi (0-3)
 
   GameQuestion({
     required this.displayText,
     this.secondaryText,
     required this.isCorrect,
+    this.questionFormat,
+    this.options,
+    this.correctAnswerIndex,
   });
 }
 
@@ -87,31 +100,71 @@ class GameService {
       }
 
       allItems.shuffle(Random());
-      final selected = allItems.take(count).toList();
-
       final questions = <GameQuestion>[];
-      for (var item in selected) {
-        // Doğru eşleştirme
-        questions.add(GameQuestion(
-          displayText: item['work']!,
-          secondaryText: item['author'],
-          isCorrect: true,
-        ));
 
-        // Yanlış eşleştirme
-        final wrongAuthors = allItems.where((a) => a['author'] != item['author']).toList();
-        if (wrongAuthors.isNotEmpty) {
-          wrongAuthors.shuffle(Random());
+      for (int i = 0; i < count && i < allItems.length; i++) {
+        final item = allItems[i];
+
+        // Rastgele soru formatı seç
+        final format = Random().nextBool() ? QuestionFormat.authorToWork : QuestionFormat.workToAuthor;
+
+        if (format == QuestionFormat.authorToWork) {
+          // "Aşağıdakilerin hangisi X yazarının eseridir?" formatı
+          final correctWork = item['work']!;
+
+          // Yanlış şıklar için diğer eserleri al
+          final otherWorks = allItems
+              .where((a) => a['work'] != correctWork)
+              .map((a) => a['work']!)
+              .toList();
+          otherWorks.shuffle(Random());
+
+          // 4 şık oluştur
+          final wrongOptions = otherWorks.take(3).toList();
+          final allOptions = [correctWork, ...wrongOptions];
+
+          // Şıkları karıştır
+          allOptions.shuffle(Random());
+          final correctIndex = allOptions.indexOf(correctWork);
+
+          questions.add(GameQuestion(
+            displayText: item['author']!,
+            isCorrect: true,
+            questionFormat: QuestionFormat.authorToWork,
+            options: allOptions,
+            correctAnswerIndex: correctIndex,
+          ));
+        } else {
+          // "X eserinin yazarı kimdir?" formatı
+          final correctAuthor = item['author']!;
+
+          // Yanlış şıklar için diğer yazarları al
+          final otherAuthors = allItems
+              .where((a) => a['author'] != correctAuthor)
+              .map((a) => a['author']!)
+              .toSet()  // Tekrarları kaldır
+              .toList();
+          otherAuthors.shuffle(Random());
+
+          // 4 şık oluştur
+          final wrongOptions = otherAuthors.take(3).toList();
+          final allOptions = [correctAuthor, ...wrongOptions];
+
+          // Şıkları karıştır
+          allOptions.shuffle(Random());
+          final correctIndex = allOptions.indexOf(correctAuthor);
+
           questions.add(GameQuestion(
             displayText: item['work']!,
-            secondaryText: wrongAuthors.first['author'],
-            isCorrect: false,
+            isCorrect: true,
+            questionFormat: QuestionFormat.workToAuthor,
+            options: allOptions,
+            correctAnswerIndex: correctIndex,
           ));
         }
       }
 
-      questions.shuffle(Random());
-      return questions.take(count).toList();
+      return questions;
     } catch (e) {
       print('Sorular yüklenirken hata: $e');
       return [];

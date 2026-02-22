@@ -5,6 +5,11 @@ enum GameType {
   authorWork,
 }
 
+enum GameFormat {
+  trueFalse,      // Doğru/Yanlış formatı
+  multipleChoice, // 4 şıklı test formatı
+}
+
 class GameConfig {
   final String title;
   final String question;
@@ -12,6 +17,7 @@ class GameConfig {
   final Color color;
   final GameType type;
   final String jsonPath;
+  final GameFormat format;
 
   const GameConfig({
     required this.title,
@@ -20,6 +26,9 @@ class GameConfig {
     required this.color,
     required this.type,
     required this.jsonPath,
+    required this.format,
   });
 }
+
+
 

@@ -15,14 +15,16 @@ class GamesHub extends StatelessWidget {
         color: const Color(0xFF10B981),
         type: GameType.spelling,
         jsonPath: 'assets/data/confused_words.json',
+        format: GameFormat.trueFalse,
       ),
       GameConfig(
         title: 'Yazar-Eser Eşleştirme',
-        question: 'Bu eşleştirme doğru mu?',
+        question: 'Yazar ve eserlerini eşleştir',
         icon: Icons.auto_stories_rounded,
         color: const Color(0xFF8B5CF6),
         type: GameType.authorWork,
         jsonPath: 'assets/data/author_works.json',
+        format: GameFormat.multipleChoice,
       ),
     ],
     'Matematik': [
@@ -33,6 +35,7 @@ class GamesHub extends StatelessWidget {
         color: const Color(0xFF3B82F6),
         type: GameType.spelling,
         jsonPath: 'assets/data/math_operations.json',
+        format: GameFormat.trueFalse,
       ),
       GameConfig(
         title: 'Çarpım Tablosu',
@@ -41,6 +44,7 @@ class GamesHub extends StatelessWidget {
         color: const Color(0xFFF59E0B),
         type: GameType.spelling,
         jsonPath: 'assets/data/math_tables.json',
+        format: GameFormat.trueFalse,
       ),
     ],
   };

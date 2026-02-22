@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:ui'; // Tabular figures için eklendi
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -69,39 +69,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     });
   }
 
-  void _check(bool userAnswer) {
-    if (_answered || _gameOver) return;
-    final isCorrect = _questions[_currentIndex].isCorrect;
-    final correct = (userAnswer == isCorrect);
-
-    setState(() {
-      _answered = true;
-      _selected = userAnswer ? 'doğru' : 'yanlış';
-      if (correct) {
-        _score += 10;
-        _remainingSeconds += 3;
-      } else {
-        _remainingSeconds -= 3;
-        if (_remainingSeconds < 0) _remainingSeconds = 0;
-      }
-    });
-
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (!mounted || _gameOver) return;
-      if (_currentIndex < _questions.length - 1 && _remainingSeconds > 0) {
-        setState(() {
-          _currentIndex++;
-          _answered = false;
-          _selected = null;
-        });
-      } else if (_remainingSeconds <= 0) {
-        _timer?.cancel();
-        _gameOver = true;
-        _showResult();
-      }
-    });
-  }
-
   void _showResult() {
     _timer?.cancel();
     GameResultDialog.show(
@@ -156,7 +123,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             children: [
               // Üst Bar (Geri Tuşu ve Avatar)
               _buildTopBar(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Ana Oyun Alanı (Büyük Mor Kart)
               Expanded(
@@ -167,55 +134,102 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                    padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 16.0),
                     child: Column(
                       children: [
-                        // Mor Kart İçi Header (Soru No, Kategori İkonu, Süre Kapsülü)
+                        // Sabit: Soru No ve Süre
                         _buildCardHeader(),
-                        const SizedBox(height: 24),
-
-                        // Soru Kartı
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(32),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: Text(
-                            question.displayText,
-                            style: const TextStyle(
-                              color: Color(0xFF1E1147),
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Doğru / Yanlış Butonları
-                        AnswerButton(
-                          label: 'Doğru',
-                          isSelected: _answered && _selected == 'doğru',
-                          isCorrectAnswer: _answered && question.isCorrect,
-                          isWrongAnswer: _answered && !question.isCorrect && _selected == 'doğru',
-                          onTap: _answered ? null : () => _check(true),
-                        ),
                         const SizedBox(height: 16),
-                        AnswerButton(
-                          label: 'Yanlış',
-                          isSelected: _answered && _selected == 'yanlış',
-                          isCorrectAnswer: _answered && !question.isCorrect,
-                          isWrongAnswer: _answered && question.isCorrect && _selected == 'yanlış',
-                          onTap: _answered ? null : () => _check(false),
+
+                        // ESNEK ALAN 1: Soru Kartı
+                        Expanded(
+                          flex: 4,
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                return SizedBox(
+                                  width: constraints.maxWidth,
+                                  height: constraints.maxHeight,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: SizedBox(
+                                      width: constraints.maxWidth,
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          if (question.questionFormat != null) ...[
+                                            Text(
+                                              question.questionFormat == QuestionFormat.authorToWork
+                                                  ? 'Aşağıdakilerin hangisi\n${question.displayText}\nadlı yazarın eseridir?'
+                                                  : '${question.displayText}\nadlı eserin yazarı kimdir?',
+                                              style: const TextStyle(
+                                                color: Color(0xFF1E1147),
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ],
+                                          if (question.questionFormat == null)
+                                            Text(
+                                              question.displayText,
+                                              style: const TextStyle(
+                                                color: Color(0xFF1E1147),
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
                         ),
 
-                        const Spacer(),
+                        const SizedBox(height: 16),
 
-                        // Alt Joker Butonları
+                        // ESNEK ALAN 2: Cevap Butonları
+                        // FittedBox kullandığımız için butonlar silinmez, sığmazsa orantılı küçülür
+                        Expanded(
+                          flex: 5,
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              return SizedBox(
+                                width: constraints.maxWidth,
+                                height: constraints.maxHeight,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown, // Sığmazsa ekranı bozma, butonları hafifçe küçült
+                                  alignment: Alignment.center,
+                                  child: SizedBox(
+                                    width: constraints.maxWidth, // Butonların tam genişliği almasını sağlar
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: widget.config.format == GameFormat.trueFalse
+                                          ? _buildTrueFalseButtons(question)
+                                          : _buildMultipleChoiceButtons(question),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Sabit Alt Kısım: Jokerler
                         _buildJokersRow(),
-                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
@@ -226,6 +240,117 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         ),
       ),
     );
+  }
+
+  // Doğru/Yanlış butonları (Genişliği fullendi, esneme zorlaması kaldırıldı)
+  List<Widget> _buildTrueFalseButtons(GameQuestion question) {
+    return [
+      SizedBox(
+        width: double.infinity,
+        child: AnswerButton(
+          label: 'Doğru',
+          isSelected: _answered && _selected == 'doğru',
+          isCorrectAnswer: _answered && question.isCorrect,
+          isWrongAnswer: _answered && !question.isCorrect && _selected == 'doğru',
+          onTap: _answered ? null : () => _checkTrueFalse(true),
+        ),
+      ),
+      const SizedBox(height: 16),
+      SizedBox(
+        width: double.infinity,
+        child: AnswerButton(
+          label: 'Yanlış',
+          isSelected: _answered && _selected == 'yanlış',
+          isCorrectAnswer: _answered && !question.isCorrect,
+          isWrongAnswer: _answered && question.isCorrect && _selected == 'yanlış',
+          onTap: _answered ? null : () => _checkTrueFalse(false),
+        ),
+      ),
+    ];
+  }
+
+  // 4 şıklı test butonları (Genişliği fullendi, esneme zorlaması kaldırıldı)
+  List<Widget> _buildMultipleChoiceButtons(GameQuestion question) {
+    if (question.options == null || question.correctAnswerIndex == null) {
+      return [const Text('Seçenekler yüklenemedi', style: TextStyle(color: Colors.white))];
+    }
+
+    return [
+      for (int i = 0; i < question.options!.length; i++) ...[
+        SizedBox(
+          width: double.infinity,
+          child: AnswerButton(
+            label: question.options![i],
+            isSelected: _answered && _selected == i.toString(),
+            isCorrectAnswer: _answered && i == question.correctAnswerIndex,
+            isWrongAnswer: _answered && i != question.correctAnswerIndex && _selected == i.toString(),
+            onTap: _answered ? null : () => _checkMultipleChoice(i),
+          ),
+        ),
+        if (i < question.options!.length - 1) const SizedBox(height: 12),
+      ],
+    ];
+  }
+
+  void _checkTrueFalse(bool userAnswer) {
+    if (_answered || _gameOver) return;
+    final isCorrect = _questions[_currentIndex].isCorrect;
+    final correct = (userAnswer == isCorrect);
+
+    setState(() {
+      _answered = true;
+      _selected = userAnswer ? 'doğru' : 'yanlış';
+      if (correct) {
+        _score += 10;
+        _remainingSeconds += 3;
+      } else {
+        _remainingSeconds -= 3;
+        if (_remainingSeconds < 0) _remainingSeconds = 0;
+      }
+    });
+
+    _handleNextQuestion();
+  }
+
+  void _checkMultipleChoice(int selectedIndex) {
+    if (_answered || _gameOver) return;
+    final question = _questions[_currentIndex];
+    final correct = (selectedIndex == question.correctAnswerIndex);
+
+    setState(() {
+      _answered = true;
+      _selected = selectedIndex.toString();
+      if (correct) {
+        _score += 10;
+        _remainingSeconds += 3;
+      } else {
+        _remainingSeconds -= 3;
+        if (_remainingSeconds < 0) _remainingSeconds = 0;
+      }
+    });
+
+    _handleNextQuestion();
+  }
+
+  void _handleNextQuestion() {
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (!mounted || _gameOver) return;
+      if (_currentIndex < _questions.length - 1 && _remainingSeconds > 0) {
+        setState(() {
+          _currentIndex++;
+          _answered = false;
+          _selected = null;
+        });
+      } else if (_remainingSeconds <= 0) {
+        _timer?.cancel();
+        _gameOver = true;
+        _showResult();
+      } else {
+        _timer?.cancel();
+        _gameOver = true;
+        _showResult();
+      }
+    });
   }
 
   String? _avatarUrl(String? style, String? seed) {
@@ -243,7 +368,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Geri Tuşu - Sola Sabitlenmiş
           Align(
             alignment: Alignment.centerLeft,
             child: IconButton(
@@ -255,8 +379,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               ),
             ),
           ),
-
-          // Avatar - Ekranda Tam Ortalanmış
           userAsync.when(
             data: (user) {
               if (user == null) {
@@ -344,7 +466,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Sol: Soru Numarası
         Container(
           width: 44,
           height: 44,
@@ -359,15 +480,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             ),
           ),
         ),
-
-        // Sağ: Kompakt Dairesel Süre Göstergesi
         SizedBox(
           width: 44,
           height: 44,
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Dairesel progress indicator - etrafında azalıyor
               SizedBox(
                 width: 44,
                 height: 44,
@@ -378,7 +496,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               ),
-              // Ortada sadece süre sayısı
               Text(
                 '$_remainingSeconds',
                 style: const TextStyle(
@@ -439,4 +556,3 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     );
   }
 }
-
