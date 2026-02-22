@@ -34,7 +34,7 @@ class GamesHub extends StatelessWidget {
         icon: Icons.calculate_rounded,
         color: const Color(0xFF3B82F6),
         type: GameType.mathOperations,
-        jsonPath: '', // Dinamik soru üretimi kullanıldığı için gerekli değil
+        jsonPath: '',
         format: GameFormat.multipleChoice,
       ),
     ],
@@ -44,7 +44,13 @@ class GamesHub extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Oyun Merkezi'),
+        title: const Text(
+          'Oyun Merkezi',
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            fontWeight: FontWeight.w900,
+          ),
+        ),
       ),
       body: ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -55,7 +61,7 @@ class GamesHub extends StatelessWidget {
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min, // Sadece gerektiği kadar yer kapla
+            mainAxisSize: MainAxisSize.min,
             children: [
               // Kategori Başlığı
               Padding(
@@ -70,30 +76,32 @@ class GamesHub extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // Kartları kendi doğal yüksekliğinde bırakan yatay kaydırma yapısı
+              // DÜZELTİLEN KISIM BURASI
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: gamesInCategory.map((game) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 16.0), // Kartlar arası boşluk
-                      child: SizedBox(
-                        width: 200, // Sadece genişliği sabitledik, yükseklik GameCard'a emanet
-                        child: GameCard(
-                          title: game.title,
-                          subtitle: game.question,
-                          icon: game.icon,
-                          color: game.color,
-                          onTap: () => context.goNamed(
-                            'GamePlay',
-                            extra: game,
+                child: IntrinsicHeight( // EKLENDİ: Tüm çocukları en uzun karta göre ayarlar
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch, // DEĞİŞTİRİLDİ: Kartları dikeyde doldurmaya zorlar
+                    children: gamesInCategory.map((game) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 16.0),
+                        child: SizedBox(
+                          width: 200, // Genişlik hala sabit, yükseklik artık IntrinsicHeight sayesinde eşit
+                          child: GameCard(
+                            title: game.title,
+                            subtitle: game.question,
+                            icon: game.icon,
+                            color: game.color,
+                            onTap: () => context.goNamed(
+                              'GamePlay',
+                              extra: game,
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  }).toList(),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
