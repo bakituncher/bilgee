@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'widgets/game_card.dart';
 import 'models/game_config.dart';
-import '../../core/navigation/app_routes.dart';
 
 class GamesHub extends StatelessWidget {
   const GamesHub({super.key});
@@ -31,21 +30,12 @@ class GamesHub extends StatelessWidget {
     'Matematik': [
       GameConfig(
         title: 'Dört İşlem',
-        question: 'İşlem sonucu doğru mu?',
+        question: 'İşlem sonucunu seç',
         icon: Icons.calculate_rounded,
         color: const Color(0xFF3B82F6),
-        type: GameType.spelling,
-        jsonPath: 'assets/data/math_operations.json',
-        format: GameFormat.trueFalse,
-      ),
-      GameConfig(
-        title: 'Çarpım Tablosu',
-        question: 'Çarpım doğru mu?',
-        icon: Icons.grid_3x3_rounded,
-        color: const Color(0xFFF59E0B),
-        type: GameType.spelling,
-        jsonPath: 'assets/data/math_tables.json',
-        format: GameFormat.trueFalse,
+        type: GameType.mathOperations,
+        jsonPath: '', // Dinamik soru üretimi kullanıldığı için gerekli değil
+        format: GameFormat.multipleChoice,
       ),
     ],
   };

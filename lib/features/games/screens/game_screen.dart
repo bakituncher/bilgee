@@ -45,12 +45,26 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   Future<void> _loadQuestions() async {
     setState(() => _loading = true);
-    final questions = await GameService.loadQuestions(widget.config, count: 100);
-    setState(() {
-      _questions = questions;
-      _loading = false;
-    });
-    _startTimer();
+
+    try {
+      final questions = await GameService.loadQuestions(widget.config, count: 100);
+
+      if (!mounted) return;
+
+      setState(() {
+        _questions = questions;
+        _loading = false;
+      });
+      _startTimer();
+    } catch (e) {
+      // ÇÖZÜM: Arka planda sessiz bir çökme olursa yükleme ekranında asılı kalmasını engeller.
+      print("Sorular yüklenirken bir hata oluştu: $e");
+      if (!mounted) return;
+      setState(() {
+        _questions = [];
+        _loading = false;
+      });
+    }
   }
 
   void _startTimer() {
@@ -98,8 +112,16 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
 
     if (_questions.isEmpty) {
-      return const Scaffold(
-        body: Center(child: Text("Sorular yüklenemedi!")),
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF3B8E79),
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: const Center(child: Text("Sorular yüklenemedi!")),
       );
     }
 
@@ -112,8 +134,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF3B8E79), // Üstteki yeşilimsi ton
-              Color(0xFF343B71), // Alttaki lacivert ton
+              Color(0xFF3B8E79),
+              Color(0xFF343B71),
             ],
           ),
         ),
@@ -121,27 +143,21 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           bottom: false,
           child: Column(
             children: [
-              // Üst Bar (Geri Tuşu ve Avatar)
               _buildTopBar(),
               const SizedBox(height: 16),
-
-              // Ana Oyun Alanı (Büyük Mor Kart)
               Expanded(
                 child: Container(
                   width: double.infinity,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF3A2393), // Ana mor arka plan
+                    color: Color(0xFF3A2393),
                     borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 16.0),
                     child: Column(
                       children: [
-                        // Sabit: Soru No ve Süre
                         _buildCardHeader(),
                         const SizedBox(height: 16),
-
-                        // ESNEK ALAN 1: Soru Kartı
                         Expanded(
                           flex: 4,
                           child: Container(
@@ -196,10 +212,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 20),
-
-                        // ESNEK ALAN 2: Cevap Butonları
                         Expanded(
                           flex: 6,
                           child: Column(
@@ -209,7 +222,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                                 : _buildMultipleChoiceButtons(question),
                           ),
                         ),
-
                       ],
                     ),
                   ),
@@ -222,7 +234,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     );
   }
 
-  // Doğru/Yanlış butonları
   List<Widget> _buildTrueFalseButtons(GameQuestion question) {
     return [
       SizedBox(
@@ -251,7 +262,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     ];
   }
 
-  // 4 şıklı test butonları
   List<Widget> _buildMultipleChoiceButtons(GameQuestion question) {
     if (question.options == null || question.correctAnswerIndex == null) {
       return [const Text('Seçenekler yüklenemedi', style: TextStyle(color: Colors.white))];
@@ -493,5 +503,4 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       ],
     );
   }
-
 }

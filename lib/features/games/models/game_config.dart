@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 enum GameType {
   spelling,
   authorWork,
+  mathOperations,
 }
 
 enum GameFormat {
