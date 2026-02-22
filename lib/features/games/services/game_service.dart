@@ -259,21 +259,19 @@ class GameService {
               break;
           }
         } else if (operationType >= 3 && operationType <= 4) {
-          final powerType = random.nextInt(5);
+          // Sadece işlemli üslü sayı soruları (tek başına üs yok)
+          final powerType = random.nextInt(4);
 
           if (powerType == 0) {
-            final base = random.nextInt(9) + 2;
-            final exponent = random.nextInt(4) + 2;
-            question = '$base${_toSuperscript(exponent)}';
-            correctAnswer = _power(base, exponent);
-          } else if (powerType == 1) {
-            final a = random.nextInt(8) + 2;
-            final b = random.nextInt(8) + 2;
+            // Kareler toplamı
+            final a = random.nextInt(7) + 2;  // 2-8 arası
+            final b = random.nextInt(7) + 2;  // 2-8 arası
             question = '$a² + $b²';
             correctAnswer = (a * a) + (b * b);
-          } else if (powerType == 2) {
-            final a = random.nextInt(6) + 3;
-            final b = random.nextInt(6) + 2;
+          } else if (powerType == 1) {
+            // Küp ve kare karışık
+            final a = random.nextInt(4) + 2;  // 2, 3, 4, 5
+            final b = random.nextInt(5) + 2;  // 2-6 arası
             final aValue = a * a * a;
             final bValue = b * b;
             if (aValue > bValue) {
@@ -283,14 +281,16 @@ class GameService {
               question = '$a² + $b²';
               correctAnswer = (a * a) + (b * b);
             }
-          } else if (powerType == 3) {
-            final a = random.nextInt(8) + 2;
-            final b = random.nextInt(6) + 2;
+          } else if (powerType == 2) {
+            // Kare × basit sayı
+            final a = random.nextInt(6) + 2;  // 2-7 arası
+            final b = random.nextInt(6) + 2;  // 2-7 arası
             question = '$a² × $b';
             correctAnswer = (a * a) * b;
           } else {
-            final a = random.nextInt(8) + 2;
-            final b = random.nextInt(8) + 2;
+            // Toplam kareleri
+            final a = random.nextInt(6) + 2;  // 2-7 arası
+            final b = random.nextInt(6) + 2;  // 2-7 arası
             question = '($a + $b)²';
             correctAnswer = (a + b) * (a + b);
           }
@@ -452,21 +452,6 @@ class GameService {
     return questions;
   }
 
-  static int _power(int base, int exponent) {
-    int result = 1;
-    for (int i = 0; i < exponent; i++) {
-      result *= base;
-    }
-    return result;
-  }
-
-  static String _toSuperscript(int number) {
-    const superscriptMap = {
-      '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
-      '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
-    };
-    return number.toString().split('').map((digit) => superscriptMap[digit] ?? digit).join();
-  }
 
   static List<int> _getFactors(int number) {
     final factors = <int>[];
