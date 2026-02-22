@@ -197,39 +197,19 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                           ),
                         ),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
 
                         // ESNEK ALAN 2: Cevap Butonları
-                        // FittedBox kullandığımız için butonlar silinmez, sığmazsa orantılı küçülür
                         Expanded(
-                          flex: 5,
-                          child: LayoutBuilder(
-                            builder: (context, constraints) {
-                              return SizedBox(
-                                width: constraints.maxWidth,
-                                height: constraints.maxHeight,
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown, // Sığmazsa ekranı bozma, butonları hafifçe küçült
-                                  alignment: Alignment.center,
-                                  child: SizedBox(
-                                    width: constraints.maxWidth, // Butonların tam genişliği almasını sağlar
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: widget.config.format == GameFormat.trueFalse
-                                          ? _buildTrueFalseButtons(question)
-                                          : _buildMultipleChoiceButtons(question),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
+                          flex: 6,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: widget.config.format == GameFormat.trueFalse
+                                ? _buildTrueFalseButtons(question)
+                                : _buildMultipleChoiceButtons(question),
                           ),
                         ),
 
-                        const SizedBox(height: 12),
-
-                        // Sabit Alt Kısım: Jokerler
-                        _buildJokersRow(),
                       ],
                     ),
                   ),
@@ -242,7 +222,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     );
   }
 
-  // Doğru/Yanlış butonları (Genişliği fullendi, esneme zorlaması kaldırıldı)
+  // Doğru/Yanlış butonları
   List<Widget> _buildTrueFalseButtons(GameQuestion question) {
     return [
       SizedBox(
@@ -253,9 +233,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           isCorrectAnswer: _answered && question.isCorrect,
           isWrongAnswer: _answered && !question.isCorrect && _selected == 'doğru',
           onTap: _answered ? null : () => _checkTrueFalse(true),
+          isBigButton: true,
         ),
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: 24),
       SizedBox(
         width: double.infinity,
         child: AnswerButton(
@@ -264,12 +245,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           isCorrectAnswer: _answered && !question.isCorrect,
           isWrongAnswer: _answered && question.isCorrect && _selected == 'yanlış',
           onTap: _answered ? null : () => _checkTrueFalse(false),
+          isBigButton: true,
         ),
       ),
     ];
   }
 
-  // 4 şıklı test butonları (Genişliği fullendi, esneme zorlaması kaldırıldı)
+  // 4 şıklı test butonları
   List<Widget> _buildMultipleChoiceButtons(GameQuestion question) {
     if (question.options == null || question.correctAnswerIndex == null) {
       return [const Text('Seçenekler yüklenemedi', style: TextStyle(color: Colors.white))];
@@ -287,7 +269,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             onTap: _answered ? null : () => _checkMultipleChoice(i),
           ),
         ),
-        if (i < question.options!.length - 1) const SizedBox(height: 12),
+        if (i < question.options!.length - 1) const SizedBox(height: 18),
       ],
     ];
   }
@@ -512,47 +494,4 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     );
   }
 
-  Widget _buildJokersRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildJokerIcon(Icons.exposure_minus_1, '200'),
-        _buildJokerIcon(Icons.close, '200'),
-        _buildJokerIcon(Icons.sync, '100'),
-      ],
-    );
-  }
-
-  Widget _buildJokerIcon(IconData icon, String cost) {
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.topRight,
-      children: [
-        Container(
-          width: 60,
-          height: 60,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: const Color(0xFF00B4DB), size: 32),
-        ),
-        Positioned(
-          right: -5,
-          top: -5,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.yellow,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              cost,
-              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 10),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }

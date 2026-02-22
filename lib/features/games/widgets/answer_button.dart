@@ -6,6 +6,7 @@ class AnswerButton extends StatelessWidget {
   final bool isCorrectAnswer;
   final bool isWrongAnswer;
   final VoidCallback? onTap;
+  final bool isBigButton;
 
   const AnswerButton({
     super.key,
@@ -14,6 +15,7 @@ class AnswerButton extends StatelessWidget {
     required this.isCorrectAnswer,
     required this.isWrongAnswer,
     required this.onTap,
+    this.isBigButton = false,
   });
 
   @override
@@ -21,17 +23,16 @@ class AnswerButton extends StatelessWidget {
     Color backgroundColor = Colors.white;
     Color textColor = const Color(0xFF1E1147); // Lacivert metin
 
-    if (isSelected) {
-      if (isCorrectAnswer) {
-        backgroundColor = Colors.greenAccent.shade400;
-        textColor = Colors.white;
-      } else {
-        backgroundColor = Colors.redAccent;
-        textColor = Colors.white;
-      }
-    } else if (isCorrectAnswer && isWrongAnswer == false && !isSelected) {
-      // Opsiyonel: Eğer yanlış cevap seçilmişse doğru cevabı göstermek istersen bunu kullanabilirsin.
-      // backgroundColor = Colors.greenAccent.withOpacity(0.5);
+    // Eğer doğru cevapsa ve cevap verildiyse yeşil yansın
+    if (isCorrectAnswer) {
+      backgroundColor = Colors.greenAccent.shade400;
+      textColor = Colors.white;
+    }
+
+    // Eğer seçilmişse ve yanlışsa kırmızı yansın (üzerine yazar)
+    if (isSelected && isWrongAnswer) {
+      backgroundColor = Colors.redAccent;
+      textColor = Colors.white;
     }
 
     return GestureDetector(
@@ -39,14 +40,17 @@ class AnswerButton extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 24),
+        padding: EdgeInsets.symmetric(
+          vertical: isBigButton ? 32 : 14,
+          horizontal: 20,
+        ),
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(30),
           boxShadow: [
-            if (!isSelected) // Seçili değilken hafif gölge
+            if (!isCorrectAnswer && !isWrongAnswer) // Cevap verilmediyse hafif gölge
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 5),
               ),
@@ -56,10 +60,11 @@ class AnswerButton extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: isBigButton ? 22 : 16,
               fontWeight: FontWeight.bold,
               color: textColor,
             ),
+            textAlign: TextAlign.center,
           ),
         ),
       ),
