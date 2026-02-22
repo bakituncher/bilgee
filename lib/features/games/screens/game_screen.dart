@@ -1,20 +1,25 @@
 import 'dart:async';
+import 'dart:ui'; // Tabular figures için eklendi
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../models/game_config.dart';
 import '../services/game_service.dart';
 import '../widgets/answer_button.dart';
 import '../widgets/game_result_dialog.dart';
+import '../../../data/providers/firestore_providers.dart';
+import '../../../shared/providers/avatar_svg_provider.dart';
 
-class GameScreen extends StatefulWidget {
+class GameScreen extends ConsumerStatefulWidget {
   final GameConfig config;
 
   const GameScreen({super.key, required this.config});
 
   @override
-  State<GameScreen> createState() => _GameScreenState();
+  ConsumerState<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _GameScreenState extends ConsumerState<GameScreen> {
   int _score = 0;
   int _currentIndex = 0;
   bool _answered = false;
@@ -22,7 +27,7 @@ class _GameScreenState extends State<GameScreen> {
   bool _loading = true;
   List<GameQuestion> _questions = [];
 
-  int _remainingSeconds = 90;
+  int _remainingSeconds = 89;
   Timer? _timer;
   bool _gameOver = false;
 
@@ -74,9 +79,9 @@ class _GameScreenState extends State<GameScreen> {
       _selected = userAnswer ? 'doğru' : 'yanlış';
       if (correct) {
         _score += 10;
-        _remainingSeconds += 3; // Doğru cevap +3 saniye
+        _remainingSeconds += 3;
       } else {
-        _remainingSeconds -= 3; // Yanlış cevap -3 saniye
+        _remainingSeconds -= 3;
         if (_remainingSeconds < 0) _remainingSeconds = 0;
       }
     });
@@ -109,7 +114,7 @@ class _GameScreenState extends State<GameScreen> {
           _currentIndex = 0;
           _answered = false;
           _selected = null;
-          _remainingSeconds = 90;
+          _remainingSeconds = 89;
           _gameOver = false;
         });
         _loadQuestions();
@@ -119,206 +124,329 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     if (_loading) {
-      return Scaffold(
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Üst Bar - Sadece Kapat Butonu
-              Align(
-                alignment: Alignment.topLeft,
-                child: IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const CircularProgressIndicator(),
-                      const SizedBox(height: 16),
-                      Text(widget.config.title, style: theme.textTheme.titleLarge),
-                      const SizedBox(height: 8),
-                      const Text('Sorular yükleniyor...'),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_questions.isEmpty) {
-      return Scaffold(
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Üst Bar - Sadece Kapat Butonu
-              Align(
-                alignment: Alignment.topLeft,
-                child: IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, size: 64),
-                      const SizedBox(height: 16),
-                      Text('Sorular yüklenemedi', style: theme.textTheme.titleLarge),
-                      const SizedBox(height: 8),
-                      Text('Lütfen daha sonra tekrar deneyin', style: theme.textTheme.bodyMedium),
-                      const SizedBox(height: 24),
-                      FilledButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Geri Dön'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+      return const Scaffold(
+        body: Center(child: Text("Sorular yüklenemedi!")),
       );
     }
 
     final question = _questions[_currentIndex];
 
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF3B8E79), // Üstteki yeşilimsi ton
+              Color(0xFF343B71), // Alttaki lacivert ton
+            ],
+          ),
+        ),
+        child: SafeArea(
+          bottom: false,
           child: Column(
             children: [
-              // Üst Bar - Süre ve Skor
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.timer_outlined,
-                        size: 24,
-                        color: _remainingSeconds <= 10 ? Colors.red : null,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$_remainingSeconds"',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: _remainingSeconds <= 10 ? Colors.red : null,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '$_score',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              const Spacer(),
-
-              Text(widget.config.question, style: theme.textTheme.titleMedium),
+              // Üst Bar (Geri Tuşu ve Avatar)
+              _buildTopBar(),
               const SizedBox(height: 24),
 
-              // Soru Kartı
-              Card(
-                key: ValueKey(_currentIndex),
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: question.secondaryText != null
-                      ? Column(
-                          children: [
-                            Text(
-                              question.displayText,
-                              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                              textAlign: TextAlign.center,
+              // Ana Oyun Alanı (Büyük Mor Kart)
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF3A2393), // Ana mor arka plan
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                    child: Column(
+                      children: [
+                        // Mor Kart İçi Header (Soru No, Kategori İkonu, Süre Kapsülü)
+                        _buildCardHeader(),
+                        const SizedBox(height: 24),
+
+                        // Soru Kartı
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Text(
+                            question.displayText,
+                            style: const TextStyle(
+                              color: Color(0xFF1E1147),
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
                             ),
-                            const SizedBox(height: 16),
-                            const Icon(Icons.arrow_downward_rounded, size: 24),
-                            const SizedBox(height: 16),
-                            Text(
-                              question.secondaryText!,
-                              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        )
-                      : Text(
-                          question.displayText,
-                          style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
-                          textAlign: TextAlign.center,
+                            textAlign: TextAlign.center,
+                          ),
                         ),
+                        const SizedBox(height: 24),
+
+                        // Doğru / Yanlış Butonları
+                        AnswerButton(
+                          label: 'Doğru',
+                          isSelected: _answered && _selected == 'doğru',
+                          isCorrectAnswer: _answered && question.isCorrect,
+                          isWrongAnswer: _answered && !question.isCorrect && _selected == 'doğru',
+                          onTap: _answered ? null : () => _check(true),
+                        ),
+                        const SizedBox(height: 16),
+                        AnswerButton(
+                          label: 'Yanlış',
+                          isSelected: _answered && _selected == 'yanlış',
+                          isCorrectAnswer: _answered && !question.isCorrect,
+                          isWrongAnswer: _answered && question.isCorrect && _selected == 'yanlış',
+                          onTap: _answered ? null : () => _check(false),
+                        ),
+
+                        const Spacer(),
+
+                        // Alt Joker Butonları
+                        _buildJokersRow(),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-
-              const Spacer(),
-
-              // Doğru/Yanlış Butonları (Doğru üstte, Yanlış altta)
-              Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: AnswerButton(
-                      label: 'DOĞRU',
-                      icon: Icons.check_rounded,
-                      color: Colors.green,
-                      isSelected: _answered && _selected == 'doğru',
-                      isCorrectAnswer: _answered && question.isCorrect,
-                      isWrongAnswer: _answered && !question.isCorrect && _selected == 'doğru',
-                      onTap: _answered ? null : () => _check(true),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: AnswerButton(
-                      label: 'YANLIŞ',
-                      icon: Icons.close_rounded,
-                      color: Colors.red,
-                      isSelected: _answered && _selected == 'yanlış',
-                      isCorrectAnswer: _answered && !question.isCorrect,
-                      isWrongAnswer: _answered && question.isCorrect && _selected == 'yanlış',
-                      onTap: _answered ? null : () => _check(false),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
             ],
           ),
         ),
       ),
     );
   }
-}
 
+  String? _avatarUrl(String? style, String? seed) {
+    if (style == null || seed == null) return null;
+    final s = style.trim();
+    final sd = Uri.encodeComponent(seed);
+    return 'https://api.dicebear.com/9.x/$s/svg?seed=$sd';
+  }
+
+  Widget _buildTopBar() {
+    final userAsync = ref.watch(userProfileProvider);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Geri Tuşu - Sola Sabitlenmiş
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(
+                Icons.arrow_back,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+          ),
+
+          // Avatar - Ekranda Tam Ortalanmış
+          userAsync.when(
+            data: (user) {
+              if (user == null) {
+                return Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFBCAAA4), width: 3),
+                  ),
+                  child: const CircleAvatar(
+                    radius: 28,
+                    backgroundColor: Colors.white,
+                    child: Icon(Icons.person, size: 40, color: Colors.grey),
+                  ),
+                );
+              }
+
+              final avatarUrl = _avatarUrl(user.avatarStyle, user.avatarSeed);
+
+              return Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFBCAAA4), width: 3),
+                ),
+                child: CircleAvatar(
+                  radius: 28,
+                  backgroundColor: Colors.white,
+                  child: ClipOval(
+                    child: (avatarUrl != null)
+                        ? ref.watch(avatarSvgProvider(avatarUrl)).when(
+                      data: (svg) => SvgPicture.string(
+                        svg,
+                        fit: BoxFit.cover,
+                        width: 56,
+                        height: 56,
+                      ),
+                      loading: () => const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 1.5),
+                      ),
+                      error: (_, __) => const Icon(
+                        Icons.person,
+                        size: 40,
+                        color: Colors.grey,
+                      ),
+                    )
+                        : const Icon(Icons.person, size: 40, color: Colors.grey),
+                  ),
+                ),
+              );
+            },
+            loading: () => Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFBCAAA4), width: 3),
+              ),
+              child: const CircleAvatar(
+                radius: 28,
+                backgroundColor: Colors.white,
+                child: SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 1.5),
+                ),
+              ),
+            ),
+            error: (_, __) => Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFBCAAA4), width: 3),
+              ),
+              child: const CircleAvatar(
+                radius: 28,
+                backgroundColor: Colors.white,
+                child: Icon(Icons.person, size: 40, color: Colors.grey),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Sol: Soru Numarası
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.white, width: 2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            child: Text(
+              '${_currentIndex + 1}.',
+              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+
+
+        // Sağ: Saat ve Sabit Genişlikli Süre Kapsülü
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.timer,
+                color: Color(0xFF3A2393),
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              // Layout kaymasını önlemek için sabit genişlikli kutu eklendi
+              SizedBox(
+                width: 28,
+                child: Text(
+                  '$_remainingSeconds',
+                  textAlign: TextAlign.center, // Tek hanede merkeze oturması için
+                  style: const TextStyle(
+                    color: Color(0xFF3A2393),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    // Rakamların genişliklerini eşitlemek için tabularFigures kullanılır
+                    fontFeatures: [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildJokersRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildJokerIcon(Icons.exposure_minus_1, '200'),
+        _buildJokerIcon(Icons.close, '200'),
+        _buildJokerIcon(Icons.sync, '100'),
+      ],
+    );
+  }
+
+  Widget _buildJokerIcon(IconData icon, String cost) {
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.topRight,
+      children: [
+        Container(
+          width: 60,
+          height: 60,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: const Color(0xFF00B4DB), size: 32),
+        ),
+        Positioned(
+          right: -5,
+          top: -5,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.yellow,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              cost,
+              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 10),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

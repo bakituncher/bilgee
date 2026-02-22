@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 class AnswerButton extends StatelessWidget {
   final String label;
-  final IconData icon;
-  final Color color;
   final bool isSelected;
   final bool isCorrectAnswer;
   final bool isWrongAnswer;
@@ -12,8 +10,6 @@ class AnswerButton extends StatelessWidget {
   const AnswerButton({
     super.key,
     required this.label,
-    required this.icon,
-    required this.color,
     required this.isSelected,
     required this.isCorrectAnswer,
     required this.isWrongAnswer,
@@ -22,46 +18,45 @@ class AnswerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    Color backgroundColor;
-    Color borderColor;
-    Color textColor;
+    Color backgroundColor = Colors.white;
+    Color textColor = const Color(0xFF1E1147); // Lacivert metin
 
     if (isSelected) {
-      // Kullanıcı bu butona tıkladı
       if (isCorrectAnswer) {
-        // Doğru cevap verdi - yeşil
-        backgroundColor = Colors.green.withAlpha(51);
-        borderColor = Colors.green;
-        textColor = Colors.green;
+        backgroundColor = Colors.greenAccent.shade400;
+        textColor = Colors.white;
       } else {
-        // Yanlış cevap verdi - kırmızı
-        backgroundColor = Colors.red.withAlpha(51);
-        borderColor = Colors.red;
-        textColor = Colors.red;
+        backgroundColor = Colors.redAccent;
+        textColor = Colors.white;
       }
-    } else {
-      // Kullanıcı bu butona tıklamadı - normal görünüm (nötr renk)
-      backgroundColor = theme.colorScheme.surfaceContainerHighest;
-      borderColor = theme.colorScheme.outline.withAlpha(76);
-      textColor = theme.colorScheme.onSurface;
+    } else if (isCorrectAnswer && isWrongAnswer == false && !isSelected) {
+      // Opsiyonel: Eğer yanlış cevap seçilmişse doğru cevabı göstermek istersen bunu kullanabilirsin.
+      // backgroundColor = Colors.greenAccent.withOpacity(0.5);
     }
 
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 24),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
           color: backgroundColor,
-          border: Border.all(color: borderColor, width: 2),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            if (!isSelected) // Seçili değilken hafif gölge
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+          ],
         ),
         child: Center(
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
               color: textColor,
             ),
@@ -71,4 +66,3 @@ class AnswerButton extends StatelessWidget {
     );
   }
 }
-
