@@ -38,6 +38,7 @@ class AppRoutes {
 
   // Oyun rotaları
   static const String games = '/games';
+  static const String gamePlay = 'game-play'; // Oyun ekranı (relative path)
   static const String spellingGame = '/games/spelling';
   static const String authorWorkGame = '/games/author-work';
   static const String mathGame = '/games/math';

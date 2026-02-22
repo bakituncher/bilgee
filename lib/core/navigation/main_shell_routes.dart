@@ -33,6 +33,8 @@ import 'package:taktik/features/profile/screens/ranks_screen.dart'; // YENİ: Ra
 import 'package:taktik/features/mind_map/screens/mind_map_screen.dart'; // YENİ: Zihin haritası ekranı
 import 'package:taktik/features/coach/screens/content_generator_screen.dart'; // YENİ: İçerik Dönüştürücü ekranı
 import 'package:taktik/features/games/games_hub.dart'; // YENİ: Merkezi oyun sistemi
+import 'package:taktik/features/games/screens/game_screen.dart'; // YENİ: Oyun ekranı
+import 'package:taktik/features/games/models/game_config.dart'; // YENİ: Oyun config modeli
 import 'transition_utils.dart';
 
 StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
@@ -110,7 +112,17 @@ StatefulShellRoute mainShellRoutes(GlobalKey<NavigatorState> rootNavigatorKey) {
             path: AppRoutes.games,
             name: 'Games',
             pageBuilder: (context, state) => buildPageWithFadeTransition(context: context, state: state, child: const GamesHub()),
-        ),
+            routes: [
+              GoRoute(
+                path: AppRoutes.gamePlay,
+                name: 'GamePlay',
+                parentNavigatorKey: rootNavigatorKey,
+                pageBuilder: (context, state) {
+                  final config = state.extra as GameConfig;
+                  return buildPageWithFadeTransition(context: context, state: state, child: GameScreen(config: config));
+                },
+              ),
+            ]),
       ]),
       StatefulShellBranch(routes: [
         GoRoute(

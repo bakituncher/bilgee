@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'widgets/game_card.dart';
-import 'screens/game_screen.dart';
 import 'models/game_config.dart';
+import '../../core/navigation/app_routes.dart';
 
 class GamesHub extends StatelessWidget {
   const GamesHub({super.key});
@@ -95,13 +96,9 @@ class GamesHub extends StatelessWidget {
                           subtitle: game.question,
                           icon: game.icon,
                           color: game.color,
-                          onTap: () => Navigator.push(
-                            context,
-                            PageRouteBuilder(
-                              pageBuilder: (context, animation, secondaryAnimation) => GameScreen(config: game),
-                              transitionDuration: Duration.zero,
-                              reverseTransitionDuration: Duration.zero,
-                            ),
+                          onTap: () => context.goNamed(
+                            'GamePlay',
+                            extra: game,
                           ),
                         ),
                       ),
