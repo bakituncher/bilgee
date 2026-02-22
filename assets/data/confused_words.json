@@ -1,1670 +1,1219 @@
-{
-  "type": "confused_words",
-  "name": "Yazımı Karıştırılan Kelimeler",
-  "description": "Türkçe'de sıklıkla yanlış yazılan ve birbirine karıştırılan kelimelerin doğru yazılışları",
-  "categories": [
-    {
-      "letter": "A",
-      "words": [
-        {
-          "wrong": ["ataşe"],
-          "correct": "ateşe",
-          "meaning": "elçilik uzmanı"
-        },
-        {
-          "wrong": ["amblem"],
-          "correct": "ablem",
-          "meaning": null
-        },
-        {
-          "wrong": ["acaip"],
-          "correct": "acayip",
-          "meaning": null
-        },
-        {
-          "wrong": ["acenta"],
-          "correct": "acente",
-          "meaning": null
-        },
-        {
-          "wrong": ["aut"],
-          "correct": "avut",
-          "meaning": "dış"
-        },
-        {
-          "wrong": ["Azerbeycan"],
-          "correct": "Azerbaycan",
-          "meaning": null
-        },
-        {
-          "wrong": ["acitasyon"],
-          "correct": "ajitasyon",
-          "meaning": "kışkırtma, duygu sömürüsü yapma"
-        },
-        {
-          "wrong": ["adele"],
-          "correct": "adale",
-          "meaning": null
-        },
-        {
-          "wrong": ["afaroz"],
-          "correct": "aforoz",
-          "meaning": "Hristiyanlıkta cemaatten kovma cezası, darılıp biriyle konuşmama, uzaklaştırma"
-        },
-        {
-          "wrong": ["afilli"],
-          "correct": "afili",
-          "meaning": "gösterişli, çalımlı"
-        },
-        {
-          "wrong": ["ahçı"],
-          "correct": "aşçı",
-          "meaning": null
-        },
-        {
-          "wrong": ["ahpap"],
-          "correct": "ahbap",
-          "meaning": null
-        },
-        {
-          "wrong": ["akapunktur"],
-          "correct": "akupunktur",
-          "meaning": "iğne batırılarak yapılan tedavi"
-        },
-        {
-          "wrong": ["alarım"],
-          "correct": "alarm",
-          "meaning": null
-        },
-        {
-          "wrong": ["aliminyum", "alimünyum"],
-          "correct": "alüminyum",
-          "meaning": null
-        },
-        {
-          "wrong": ["allerji"],
-          "correct": "alerji",
-          "meaning": null
-        },
-        {
-          "wrong": ["alobora"],
-          "correct": "alabora",
-          "meaning": "geminin yan yatması"
-        },
-        {
-          "wrong": ["amartisör"],
-          "correct": "amortisör",
-          "meaning": null
-        },
-        {
-          "wrong": ["anfi"],
-          "correct": "amfi",
-          "meaning": "basamaklı olarak yükselen büyük derslik"
-        },
-        {
-          "wrong": ["anotomi"],
-          "correct": "anatomi",
-          "meaning": null
-        },
-        {
-          "wrong": ["antiparantez"],
-          "correct": "antrparantez",
-          "meaning": null
-        },
-        {
-          "wrong": ["antreman"],
-          "correct": "antrenman",
-          "meaning": null
-        },
-        {
-          "wrong": ["aparatif", "aperatif"],
-          "correct": "aperitif",
-          "meaning": "ön içki"
-        },
-        {
-          "wrong": ["aporlor", "hoporlër", "opörler"],
-          "correct": "hoparlör",
-          "meaning": null
-        },
-        {
-          "wrong": ["aptes"],
-          "correct": "abdest",
-          "meaning": null
-        },
-        {
-          "wrong": ["arabeks"],
-          "correct": "arabesk",
-          "meaning": null
-        },
-        {
-          "wrong": ["arefe"],
-          "correct": "arife",
-          "meaning": null
-        },
-        {
-          "wrong": ["arozöz"],
-          "correct": "arazöz",
-          "meaning": "yolları ve yol kenarlarındaki yeşillikleri sulamakta kullanılan araç"
-        },
-        {
-          "wrong": ["artiz", "artis"],
-          "correct": "artist",
-          "meaning": null
-        },
-        {
-          "wrong": ["askari"],
-          "correct": "asgari",
-          "meaning": "en az, en düşük"
-        },
-        {
-          "wrong": ["assubay"],
-          "correct": "astsubay",
-          "meaning": null
-        },
-        {
-          "wrong": ["asvalt"],
-          "correct": "asfalt",
-          "meaning": null
-        },
-        {
-          "wrong": ["aşentiyon", "aşantiyon"],
-          "correct": "eşantiyon",
-          "meaning": null
-        },
-        {
-          "wrong": ["aşofman", "eşortman"],
-          "correct": "eşofman",
-          "meaning": null
-        },
-        {
-          "wrong": ["ataç"],
-          "correct": "ataş",
-          "meaning": "tutturgaç"
-        },
-        {
-          "wrong": ["atelye"],
-          "correct": "atölye",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "B",
-      "words": [
-        {
-          "wrong": ["barsak"],
-          "correct": "bağırsak",
-          "meaning": null
-        },
-        {
-          "wrong": ["bilader"],
-          "correct": "birader",
-          "meaning": null
-        },
-        {
-          "wrong": ["bilimum"],
-          "correct": "bilumum",
-          "meaning": null
-        },
-        {
-          "wrong": ["birfiil"],
-          "correct": "bilfiil",
-          "meaning": null
-        },
-        {
-          "wrong": ["birhaber"],
-          "correct": "bihaber",
-          "meaning": null
-        },
-        {
-          "wrong": ["boğa yılanı"],
-          "correct": "boa yılanı",
-          "meaning": null
-        },
-        {
-          "wrong": ["boy pos"],
-          "correct": "boy bos",
-          "meaning": null
-        },
-        {
-          "wrong": ["boğça", "poaça", "poça"],
-          "correct": "poğaça",
-          "meaning": null
-        },
-        {
-          "wrong": ["büsküüt", "püsküüt", "pisküüt", "pisküvi", "püsküvüt"],
-          "correct": "bisküvi",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "C",
-      "words": [
-        {
-          "wrong": ["canbaz"],
-          "correct": "cambaz",
-          "meaning": null
-        },
-        {
-          "wrong": ["candarma", "cenderme"],
-          "correct": "jandarma",
-          "meaning": null
-        },
-        {
-          "wrong": ["celatin"],
-          "correct": "jelatin",
-          "meaning": null
-        },
-        {
-          "wrong": ["ceryan"],
-          "correct": "cereyan",
-          "meaning": null
-        },
-        {
-          "wrong": ["ceton"],
-          "correct": "jeton",
-          "meaning": null
-        },
-        {
-          "wrong": ["cimnastik"],
-          "correct": "jimnastik",
-          "meaning": null
-        },
-        {
-          "wrong": ["ciyer"],
-          "correct": "ciğer",
-          "meaning": null
-        },
-        {
-          "wrong": ["civa"],
-          "correct": "cıva",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "Ç",
-      "words": [
-        {
-          "wrong": ["çekinser"],
-          "correct": "çekimser",
-          "meaning": null
-        },
-        {
-          "wrong": ["çiflik"],
-          "correct": "çiftlik",
-          "meaning": null
-        },
-        {
-          "wrong": ["çinakop"],
-          "correct": "çinekop",
-          "meaning": null
-        },
-        {
-          "wrong": ["çukulata", "çukolata"],
-          "correct": "çikolata",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "D",
-      "words": [
-        {
-          "wrong": ["dekarasyon"],
-          "correct": "dekorasyon",
-          "meaning": null
-        },
-        {
-          "wrong": ["dekaratör"],
-          "correct": "dekoratör",
-          "meaning": null
-        },
-        {
-          "wrong": ["dersane"],
-          "correct": "dershane",
-          "meaning": null
-        },
-        {
-          "wrong": ["dinazor"],
-          "correct": "dinozor",
-          "meaning": null
-        },
-        {
-          "wrong": ["direk"],
-          "correct": "direkt",
-          "meaning": null
-        },
-        {
-          "wrong": ["döğmek"],
-          "correct": "dövmek",
-          "meaning": null
-        },
-        {
-          "wrong": ["döküman"],
-          "correct": "doküman",
-          "meaning": "belge"
-        },
-        {
-          "wrong": ["dökümanter"],
-          "correct": "dokümanter",
-          "meaning": "belgesel"
-        }
-      ]
-    },
-    {
-      "letter": "E",
-      "words": [
-        {
-          "wrong": ["egzantrik", "ekzantrik", "egsantrik"],
-          "correct": "eksantrik",
-          "meaning": "dış merkezli, ayrıksı"
-        },
-        {
-          "wrong": ["egzos", "egsoz", "eksoz", "egzost", "eksozt"],
-          "correct": "egzoz",
-          "meaning": null
-        },
-        {
-          "wrong": ["ensitü"],
-          "correct": "enstitü",
-          "meaning": null
-        },
-        {
-          "wrong": ["entellektüel"],
-          "correct": "entelektüel",
-          "meaning": null
-        },
-        {
-          "wrong": ["entrasan"],
-          "correct": "enteresan",
-          "meaning": null
-        },
-        {
-          "wrong": ["erezyon"],
-          "correct": "erozyon",
-          "meaning": "aşınma"
-        },
-        {
-          "wrong": ["eskirim"],
-          "correct": "eskrim",
-          "meaning": null
-        },
-        {
-          "wrong": ["espiri"],
-          "correct": "espri",
-          "meaning": null
-        },
-        {
-          "wrong": ["eşgal", "eşkal"],
-          "correct": "eşkâl",
-          "meaning": "dıştan görünüş, biçim"
-        },
-        {
-          "wrong": ["evsane"],
-          "correct": "efsane",
-          "meaning": null
-        },
-        {
-          "wrong": ["ezzane"],
-          "correct": "eczane",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "F",
-      "words": [
-        {
-          "wrong": ["faliyet"],
-          "correct": "faaliyet",
-          "meaning": null
-        },
-        {
-          "wrong": ["fantazi"],
-          "correct": "fantezi",
-          "meaning": "değişik heves, değişik beğeni"
-        },
-        {
-          "wrong": ["fasülye"],
-          "correct": "fasulye",
-          "meaning": null
-        },
-        {
-          "wrong": ["fermar"],
-          "correct": "fermuar",
-          "meaning": null
-        },
-        {
-          "wrong": ["fesetmek"],
-          "correct": "feshetmek",
-          "meaning": "bozmak, dağıtmak"
-        },
-        {
-          "wrong": ["fiat"],
-          "correct": "fiyat",
-          "meaning": null
-        },
-        {
-          "wrong": ["filim"],
-          "correct": "film",
-          "meaning": null
-        },
-        {
-          "wrong": ["fites"],
-          "correct": "vites",
-          "meaning": null
-        },
-        {
-          "wrong": ["florasan"],
-          "correct": "floresan",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "G",
-      "words": [
-        {
-          "wrong": ["gangaster"],
-          "correct": "gangster",
-          "meaning": null
-        },
-        {
-          "wrong": ["gangren"],
-          "correct": "kangren",
-          "meaning": null
-        },
-        {
-          "wrong": ["gardolap"],
-          "correct": "gardırop",
-          "meaning": null
-        },
-        {
-          "wrong": ["gaste", "gazte"],
-          "correct": "gazete",
-          "meaning": null
-        },
-        {
-          "wrong": ["gravat"],
-          "correct": "kravat",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "H",
-      "words": [
-        {
-          "wrong": ["halel"],
-          "correct": "helâl",
-          "meaning": "dinin kurallarına aykırı olmayan, dinî bakımdan yasaklanmamış olan, haram karşıtı",
-          "note": "halel: bozma, bozukluk anlamına gelir"
-        },
-        {
-          "wrong": ["hakkaten"],
-          "correct": "hakikaten",
-          "meaning": null
-        },
-        {
-          "wrong": ["halisinasyon", "halisünasyon"],
-          "correct": "halüsinasyon",
-          "meaning": "sanrı"
-        },
-        {
-          "wrong": ["haremlik selamlık"],
-          "correct": "harem selamlık",
-          "meaning": null
-        },
-        {
-          "wrong": ["harfiyat"],
-          "correct": "hafriyat",
-          "meaning": "kazı"
-        },
-        {
-          "wrong": ["herkez", "herkeş"],
-          "correct": "herkes",
-          "meaning": null
-        },
-        {
-          "wrong": ["heycan"],
-          "correct": "heyecan",
-          "meaning": null
-        },
-        {
-          "wrong": ["Hıristiyan"],
-          "correct": "Hristiyan",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "I",
-      "words": [
-        {
-          "wrong": ["ıskonto"],
-          "correct": "iskonto",
-          "meaning": null
-        },
-        {
-          "wrong": ["ıstırap"],
-          "correct": "ızdırap",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "İ",
-      "words": [
-        {
-          "wrong": ["Istanbul", "İstambul"],
-          "correct": "İstanbul",
-          "meaning": null
-        },
-        {
-          "wrong": ["istakoz"],
-          "correct": "ıstakoz",
-          "meaning": null
-        },
-        {
-          "wrong": ["ilizyon", "ilüzyon"],
-          "correct": "illüzyon",
-          "meaning": "yanılsama"
-        },
-        {
-          "wrong": ["inkilap"],
-          "correct": "inkılap",
-          "meaning": null
-        },
-        {
-          "wrong": ["insiyatif"],
-          "correct": "inisiyatif",
-          "meaning": "öncelik, üstünlük"
-        },
-        {
-          "wrong": ["istepne"],
-          "correct": "stepne",
-          "meaning": "yedek lastik"
-        },
-        {
-          "wrong": ["istihap hatti"],
-          "correct": "istiap haddi",
-          "meaning": "içine alma sınırı, sığdırma sınırı"
-        },
-        {
-          "wrong": ["izalasyon"],
-          "correct": "izolasyon",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "K",
-      "words": [
-        {
-          "wrong": ["karsör", "karisör"],
-          "correct": "karoser",
-          "meaning": null
-        },
-        {
-          "wrong": ["kakafoni"],
-          "correct": "kakofoni",
-          "meaning": "ses uyumsuzluğu"
-        },
-        {
-          "wrong": ["kalemşör"],
-          "correct": "kalemşor",
-          "meaning": "kalem savaşçısı"
-        },
-        {
-          "wrong": ["kanpanya"],
-          "correct": "kampanya",
-          "meaning": null
-        },
-        {
-          "wrong": ["kaporo"],
-          "correct": "kaparo",
-          "meaning": null
-        },
-        {
-          "wrong": ["karegrafi", "kareografi"],
-          "correct": "koreografi",
-          "meaning": "figür ve anlatımların bütünü"
-        },
-        {
-          "wrong": ["karekter"],
-          "correct": "karakter",
-          "meaning": null
-        },
-        {
-          "wrong": ["karnıbahar"],
-          "correct": "karnabahar",
-          "meaning": null
-        },
-        {
-          "wrong": ["kavonoz"],
-          "correct": "kavanoz",
-          "meaning": null
-        },
-        {
-          "wrong": ["katalok"],
-          "correct": "katalog",
-          "meaning": null
-        },
-        {
-          "wrong": ["kaysı"],
-          "correct": "kayısı",
-          "meaning": null
-        },
-        {
-          "wrong": ["kırahatane"],
-          "correct": "kıraathane",
-          "meaning": null
-        },
-        {
-          "wrong": ["kilot"],
-          "correct": "külot",
-          "meaning": null
-        },
-        {
-          "wrong": ["kipri"],
-          "correct": "kirpi",
-          "meaning": null
-        },
-        {
-          "wrong": ["kiprik"],
-          "correct": "kirpik",
-          "meaning": null
-        },
-        {
-          "wrong": ["kitlemek"],
-          "correct": "kilitlemek",
-          "meaning": null
-        },
-        {
-          "wrong": ["klavuz"],
-          "correct": "kılavuz",
-          "meaning": null
-        },
-        {
-          "wrong": ["klüp"],
-          "correct": "kulüp",
-          "meaning": null
-        },
-        {
-          "wrong": ["kokreç", "kokareç"],
-          "correct": "kokoreç",
-          "meaning": null
-        },
-        {
-          "wrong": ["kolanya"],
-          "correct": "kolonya",
-          "meaning": null
-        },
-        {
-          "wrong": ["kollej"],
-          "correct": "kolej",
-          "meaning": null
-        },
-        {
-          "wrong": ["kolleksiyon"],
-          "correct": "koleksiyon",
-          "meaning": null
-        },
-        {
-          "wrong": ["kollektif"],
-          "correct": "kolektif",
-          "meaning": null
-        },
-        {
-          "wrong": ["komidin"],
-          "correct": "komodin",
-          "meaning": "küçük dolap"
-        },
-        {
-          "wrong": ["kominist"],
-          "correct": "komünist",
-          "meaning": null
-        },
-        {
-          "wrong": ["komünükasyon"],
-          "correct": "komünikasyon",
-          "meaning": "iletişim"
-        },
-        {
-          "wrong": ["konsansüs"],
-          "correct": "konsensüs",
-          "meaning": "uzlaşma"
-        },
-        {
-          "wrong": ["kontür", "kontur"],
-          "correct": "kontör",
-          "meaning": null
-        },
-        {
-          "wrong": ["kopye"],
-          "correct": "kopya",
-          "meaning": null
-        },
-        {
-          "wrong": ["kurdela", "kordale", "kurdale"],
-          "correct": "kurdele",
-          "meaning": null
-        },
-        {
-          "wrong": ["küpür"],
-          "correct": "kupür",
-          "meaning": "giyside kesim"
-        },
-        {
-          "wrong": ["küvöz"],
-          "correct": "kuvöz",
-          "meaning": "yaşanak"
-        }
-      ]
-    },
-    {
-      "letter": "L",
-      "words": [
-        {
-          "wrong": ["layik"],
-          "correct": "laik",
-          "meaning": null
-        },
-        {
-          "wrong": ["labaratuar", "labaratuvar", "laboratuar"],
-          "correct": "laboratuvar",
-          "meaning": null
-        },
-        {
-          "wrong": ["lağbo", "lavobo"],
-          "correct": "lavabo",
-          "meaning": null
-        },
-        {
-          "wrong": ["laylon"],
-          "correct": "naylon",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "M",
-      "words": [
-        {
-          "wrong": ["nalet"],
-          "correct": "lanet",
-          "meaning": null
-        },
-        {
-          "wrong": ["mahçup"],
-          "correct": "mahcup",
-          "meaning": null
-        },
-        {
-          "wrong": ["mahfolmak"],
-          "correct": "mahvolmak",
-          "meaning": null
-        },
-        {
-          "wrong": ["mahsuz", "masus"],
-          "correct": "mahsus",
-          "meaning": null
-        },
-        {
-          "wrong": ["makina"],
-          "correct": "makine",
-          "meaning": null
-        },
-        {
-          "wrong": ["maktül"],
-          "correct": "maktul",
-          "meaning": "öldürülmüş"
-        },
-        {
-          "wrong": ["manüpülasyon"],
-          "correct": "manipülasyon",
-          "meaning": "yönlendirme, seçme"
-        },
-        {
-          "wrong": ["matamatik"],
-          "correct": "matematik",
-          "meaning": null
-        },
-        {
-          "wrong": ["mataryal"],
-          "correct": "materyal",
-          "meaning": null
-        },
-        {
-          "wrong": ["maydonoz"],
-          "correct": "maydanoz",
-          "meaning": null
-        },
-        {
-          "wrong": ["mefta"],
-          "correct": "mevta",
-          "meaning": "ölü, ölmüş kimse"
-        },
-        {
-          "wrong": ["megoloman", "megolaman"],
-          "correct": "megaloman",
-          "meaning": "kendini çok büyük gören kimse"
-        },
-        {
-          "wrong": ["melemen"],
-          "correct": "menemen",
-          "meaning": null
-        },
-        {
-          "wrong": ["melhem"],
-          "correct": "merhem",
-          "meaning": null
-        },
-        {
-          "wrong": ["menapoz"],
-          "correct": "menopoz",
-          "meaning": null
-        },
-        {
-          "wrong": ["menejer", "menecer"],
-          "correct": "menajer",
-          "meaning": null
-        },
-        {
-          "wrong": ["mentalite"],
-          "correct": "mantalite",
-          "meaning": "anlayış"
-        },
-        {
-          "wrong": ["menüsküs"],
-          "correct": "menisküs",
-          "meaning": null
-        },
-        {
-          "wrong": ["meyva"],
-          "correct": "meyve",
-          "meaning": null
-        },
-        {
-          "wrong": ["miğde"],
-          "correct": "mide",
-          "meaning": null
-        },
-        {
-          "wrong": ["mokasen"],
-          "correct": "makosen",
-          "meaning": "kısa ökçeli, bağsız ayakkabı"
-        },
-        {
-          "wrong": ["motorsiklet"],
-          "correct": "motosiklet",
-          "meaning": null
-        },
-        {
-          "wrong": ["mozayik"],
-          "correct": "mozaik",
-          "meaning": null
-        },
-        {
-          "wrong": ["mönü"],
-          "correct": "menü",
-          "meaning": "yemek listesi"
-        },
-        {
-          "wrong": ["muacir"],
-          "correct": "muhacir",
-          "meaning": null
-        },
-        {
-          "wrong": ["muaffak"],
-          "correct": "muvaffak",
-          "meaning": null
-        },
-        {
-          "wrong": ["muhattap"],
-          "correct": "muhatap",
-          "meaning": null
-        },
-        {
-          "wrong": ["mundar"],
-          "correct": "murdar",
-          "meaning": "kirli, pis"
-        },
-        {
-          "wrong": ["mustarip"],
-          "correct": "muzdarip",
-          "meaning": null
-        },
-        {
-          "wrong": ["muşanba"],
-          "correct": "muşamba",
-          "meaning": null
-        },
-        {
-          "wrong": ["muzur"],
-          "correct": "muzır",
-          "meaning": "zararlı"
-        },
-        {
-          "wrong": ["münübüs"],
-          "correct": "minibüs",
-          "meaning": null
-        },
-        {
-          "wrong": ["müracat"],
-          "correct": "müracaat",
-          "meaning": null
-        },
-        {
-          "wrong": ["mürüvet", "mürivet"],
-          "correct": "mürüvvet",
-          "meaning": "cömertlik, yiğitlik"
-        },
-        {
-          "wrong": ["müsayit"],
-          "correct": "müsait",
-          "meaning": null
-        },
-        {
-          "wrong": ["müsbet"],
-          "correct": "müspet",
-          "meaning": null
-        },
-        {
-          "wrong": ["müsvette"],
-          "correct": "müsvedde",
-          "meaning": null
-        },
-        {
-          "wrong": ["mütaakip"],
-          "correct": "müteakip",
-          "meaning": null
-        },
-        {
-          "wrong": ["mütahit"],
-          "correct": "müteahhit",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "N",
-      "words": [
-        {
-          "wrong": ["naturel"],
-          "correct": "natürel",
-          "meaning": "doğal"
-        },
-        {
-          "wrong": ["nergiz"],
-          "correct": "nergis",
-          "meaning": null
-        },
-        {
-          "wrong": ["nisbet"],
-          "correct": "nispet",
-          "meaning": null
-        },
-        {
-          "wrong": ["nötür"],
-          "correct": "nötr",
-          "meaning": "etkisiz"
-        }
-      ]
-    },
-    {
-      "letter": "O",
-      "words": [
-        {
-          "wrong": ["oce"],
-          "correct": "oje",
-          "meaning": null
-        },
-        {
-          "wrong": ["okşizen"],
-          "correct": "oksijen",
-          "meaning": null
-        },
-        {
-          "wrong": ["oparasyon"],
-          "correct": "operasyon",
-          "meaning": null
-        },
-        {
-          "wrong": ["opsayd"],
-          "correct": "ofsayt",
-          "meaning": null
-        },
-        {
-          "wrong": ["orjinal"],
-          "correct": "orijinal",
-          "meaning": null
-        },
-        {
-          "wrong": ["şok olmak"],
-          "correct": "şoke olmak",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "Ö",
-      "words": [
-        {
-          "wrong": ["öğe"],
-          "correct": "öge",
-          "meaning": null
-        },
-        {
-          "wrong": ["ötenazi"],
-          "correct": "ötanazi",
-          "meaning": "ölme hakkı"
-        }
-      ]
-    },
-    {
-      "letter": "P",
-      "words": [
-        {
-          "wrong": ["palyanço", "palyoça"],
-          "correct": "palyaço",
-          "meaning": null
-        },
-        {
-          "wrong": ["panaroma"],
-          "correct": "panorama",
-          "meaning": "genel görünüm"
-        },
-        {
-          "wrong": ["pantalon"],
-          "correct": "pantolon",
-          "meaning": null
-        },
-        {
-          "wrong": ["parağraf"],
-          "correct": "paragraf",
-          "meaning": null
-        },
-        {
-          "wrong": ["pardesü"],
-          "correct": "pardösü",
-          "meaning": null
-        },
-        {
-          "wrong": ["parelel"],
-          "correct": "paralel",
-          "meaning": null
-        },
-        {
-          "wrong": ["parende"],
-          "correct": "perende",
-          "meaning": "havada dönerek atılan takla"
-        },
-        {
-          "wrong": ["parlementer"],
-          "correct": "parlamenter",
-          "meaning": null
-        },
-        {
-          "wrong": ["parlemento"],
-          "correct": "parlamento",
-          "meaning": null
-        },
-        {
-          "wrong": ["payton"],
-          "correct": "fayton",
-          "meaning": null
-        },
-        {
-          "wrong": ["penbe"],
-          "correct": "pembe",
-          "meaning": null
-        },
-        {
-          "wrong": ["peştemal"],
-          "correct": "peştamal",
-          "meaning": null
-        },
-        {
-          "wrong": ["pisiklet"],
-          "correct": "bisiklet",
-          "meaning": null
-        },
-        {
-          "wrong": ["proğram", "prooram"],
-          "correct": "program",
-          "meaning": null
-        },
-        {
-          "wrong": ["proleterya"],
-          "correct": "proletarya",
-          "meaning": "emekçi sınıfı"
-        },
-        {
-          "wrong": ["promasyon"],
-          "correct": "promosyon",
-          "meaning": "özendirme"
-        },
-        {
-          "wrong": ["provakatör"],
-          "correct": "provokatör",
-          "meaning": "kışkırtmacı"
-        },
-        {
-          "wrong": ["psikiyatrist"],
-          "correct": "psikiyatr",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "R",
-      "words": [
-        {
-          "wrong": ["radyosyon"],
-          "correct": "radyasyon",
-          "meaning": null
-        },
-        {
-          "wrong": ["rakkam"],
-          "correct": "rakam",
-          "meaning": null
-        },
-        {
-          "wrong": ["raslantı"],
-          "correct": "rastlantı",
-          "meaning": null
-        },
-        {
-          "wrong": ["rasgele"],
-          "correct": "rastgele",
-          "meaning": null
-        },
-        {
-          "wrong": ["restoran"],
-          "correct": "restoran",
-          "meaning": null
-        },
-        {
-          "wrong": ["revanş"],
-          "correct": "rövanş",
-          "meaning": null
-        },
-        {
-          "wrong": ["rezarvasyon"],
-          "correct": "rezervasyon",
-          "meaning": null
-        },
-        {
-          "wrong": ["riks"],
-          "correct": "risk",
-          "meaning": null
-        },
-        {
-          "wrong": ["Roma rakamları"],
-          "correct": "Romen rakamları",
-          "meaning": null
-        },
-        {
-          "wrong": ["ropörtaj"],
-          "correct": "röportaj",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "S",
-      "words": [
-        {
-          "wrong": ["sada"],
-          "correct": "seda",
-          "meaning": "ses"
-        },
-        {
-          "wrong": ["safa"],
-          "correct": "sefa",
-          "meaning": "gönül rahatlığı"
-        },
-        {
-          "wrong": ["sağnak"],
-          "correct": "sağanak",
-          "meaning": null
-        },
-        {
-          "wrong": ["sandoviç", "sandöviç", "sandüviç"],
-          "correct": "sandviç",
-          "meaning": null
-        },
-        {
-          "wrong": ["sarmısak"],
-          "correct": "sarımsak",
-          "meaning": null
-        },
-        {
-          "wrong": ["satlık"],
-          "correct": "satılık",
-          "meaning": null
-        },
-        {
-          "wrong": ["sellektör"],
-          "correct": "selektör",
-          "meaning": null
-        },
-        {
-          "wrong": ["seramoni"],
-          "correct": "seremoni",
-          "meaning": "tören"
-        },
-        {
-          "wrong": ["serbes"],
-          "correct": "serbest",
-          "meaning": null
-        },
-        {
-          "wrong": ["seyehat"],
-          "correct": "seyahat",
-          "meaning": null
-        },
-        {
-          "wrong": ["sezeryan"],
-          "correct": "sezaryen",
-          "meaning": null
-        },
-        {
-          "wrong": ["silahşör"],
-          "correct": "silahşor",
-          "meaning": null
-        },
-        {
-          "wrong": ["sohpet"],
-          "correct": "sohbet",
-          "meaning": null
-        },
-        {
-          "wrong": ["soy kırımı"],
-          "correct": "soykırım",
-          "meaning": null
-        },
-        {
-          "wrong": ["statyum"],
-          "correct": "stadyum",
-          "meaning": null
-        },
-        {
-          "wrong": ["su basmanı"],
-          "correct": "subasman",
-          "meaning": "oturmalık"
-        },
-        {
-          "wrong": ["subap", "supab", "sibop"],
-          "correct": "supap",
-          "meaning": null
-        },
-        {
-          "wrong": ["sueter"],
-          "correct": "süveter",
-          "meaning": null
-        },
-        {
-          "wrong": ["südyen", "sudyen"],
-          "correct": "sütyen",
-          "meaning": null
-        },
-        {
-          "wrong": ["sükûtuhayal"],
-          "correct": "sukutuhayal",
-          "meaning": "hayal kırıklığı"
-        },
-        {
-          "wrong": ["süpriz", "süprüz"],
-          "correct": "sürpriz",
-          "meaning": null
-        },
-        {
-          "wrong": ["sütüdyo"],
-          "correct": "stüdyo",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "Ş",
-      "words": [
-        {
-          "wrong": ["şanzuman"],
-          "correct": "şanzıman",
-          "meaning": null
-        },
-        {
-          "wrong": ["şarter"],
-          "correct": "şalter",
-          "meaning": null
-        },
-        {
-          "wrong": ["şarz"],
-          "correct": "şarj",
-          "meaning": null
-        },
-        {
-          "wrong": ["şayibe"],
-          "correct": "şaibe",
-          "meaning": null
-        },
-        {
-          "wrong": ["şemşiye"],
-          "correct": "şemsiye",
-          "meaning": null
-        },
-        {
-          "wrong": ["şevkat"],
-          "correct": "şefkat",
-          "meaning": null
-        },
-        {
-          "wrong": ["şifai"],
-          "correct": "şifahi",
-          "meaning": null
-        },
-        {
-          "wrong": ["şohben"],
-          "correct": "şofben",
-          "meaning": null
-        },
-        {
-          "wrong": ["şöför"],
-          "correct": "şoför",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "T",
-      "words": [
-        {
-          "wrong": ["tabiyat"],
-          "correct": "tabiat",
-          "meaning": null
-        },
-        {
-          "wrong": ["tahüt"],
-          "correct": "taahhüt",
-          "meaning": null
-        },
-        {
-          "wrong": ["taamüden", "tamüden"],
-          "correct": "taammüden",
-          "meaning": "kasten, tasarlayarak"
-        },
-        {
-          "wrong": ["tafsiye"],
-          "correct": "tavsiye",
-          "meaning": null
-        },
-        {
-          "wrong": ["tahtarevalli"],
-          "correct": "tahterevalli",
-          "meaning": null
-        },
-        {
-          "wrong": ["taktim"],
-          "correct": "takdim",
-          "meaning": null
-        },
-        {
-          "wrong": ["taktir"],
-          "correct": "takdir",
-          "meaning": null
-        },
-        {
-          "wrong": ["tanpon"],
-          "correct": "tampon",
-          "meaning": null
-        },
-        {
-          "wrong": ["tastik"],
-          "correct": "tasdik",
-          "meaning": null
-        },
-        {
-          "wrong": ["tasfir"],
-          "correct": "tasvir",
-          "meaning": null
-        },
-        {
-          "wrong": ["tasviye"],
-          "correct": "tasfiye",
-          "meaning": "arıtma"
-        },
-        {
-          "wrong": ["taşaron"],
-          "correct": "taşeron",
-          "meaning": "ikinci derecede müteahhit"
-        },
-        {
-          "wrong": ["teferuat"],
-          "correct": "teferruat",
-          "meaning": null
-        },
-        {
-          "wrong": ["tekneloji"],
-          "correct": "teknoloji",
-          "meaning": null
-        },
-        {
-          "wrong": ["tekrardan"],
-          "correct": "tekrar",
-          "meaning": null
-        },
-        {
-          "wrong": ["temize gitmek"],
-          "correct": "temyize gitmek",
-          "meaning": null
-        },
-        {
-          "wrong": ["tenbel"],
-          "correct": "tembel",
-          "meaning": null
-        },
-        {
-          "wrong": ["tenbih"],
-          "correct": "tembih",
-          "meaning": null
-        },
-        {
-          "wrong": ["tenefüs"],
-          "correct": "teneffüs",
-          "meaning": null
-        },
-        {
-          "wrong": ["teravi", "terevi"],
-          "correct": "teravih",
-          "meaning": null
-        },
-        {
-          "wrong": ["tesbih"],
-          "correct": "tespih",
-          "meaning": null
-        },
-        {
-          "wrong": ["tesbit"],
-          "correct": "tespit",
-          "meaning": null
-        },
-        {
-          "wrong": ["teşfik"],
-          "correct": "teşvik",
-          "meaning": null
-        },
-        {
-          "wrong": ["tetanoz"],
-          "correct": "tetanos",
-          "meaning": null
-        },
-        {
-          "wrong": ["tiskinmek"],
-          "correct": "tiksinmek",
-          "meaning": null
-        },
-        {
-          "wrong": ["tiyo"],
-          "correct": "tüyo",
-          "meaning": "gizli bilgi"
-        },
-        {
-          "wrong": ["tolorans"],
-          "correct": "tolerans",
-          "meaning": null
-        },
-        {
-          "wrong": ["tos"],
-          "correct": "tost",
-          "meaning": null
-        },
-        {
-          "wrong": ["traş"],
-          "correct": "tıraş",
-          "meaning": null
-        },
-        {
-          "wrong": ["tribuşon", "tirbüşon"],
-          "correct": "tirbuşon",
-          "meaning": "burgu"
-        },
-        {
-          "wrong": ["türübün"],
-          "correct": "tribün",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "U",
-      "words": [
-        {
-          "wrong": ["ukte"],
-          "correct": "ukde",
-          "meaning": "yükümlülük, sorumluluk"
-        },
-        {
-          "wrong": ["ultrasyon"],
-          "correct": "ultrason",
-          "meaning": "yansılanım"
-        },
-        {
-          "wrong": ["ultümaton", "ültimatom"],
-          "correct": "ültimatom",
-          "meaning": "bir devletin başka bir devlete verdiği nota"
-        },
-        {
-          "wrong": ["usûl"],
-          "correct": "usul",
-          "meaning": null
-        },
-        {
-          "wrong": ["utopya"],
-          "correct": "ütopya",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "Ü",
-      "words": [
-        {
-          "wrong": ["ünüforma"],
-          "correct": "üniforma",
-          "meaning": null
-        },
-        {
-          "wrong": ["ünvan"],
-          "correct": "unvan",
-          "meaning": null
-        },
-        {
-          "wrong": ["üvertür"],
-          "correct": "uvertür",
-          "meaning": "konser öncesi çalınan parça"
-        }
-      ]
-    },
-    {
-      "letter": "V",
-      "words": [
-        {
-          "wrong": ["valeybol", "veleybol"],
-          "correct": "voleybol",
-          "meaning": null
-        },
-        {
-          "wrong": ["vehamet"],
-          "correct": "vahamet",
-          "meaning": "güçlük, tehlikeli durum"
-        },
-        {
-          "wrong": ["vejeteryan"],
-          "correct": "vejetaryen",
-          "meaning": "etyemez"
-        },
-        {
-          "wrong": ["vürüs"],
-          "correct": "virüs",
-          "meaning": "parazit"
-        }
-      ]
-    },
-    {
-      "letter": "Y",
-      "words": [
-        {
-          "wrong": ["yalnış"],
-          "correct": "yanlış",
-          "meaning": null
-        },
-        {
-          "wrong": ["yayınlamak"],
-          "correct": "yayımlamak",
-          "meaning": null
-        },
-        {
-          "wrong": ["yımırta"],
-          "correct": "yumurta",
-          "meaning": null
-        },
-        {
-          "wrong": ["yövmiye"],
-          "correct": "yevmiye",
-          "meaning": null
-        }
-      ]
-    },
-    {
-      "letter": "Z",
-      "words": [
-        {
-          "wrong": ["zenaat"],
-          "correct": "zanaat",
-          "meaning": null
-        },
-        {
-          "wrong": ["zerafet"],
-          "correct": "zarafet",
-          "meaning": "zariflik"
-        },
-        {
-          "wrong": ["zınba"],
-          "correct": "zımba",
-          "meaning": null
-        }
-      ]
-    }
-  ],
-  "metadata": {
-    "source": "İBB Yavuz Sultan Selim Kız AİHL / Türk Dili ve Edebiyatı",
-    "totalWords": 222,
-    "version": "1.0",
-    "lastUpdated": "2026-02-21"
+[
+  {
+    "wrong": ["ataşe"],
+    "correct": "ateşe"
+  },
+  {
+    "wrong": ["amblem"],
+    "correct": "ablem"
+  },
+  {
+    "wrong": ["acaip"],
+    "correct": "acayip"
+  },
+  {
+    "wrong": ["acenta"],
+    "correct": "acente"
+  },
+  {
+    "wrong": ["aut"],
+    "correct": "avut"
+  },
+  {
+    "wrong": ["Azerbeycan"],
+    "correct": "Azerbaycan"
+  },
+  {
+    "wrong": ["acitasyon"],
+    "correct": "ajitasyon"
+  },
+  {
+    "wrong": ["adele"],
+    "correct": "adale"
+  },
+  {
+    "wrong": ["afaroz"],
+    "correct": "aforoz"
+  },
+  {
+    "wrong": ["afilli"],
+    "correct": "afili"
+  },
+  {
+    "wrong": ["ahçı"],
+    "correct": "aşçı"
+  },
+  {
+    "wrong": ["ahpap"],
+    "correct": "ahbap"
+  },
+  {
+    "wrong": ["akapunktur"],
+    "correct": "akupunktur"
+  },
+  {
+    "wrong": ["alarım"],
+    "correct": "alarm"
+  },
+  {
+    "wrong": ["aliminyum", "alimünyum"],
+    "correct": "alüminyum"
+  },
+  {
+    "wrong": ["allerji"],
+    "correct": "alerji"
+  },
+  {
+    "wrong": ["alobora"],
+    "correct": "alabora"
+  },
+  {
+    "wrong": ["amartisör"],
+    "correct": "amortisör"
+  },
+  {
+    "wrong": ["anfi"],
+    "correct": "amfi"
+  },
+  {
+    "wrong": ["anotomi"],
+    "correct": "anatomi"
+  },
+  {
+    "wrong": ["antiparantez"],
+    "correct": "antrparantez"
+  },
+  {
+    "wrong": ["antreman"],
+    "correct": "antrenman"
+  },
+  {
+    "wrong": ["aparatif", "aperatif"],
+    "correct": "aperitif"
+  },
+  {
+    "wrong": ["aporlor", "hoporlër", "opörler"],
+    "correct": "hoparlör"
+  },
+  {
+    "wrong": ["aptes"],
+    "correct": "abdest"
+  },
+  {
+    "wrong": ["arabeks"],
+    "correct": "arabesk"
+  },
+  {
+    "wrong": ["arefe"],
+    "correct": "arife"
+  },
+  {
+    "wrong": ["arozöz"],
+    "correct": "arazöz"
+  },
+  {
+    "wrong": ["artiz", "artis"],
+    "correct": "artist"
+  },
+  {
+    "wrong": ["askari"],
+    "correct": "asgari"
+  },
+  {
+    "wrong": ["assubay"],
+    "correct": "astsubay"
+  },
+  {
+    "wrong": ["asvalt"],
+    "correct": "asfalt"
+  },
+  {
+    "wrong": ["aşentiyon", "aşantiyon"],
+    "correct": "eşantiyon"
+  },
+  {
+    "wrong": ["aşofman", "eşortman"],
+    "correct": "eşofman"
+  },
+  {
+    "wrong": ["ataç"],
+    "correct": "ataş"
+  },
+  {
+    "wrong": ["atelye"],
+    "correct": "atölye"
+  },
+  {
+    "wrong": ["barsak"],
+    "correct": "bağırsak"
+  },
+  {
+    "wrong": ["bilader"],
+    "correct": "birader"
+  },
+  {
+    "wrong": ["bilimum"],
+    "correct": "bilumum"
+  },
+  {
+    "wrong": ["birfiil"],
+    "correct": "bilfiil"
+  },
+  {
+    "wrong": ["birhaber"],
+    "correct": "bihaber"
+  },
+  {
+    "wrong": ["boğa yılanı"],
+    "correct": "boa yılanı"
+  },
+  {
+    "wrong": ["boy pos"],
+    "correct": "boy bos"
+  },
+  {
+    "wrong": ["boğça", "poaça", "poça"],
+    "correct": "poğaça"
+  },
+  {
+    "wrong": ["büsküüt", "püsküüt", "pisküüt", "pisküvi", "püsküvüt"],
+    "correct": "bisküvi"
+  },
+  {
+    "wrong": ["canbaz"],
+    "correct": "cambaz"
+  },
+  {
+    "wrong": ["candarma", "cenderme"],
+    "correct": "jandarma"
+  },
+  {
+    "wrong": ["celatin"],
+    "correct": "jelatin"
+  },
+  {
+    "wrong": ["ceryan"],
+    "correct": "cereyan"
+  },
+  {
+    "wrong": ["ceton"],
+    "correct": "jeton"
+  },
+  {
+    "wrong": ["cimnastik"],
+    "correct": "jimnastik"
+  },
+  {
+    "wrong": ["ciyer"],
+    "correct": "ciğer"
+  },
+  {
+    "wrong": ["civa"],
+    "correct": "cıva"
+  },
+  {
+    "wrong": ["çekinser"],
+    "correct": "çekimser"
+  },
+  {
+    "wrong": ["çiflik"],
+    "correct": "çiftlik"
+  },
+  {
+    "wrong": ["çinakop"],
+    "correct": "çinekop"
+  },
+  {
+    "wrong": ["çukulata", "çukolata"],
+    "correct": "çikolata"
+  },
+  {
+    "wrong": ["dekarasyon"],
+    "correct": "dekorasyon"
+  },
+  {
+    "wrong": ["dekaratör"],
+    "correct": "dekoratör"
+  },
+  {
+    "wrong": ["dersane"],
+    "correct": "dershane"
+  },
+  {
+    "wrong": ["dinazor"],
+    "correct": "dinozor"
+  },
+  {
+    "wrong": ["direk"],
+    "correct": "direkt"
+  },
+  {
+    "wrong": ["döğmek"],
+    "correct": "dövmek"
+  },
+  {
+    "wrong": ["döküman"],
+    "correct": "doküman"
+  },
+  {
+    "wrong": ["dökümanter"],
+    "correct": "dokümanter"
+  },
+  {
+    "wrong": ["egzantrik", "ekzantrik", "egsantrik"],
+    "correct": "eksantrik"
+  },
+  {
+    "wrong": ["egzos", "egsoz", "eksoz", "egzost", "eksozt"],
+    "correct": "egzoz"
+  },
+  {
+    "wrong": ["ensitü"],
+    "correct": "enstitü"
+  },
+  {
+    "wrong": ["entellektüel"],
+    "correct": "entelektüel"
+  },
+  {
+    "wrong": ["entrasan"],
+    "correct": "enteresan"
+  },
+  {
+    "wrong": ["erezyon"],
+    "correct": "erozyon"
+  },
+  {
+    "wrong": ["eskirim"],
+    "correct": "eskrim"
+  },
+  {
+    "wrong": ["espiri"],
+    "correct": "espri"
+  },
+  {
+    "wrong": ["eşgal", "eşkal"],
+    "correct": "eşkâl"
+  },
+  {
+    "wrong": ["evsane"],
+    "correct": "efsane"
+  },
+  {
+    "wrong": ["ezzane"],
+    "correct": "eczane"
+  },
+  {
+    "wrong": ["faliyet"],
+    "correct": "faaliyet"
+  },
+  {
+    "wrong": ["fantazi"],
+    "correct": "fantezi"
+  },
+  {
+    "wrong": ["fasülye"],
+    "correct": "fasulye"
+  },
+  {
+    "wrong": ["fermar"],
+    "correct": "fermuar"
+  },
+  {
+    "wrong": ["fesetmek"],
+    "correct": "feshetmek"
+  },
+  {
+    "wrong": ["fiat"],
+    "correct": "fiyat"
+  },
+  {
+    "wrong": ["filim"],
+    "correct": "film"
+  },
+  {
+    "wrong": ["fites"],
+    "correct": "vites"
+  },
+  {
+    "wrong": ["florasan"],
+    "correct": "floresan"
+  },
+  {
+    "wrong": ["gangaster"],
+    "correct": "gangster"
+  },
+  {
+    "wrong": ["gangren"],
+    "correct": "kangren"
+  },
+  {
+    "wrong": ["gardolap"],
+    "correct": "gardırop"
+  },
+  {
+    "wrong": ["gaste", "gazte"],
+    "correct": "gazete"
+  },
+  {
+    "wrong": ["gravat"],
+    "correct": "kravat"
+  },
+  {
+    "wrong": ["halel"],
+    "correct": "helâl"
+  },
+  {
+    "wrong": ["hakkaten"],
+    "correct": "hakikaten"
+  },
+  {
+    "wrong": ["halisinasyon", "halisünasyon"],
+    "correct": "halüsinasyon"
+  },
+  {
+    "wrong": ["haremlik selamlık"],
+    "correct": "harem selamlık"
+  },
+  {
+    "wrong": ["harfiyat"],
+    "correct": "hafriyat"
+  },
+  {
+    "wrong": ["herkez", "herkeş"],
+    "correct": "herkes"
+  },
+  {
+    "wrong": ["heycan"],
+    "correct": "heyecan"
+  },
+  {
+    "wrong": ["Hıristiyan"],
+    "correct": "Hristiyan"
+  },
+  {
+    "wrong": ["ıskonto"],
+    "correct": "iskonto"
+  },
+  {
+    "wrong": ["ıstırap"],
+    "correct": "ızdırap"
+  },
+  {
+    "wrong": ["Istanbul", "İstambul"],
+    "correct": "İstanbul"
+  },
+  {
+    "wrong": ["istakoz"],
+    "correct": "ıstakoz"
+  },
+  {
+    "wrong": ["ilizyon", "ilüzyon"],
+    "correct": "illüzyon"
+  },
+  {
+    "wrong": ["inkilap"],
+    "correct": "inkılap"
+  },
+  {
+    "wrong": ["insiyatif"],
+    "correct": "inisiyatif"
+  },
+  {
+    "wrong": ["istepne"],
+    "correct": "stepne"
+  },
+  {
+    "wrong": ["istihap hatti"],
+    "correct": "istiap haddi"
+  },
+  {
+    "wrong": ["izalasyon"],
+    "correct": "izolasyon"
+  },
+  {
+    "wrong": ["karsör", "karisör"],
+    "correct": "karoser"
+  },
+  {
+    "wrong": ["kakafoni"],
+    "correct": "kakofoni"
+  },
+  {
+    "wrong": ["kalemşör"],
+    "correct": "kalemşor"
+  },
+  {
+    "wrong": ["kanpanya"],
+    "correct": "kampanya"
+  },
+  {
+    "wrong": ["kaporo"],
+    "correct": "kaparo"
+  },
+  {
+    "wrong": ["karegrafi", "kareografi"],
+    "correct": "koreografi"
+  },
+  {
+    "wrong": ["karekter"],
+    "correct": "karakter"
+  },
+  {
+    "wrong": ["karnıbahar"],
+    "correct": "karnabahar"
+  },
+  {
+    "wrong": ["kavonoz"],
+    "correct": "kavanoz"
+  },
+  {
+    "wrong": ["katalok"],
+    "correct": "katalog"
+  },
+  {
+    "wrong": ["kaysı"],
+    "correct": "kayısı"
+  },
+  {
+    "wrong": ["kırahatane"],
+    "correct": "kıraathane"
+  },
+  {
+    "wrong": ["kilot"],
+    "correct": "külot"
+  },
+  {
+    "wrong": ["kipri"],
+    "correct": "kirpi"
+  },
+  {
+    "wrong": ["kiprik"],
+    "correct": "kirpik"
+  },
+  {
+    "wrong": ["kitlemek"],
+    "correct": "kilitlemek"
+  },
+  {
+    "wrong": ["klavuz"],
+    "correct": "kılavuz"
+  },
+  {
+    "wrong": ["klüp"],
+    "correct": "kulüp"
+  },
+  {
+    "wrong": ["kokreç", "kokareç"],
+    "correct": "kokoreç"
+  },
+  {
+    "wrong": ["kolanya"],
+    "correct": "kolonya"
+  },
+  {
+    "wrong": ["kollej"],
+    "correct": "kolej"
+  },
+  {
+    "wrong": ["kolleksiyon"],
+    "correct": "koleksiyon"
+  },
+  {
+    "wrong": ["kollektif"],
+    "correct": "kolektif"
+  },
+  {
+    "wrong": ["komidin"],
+    "correct": "komodin"
+  },
+  {
+    "wrong": ["kominist"],
+    "correct": "komünist"
+  },
+  {
+    "wrong": ["komünükasyon"],
+    "correct": "komünikasyon"
+  },
+  {
+    "wrong": ["konsansüs"],
+    "correct": "konsensüs"
+  },
+  {
+    "wrong": ["kontür", "kontur"],
+    "correct": "kontör"
+  },
+  {
+    "wrong": ["kopye"],
+    "correct": "kopya"
+  },
+  {
+    "wrong": ["kurdela", "kordale", "kurdale"],
+    "correct": "kurdele"
+  },
+  {
+    "wrong": ["küpür"],
+    "correct": "kupür"
+  },
+  {
+    "wrong": ["küvöz"],
+    "correct": "kuvöz"
+  },
+  {
+    "wrong": ["layik"],
+    "correct": "laik"
+  },
+  {
+    "wrong": ["labaratuar", "labaratuvar", "laboratuar"],
+    "correct": "laboratuvar"
+  },
+  {
+    "wrong": ["lağbo", "lavobo"],
+    "correct": "lavabo"
+  },
+  {
+    "wrong": ["laylon"],
+    "correct": "naylon"
+  },
+  {
+    "wrong": ["nalet"],
+    "correct": "lanet"
+  },
+  {
+    "wrong": ["mahçup"],
+    "correct": "mahcup"
+  },
+  {
+    "wrong": ["mahfolmak"],
+    "correct": "mahvolmak"
+  },
+  {
+    "wrong": ["mahsuz", "masus"],
+    "correct": "mahsus"
+  },
+  {
+    "wrong": ["makina"],
+    "correct": "makine"
+  },
+  {
+    "wrong": ["maktül"],
+    "correct": "maktul"
+  },
+  {
+    "wrong": ["manüpülasyon"],
+    "correct": "manipülasyon"
+  },
+  {
+    "wrong": ["matamatik"],
+    "correct": "matematik"
+  },
+  {
+    "wrong": ["mataryal"],
+    "correct": "materyal"
+  },
+  {
+    "wrong": ["maydonoz"],
+    "correct": "maydanoz"
+  },
+  {
+    "wrong": ["mefta"],
+    "correct": "mevta"
+  },
+  {
+    "wrong": ["megoloman", "megolaman"],
+    "correct": "megaloman"
+  },
+  {
+    "wrong": ["melemen"],
+    "correct": "menemen"
+  },
+  {
+    "wrong": ["melhem"],
+    "correct": "merhem"
+  },
+  {
+    "wrong": ["menapoz"],
+    "correct": "menopoz"
+  },
+  {
+    "wrong": ["menejer", "menecer"],
+    "correct": "menajer"
+  },
+  {
+    "wrong": ["mentalite"],
+    "correct": "mantalite"
+  },
+  {
+    "wrong": ["menüsküs"],
+    "correct": "menisküs"
+  },
+  {
+    "wrong": ["meyva"],
+    "correct": "meyve"
+  },
+  {
+    "wrong": ["miğde"],
+    "correct": "mide"
+  },
+  {
+    "wrong": ["mokasen"],
+    "correct": "makosen"
+  },
+  {
+    "wrong": ["motorsiklet"],
+    "correct": "motosiklet"
+  },
+  {
+    "wrong": ["mozayik"],
+    "correct": "mozaik"
+  },
+  {
+    "wrong": ["mönü"],
+    "correct": "menü"
+  },
+  {
+    "wrong": ["muacir"],
+    "correct": "muhacir"
+  },
+  {
+    "wrong": ["muaffak"],
+    "correct": "muvaffak"
+  },
+  {
+    "wrong": ["muhattap"],
+    "correct": "muhatap"
+  },
+  {
+    "wrong": ["mundar"],
+    "correct": "murdar"
+  },
+  {
+    "wrong": ["mustarip"],
+    "correct": "muzdarip"
+  },
+  {
+    "wrong": ["muşanba"],
+    "correct": "muşamba"
+  },
+  {
+    "wrong": ["muzur"],
+    "correct": "muzır"
+  },
+  {
+    "wrong": ["münübüs"],
+    "correct": "minibüs"
+  },
+  {
+    "wrong": ["müracat"],
+    "correct": "müracaat"
+  },
+  {
+    "wrong": ["mürüvet", "mürivet"],
+    "correct": "mürüvvet"
+  },
+  {
+    "wrong": ["müsayit"],
+    "correct": "müsait"
+  },
+  {
+    "wrong": ["müsbet"],
+    "correct": "müspet"
+  },
+  {
+    "wrong": ["müsvette"],
+    "correct": "müsvedde"
+  },
+  {
+    "wrong": ["mütaakip"],
+    "correct": "müteakip"
+  },
+  {
+    "wrong": ["mütahit"],
+    "correct": "müteahhit"
+  },
+  {
+    "wrong": ["naturel"],
+    "correct": "natürel"
+  },
+  {
+    "wrong": ["nergiz"],
+    "correct": "nergis"
+  },
+  {
+    "wrong": ["nisbet"],
+    "correct": "nispet"
+  },
+  {
+    "wrong": ["nötür"],
+    "correct": "nötr"
+  },
+  {
+    "wrong": ["oce"],
+    "correct": "oje"
+  },
+  {
+    "wrong": ["okşizen"],
+    "correct": "oksijen"
+  },
+  {
+    "wrong": ["oparasyon"],
+    "correct": "operasyon"
+  },
+  {
+    "wrong": ["opsayd"],
+    "correct": "ofsayt"
+  },
+  {
+    "wrong": ["orjinal"],
+    "correct": "orijinal"
+  },
+  {
+    "wrong": ["şok olmak"],
+    "correct": "şoke olmak"
+  },
+  {
+    "wrong": ["öğe"],
+    "correct": "öge"
+  },
+  {
+    "wrong": ["ötenazi"],
+    "correct": "ötanazi"
+  },
+  {
+    "wrong": ["palyanço", "palyoça"],
+    "correct": "palyaço"
+  },
+  {
+    "wrong": ["panaroma"],
+    "correct": "panorama"
+  },
+  {
+    "wrong": ["pantalon"],
+    "correct": "pantolon"
+  },
+  {
+    "wrong": ["parağraf"],
+    "correct": "paragraf"
+  },
+  {
+    "wrong": ["pardesü"],
+    "correct": "pardösü"
+  },
+  {
+    "wrong": ["parelel"],
+    "correct": "paralel"
+  },
+  {
+    "wrong": ["parende"],
+    "correct": "perende"
+  },
+  {
+    "wrong": ["parlementer"],
+    "correct": "parlamenter"
+  },
+  {
+    "wrong": ["parlemento"],
+    "correct": "parlamento"
+  },
+  {
+    "wrong": ["payton"],
+    "correct": "fayton"
+  },
+  {
+    "wrong": ["penbe"],
+    "correct": "pembe"
+  },
+  {
+    "wrong": ["peştemal"],
+    "correct": "peştamal"
+  },
+  {
+    "wrong": ["pisiklet"],
+    "correct": "bisiklet"
+  },
+  {
+    "wrong": ["proğram", "prooram"],
+    "correct": "program"
+  },
+  {
+    "wrong": ["proleterya"],
+    "correct": "proletarya"
+  },
+  {
+    "wrong": ["promasyon"],
+    "correct": "promosyon"
+  },
+  {
+    "wrong": ["provakatör"],
+    "correct": "provokatör"
+  },
+  {
+    "wrong": ["psikiyatrist"],
+    "correct": "psikiyatr"
+  },
+  {
+    "wrong": ["radyosyon"],
+    "correct": "radyasyon"
+  },
+  {
+    "wrong": ["rakkam"],
+    "correct": "rakam"
+  },
+  {
+    "wrong": ["raslantı"],
+    "correct": "rastlantı"
+  },
+  {
+    "wrong": ["rasgele"],
+    "correct": "rastgele"
+  },
+  {
+    "wrong": ["restoran"],
+    "correct": "restoran"
+  },
+  {
+    "wrong": ["revanş"],
+    "correct": "rövanş"
+  },
+  {
+    "wrong": ["rezarvasyon"],
+    "correct": "rezervasyon"
+  },
+  {
+    "wrong": ["riks"],
+    "correct": "risk"
+  },
+  {
+    "wrong": ["Roma rakamları"],
+    "correct": "Romen rakamları"
+  },
+  {
+    "wrong": ["ropörtaj"],
+    "correct": "röportaj"
+  },
+  {
+    "wrong": ["sada"],
+    "correct": "seda"
+  },
+  {
+    "wrong": ["safa"],
+    "correct": "sefa"
+  },
+  {
+    "wrong": ["sağnak"],
+    "correct": "sağanak"
+  },
+  {
+    "wrong": ["sandoviç", "sandöviç", "sandüviç"],
+    "correct": "sandviç"
+  },
+  {
+    "wrong": ["sarmısak"],
+    "correct": "sarımsak"
+  },
+  {
+    "wrong": ["satlık"],
+    "correct": "satılık"
+  },
+  {
+    "wrong": ["sellektör"],
+    "correct": "selektör"
+  },
+  {
+    "wrong": ["seramoni"],
+    "correct": "seremoni"
+  },
+  {
+    "wrong": ["serbes"],
+    "correct": "serbest"
+  },
+  {
+    "wrong": ["seyehat"],
+    "correct": "seyahat"
+  },
+  {
+    "wrong": ["sezeryan"],
+    "correct": "sezaryen"
+  },
+  {
+    "wrong": ["silahşör"],
+    "correct": "silahşor"
+  },
+  {
+    "wrong": ["sohpet"],
+    "correct": "sohbet"
+  },
+  {
+    "wrong": ["soy kırımı"],
+    "correct": "soykırım"
+  },
+  {
+    "wrong": ["statyum"],
+    "correct": "stadyum"
+  },
+  {
+    "wrong": ["su basmanı"],
+    "correct": "subasman"
+  },
+  {
+    "wrong": ["subap", "supab", "sibop"],
+    "correct": "supap"
+  },
+  {
+    "wrong": ["sueter"],
+    "correct": "süveter"
+  },
+  {
+    "wrong": ["südyen", "sudyen"],
+    "correct": "sütyen"
+  },
+  {
+    "wrong": ["sükûtuhayal"],
+    "correct": "sukutuhayal"
+  },
+  {
+    "wrong": ["süpriz", "süprüz"],
+    "correct": "sürpriz"
+  },
+  {
+    "wrong": ["sütüdyo"],
+    "correct": "stüdyo"
+  },
+  {
+    "wrong": ["şanzuman"],
+    "correct": "şanzıman"
+  },
+  {
+    "wrong": ["şarter"],
+    "correct": "şalter"
+  },
+  {
+    "wrong": ["şarz"],
+    "correct": "şarj"
+  },
+  {
+    "wrong": ["şayibe"],
+    "correct": "şaibe"
+  },
+  {
+    "wrong": ["şemşiye"],
+    "correct": "şemsiye"
+  },
+  {
+    "wrong": ["şevkat"],
+    "correct": "şefkat"
+  },
+  {
+    "wrong": ["şifai"],
+    "correct": "şifahi"
+  },
+  {
+    "wrong": ["şohben"],
+    "correct": "şofben"
+  },
+  {
+    "wrong": ["şöför"],
+    "correct": "şoför"
+  },
+  {
+    "wrong": ["tabiyat"],
+    "correct": "tabiat"
+  },
+  {
+    "wrong": ["tahüt"],
+    "correct": "taahhüt"
+  },
+  {
+    "wrong": ["taamüden", "tamüden"],
+    "correct": "taammüden"
+  },
+  {
+    "wrong": ["tafsiye"],
+    "correct": "tavsiye"
+  },
+  {
+    "wrong": ["tahtarevalli"],
+    "correct": "tahterevalli"
+  },
+  {
+    "wrong": ["taktim"],
+    "correct": "takdim"
+  },
+  {
+    "wrong": ["taktir"],
+    "correct": "takdir"
+  },
+  {
+    "wrong": ["tanpon"],
+    "correct": "tampon"
+  },
+  {
+    "wrong": ["tastik"],
+    "correct": "tasdik"
+  },
+  {
+    "wrong": ["tasfir"],
+    "correct": "tasvir"
+  },
+  {
+    "wrong": ["tasviye"],
+    "correct": "tasfiye"
+  },
+  {
+    "wrong": ["taşaron"],
+    "correct": "taşeron"
+  },
+  {
+    "wrong": ["teferuat"],
+    "correct": "teferruat"
+  },
+  {
+    "wrong": ["tekneloji"],
+    "correct": "teknoloji"
+  },
+  {
+    "wrong": ["tekrardan"],
+    "correct": "tekrar"
+  },
+  {
+    "wrong": ["temize gitmek"],
+    "correct": "temyize gitmek"
+  },
+  {
+    "wrong": ["tenbel"],
+    "correct": "tembel"
+  },
+  {
+    "wrong": ["tenbih"],
+    "correct": "tembih"
+  },
+  {
+    "wrong": ["tenefüs"],
+    "correct": "teneffüs"
+  },
+  {
+    "wrong": ["teravi", "terevi"],
+    "correct": "teravih"
+  },
+  {
+    "wrong": ["tesbih"],
+    "correct": "tespih"
+  },
+  {
+    "wrong": ["tesbit"],
+    "correct": "tespit"
+  },
+  {
+    "wrong": ["teşfik"],
+    "correct": "teşvik"
+  },
+  {
+    "wrong": ["tetanoz"],
+    "correct": "tetanos"
+  },
+  {
+    "wrong": ["tiskinmek"],
+    "correct": "tiksinmek"
+  },
+  {
+    "wrong": ["tiyo"],
+    "correct": "tüyo"
+  },
+  {
+    "wrong": ["tolorans"],
+    "correct": "tolerans"
+  },
+  {
+    "wrong": ["tos"],
+    "correct": "tost"
+  },
+  {
+    "wrong": ["traş"],
+    "correct": "tıraş"
+  },
+  {
+    "wrong": ["tribuşon", "tirbüşon"],
+    "correct": "tirbuşon"
+  },
+  {
+    "wrong": ["türübün"],
+    "correct": "tribün"
+  },
+  {
+    "wrong": ["ukte"],
+    "correct": "ukde"
+  },
+  {
+    "wrong": ["ultrasyon"],
+    "correct": "ultrason"
+  },
+  {
+    "wrong": ["ultümaton", "ültimatom"],
+    "correct": "ültimatom"
+  },
+  {
+    "wrong": ["usûl"],
+    "correct": "usul"
+  },
+  {
+    "wrong": ["utopya"],
+    "correct": "ütopya"
+  },
+  {
+    "wrong": ["ünüforma"],
+    "correct": "üniforma"
+  },
+  {
+    "wrong": ["ünvan"],
+    "correct": "unvan"
+  },
+  {
+    "wrong": ["üvertür"],
+    "correct": "uvertür"
+  },
+  {
+    "wrong": ["valeybol", "veleybol"],
+    "correct": "voleybol"
+  },
+  {
+    "wrong": ["vehamet"],
+    "correct": "vahamet"
+  },
+  {
+    "wrong": ["vejeteryan"],
+    "correct": "vejetaryen"
+  },
+  {
+    "wrong": ["vürüs"],
+    "correct": "virüs"
+  },
+  {
+    "wrong": ["yalnış"],
+    "correct": "yanlış"
+  },
+  {
+    "wrong": ["yayınlamak"],
+    "correct": "yayımlamak"
+  },
+  {
+    "wrong": ["yımırta"],
+    "correct": "yumurta"
+  },
+  {
+    "wrong": ["yövmiye"],
+    "correct": "yevmiye"
+  },
+  {
+    "wrong": ["zenaat"],
+    "correct": "zanaat"
+  },
+  {
+    "wrong": ["zerafet"],
+    "correct": "zarafet"
+  },
+  {
+    "wrong": ["zınba"],
+    "correct": "zımba"
   }
-}
+]
 
