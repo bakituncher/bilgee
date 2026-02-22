@@ -1,11 +1,7 @@
 [
   {
-    "wrong": ["ataşe"],
-    "correct": "ateşe"
-  },
-  {
-    "wrong": ["amblem"],
-    "correct": "ablem"
+    "wrong": ["ablem"],
+    "correct": "amblem"
   },
   {
     "wrong": ["acaip"],
@@ -14,10 +10,6 @@
   {
     "wrong": ["acenta"],
     "correct": "acente"
-  },
-  {
-    "wrong": ["aut"],
-    "correct": "avut"
   },
   {
     "wrong": ["Azerbeycan"],
@@ -168,8 +160,8 @@
     "correct": "boa yılanı"
   },
   {
-    "wrong": ["boy pos"],
-    "correct": "boy bos"
+    "wrong": ["boy bos"],
+    "correct": "boy pos"
   },
   {
     "wrong": ["boğça", "poaça", "poça"],
@@ -242,10 +234,6 @@
   {
     "wrong": ["dinazor"],
     "correct": "dinozor"
-  },
-  {
-    "wrong": ["direk"],
-    "correct": "direkt"
   },
   {
     "wrong": ["döğmek"],
@@ -358,10 +346,6 @@
   {
     "wrong": ["gravat"],
     "correct": "kravat"
-  },
-  {
-    "wrong": ["halel"],
-    "correct": "helâl"
   },
   {
     "wrong": ["hakkaten"],
@@ -856,10 +840,6 @@
     "correct": "radyasyon"
   },
   {
-    "wrong": ["rakkam"],
-    "correct": "rakam"
-  },
-  {
     "wrong": ["raslantı"],
     "correct": "rastlantı"
   },
@@ -868,7 +848,7 @@
     "correct": "rastgele"
   },
   {
-    "wrong": ["restoran"],
+    "wrong": ["restorant"],
     "correct": "restoran"
   },
   {
@@ -890,10 +870,6 @@
   {
     "wrong": ["ropörtaj"],
     "correct": "röportaj"
-  },
-  {
-    "wrong": ["sada"],
-    "correct": "seda"
   },
   {
     "wrong": ["safa"],
@@ -1040,10 +1016,6 @@
     "correct": "takdim"
   },
   {
-    "wrong": ["taktir"],
-    "correct": "takdir"
-  },
-  {
     "wrong": ["tanpon"],
     "correct": "tampon"
   },
@@ -1070,10 +1042,6 @@
   {
     "wrong": ["tekneloji"],
     "correct": "teknoloji"
-  },
-  {
-    "wrong": ["tekrardan"],
-    "correct": "tekrar"
   },
   {
     "wrong": ["temize gitmek"],
@@ -1164,8 +1132,8 @@
     "correct": "üniforma"
   },
   {
-    "wrong": ["ünvan"],
-    "correct": "unvan"
+    "wrong": ["unvan"],
+    "correct": "ünvan"
   },
   {
     "wrong": ["üvertür"],
@@ -1192,10 +1160,6 @@
     "correct": "yanlış"
   },
   {
-    "wrong": ["yayınlamak"],
-    "correct": "yayımlamak"
-  },
-  {
     "wrong": ["yımırta"],
     "correct": "yumurta"
   },
@@ -1216,4 +1180,3 @@
     "correct": "zımba"
   }
 ]
-
