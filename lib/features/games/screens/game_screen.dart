@@ -360,43 +360,32 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           ),
         ),
 
-
-        // Sağ: Saat ve Sabit Genişlikli Süre Kapsülü
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+        // Sağ: Kompakt Dairesel Süre Göstergesi
+        SizedBox(
+          width: 44,
+          height: 44,
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              const Icon(
-                Icons.timer,
-                color: Color(0xFF3A2393),
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              // Layout kaymasını önlemek için sabit genişlikli kutu eklendi
+              // Dairesel progress indicator - etrafında azalıyor
               SizedBox(
-                width: 28,
-                child: Text(
-                  '$_remainingSeconds',
-                  textAlign: TextAlign.center, // Tek hanede merkeze oturması için
-                  style: const TextStyle(
-                    color: Color(0xFF3A2393),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    // Rakamların genişliklerini eşitlemek için tabularFigures kullanılır
-                    fontFeatures: [FontFeature.tabularFigures()],
-                  ),
+                width: 44,
+                height: 44,
+                child: CircularProgressIndicator(
+                  value: _remainingSeconds / 89,
+                  strokeWidth: 2.5,
+                  backgroundColor: Colors.white.withValues(alpha: 0.3),
+                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              // Ortada sadece süre sayısı
+              Text(
+                '$_remainingSeconds',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  fontFeatures: [FontFeature.tabularFigures()],
                 ),
               ),
             ],
@@ -450,3 +439,4 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     );
   }
 }
+
